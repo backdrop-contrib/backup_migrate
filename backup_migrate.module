@@ -212,6 +212,19 @@ function backup_migrate_backup() {
     "#default_value" => variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ),
   );  
   
+  if (module_exists('token')) {
+    $form['token_help'] = array(
+      '#title' => t('Replacement patterns'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#description' => t('Prefer raw-text replacements for text to avoid problems with HTML entities!'),
+    );
+    $form['token_help']['help'] = array(
+      '#value' => theme('token_help', ''),
+    );
+  }
+  
   $compression_options = array( "none" => "None" );
   if ( @function_exists( "gzencode" ) ) {
     $compression_options['gzip'] = "GZip";
@@ -243,7 +256,12 @@ function backup_migrate_backup() {
     "#title" => "Append a timestamp.",
     "#default_value" => variable_get( "backup_migrate_append_timestamp", 1 ),
   );
-  
+  $form['backup_migrate_timestamp_format'] = array(
+    "#type" => "textfield",
+    "#title" => "Timestamp format",
+    "#default_value" => variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ),
+    "#description" => t( 'Should be a PHP <a href="!url">date()</a> format string.', array( '!url' => 'http://www.php.net/date' ) ),
+  );  
   $form['backup_migrate_save_settings'] = array(
     "#type" => "checkbox",
     "#title" => "Save these settings.",
@@ -267,6 +285,7 @@ function backup_migrate_backup_submit($form_id, $form_values) {
     variable_set( "backup_migrate_destination",        $form_values['backup_migrate_destination'] );
     variable_set( "backup_migrate_compression",        $form_values['backup_migrate_compression'] );
     variable_set( "backup_migrate_append_timestamp",   $form_values['backup_migrate_append_timestamp'] );
+    variable_set( "backup_migrate_timestamp_format",   $form_values['backup_migrate_timestamp_format'] );
   }
 
   $out = _backup_migrate_dump_tables( 
@@ -277,7 +296,7 @@ function backup_migrate_backup_submit($form_id, $form_values) {
                 $form_values['backup_migrate_destination'],
                 $form_values['backup_migrate_compression'],
                 "manual",
-                $form_values['backup_migrate_append_timestamp']
+                $form_values['backup_migrate_append_timestamp'] ? $form_values['backup_migrate_timestamp_format'] : false
           );
   
   return $out;
@@ -357,6 +376,71 @@ function backup_migrate_restore_submit($form_id, $form_values) {
 }
 
 /**
+ * Action to backup the drupal site. Requires actions.module
+ */
+function action_backup_migrate_backup($op, $edit = array()) {
+  switch($op) {
+    case 'do':
+      _backup_migrate_backup_with_defaults();
+      watchdog('action', t('Backed up database'));
+      break;
+
+    case 'metadata':
+      return array(
+        'description' => t('Backup the database with the default settings'),
+        'type' => t('Backup and Migrate'),
+        'batchable' => true,
+        'configurable' => false,
+      );
+
+    // return an HTML config form for the action
+    case 'form':
+      return '';
+
+    // validate the HTML form
+    case 'validate':
+      return TRUE;
+
+    // process the HTML form to store configuration
+    case 'submit':
+      return '';
+  }
+}
+
+/*
+ * Implementation of hook_action_info()
+ */
+function backup_migrate_action_info() {
+  return array(
+    'backup_migrate_action_backup' => array(
+      '#label' => t('Backup the database'),
+      '#module' => t('Backup and Migrate'),
+      '#description' => t('Backup the database with the default settings.'),
+    ),
+  );
+}
+
+function backup_migrate_action_backup() {
+  _backup_migrate_backup_with_defaults();
+}
+
+/**
+ * Backup the database with the default settings
+ */
+function _backup_migrate_backup_with_defaults() {
+  _backup_migrate_dump_tables( 
+        variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ), 
+        variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() ), 
+        variable_get( "backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables() ),
+        'sql',
+        'save',
+        variable_get( "backup_migrate_compression", "none" ),
+        "manual",
+        variable_get( "backup_migrate_append_timestamp", 1 ) ? variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ) : false
+  );
+}
+
+/**
  * Build the database dump file. Takes a list of tables to exclude and some formatting options 
  */
 function _backup_migrate_dump_tables( $filename, $exclude_tables, $nodata_tables, $type="sql", $destination="download", $compression="none", $dir="manual", $append_timestamp=false ) {
@@ -364,8 +448,9 @@ function _backup_migrate_dump_tables( $filename, $exclude_tables, $nodata_tables
   $success = false;
   
   if ( $append_timestamp ) {
-    $filename .= date( "-Y-m-d\TH-i-s" );
+    $filename .= "-" . date( $append_timestamp );
   }
+  $filename = _backup_migrate_clean_filename( $filename );
   
   // dump the database
   $temp_file = _backup_migrate_temp_file();
@@ -778,7 +863,7 @@ function _backup_migrate_list_files( $type = "manual" ) {
       while ( false !== ($file = readdir($handle))) {
         if ( substr( $file, 0, 1 ) != "." ) {
           $filepath = $dir ."/". $file;
-          $files[] = array( 
+          $files[$file] = array( 
             $file, 
             date( "m/d/Y h:i a", filemtime( $filepath ) ),
             format_size( filesize( $filepath ) ),
@@ -790,6 +875,8 @@ function _backup_migrate_list_files( $type = "manual" ) {
       }
     }
   }
+  krsort($files);
+  
   return theme( "table", array(), $files );
 }
 
@@ -955,10 +1042,24 @@ function _backup_migrate_zip_encode( $source, $dest, $filename ){
  * Construct a default filename using the site's name.
  */ 
 function _backup_migrate_default_file_name() {
-  $filename = strtolower(variable_get( site_name, "backup_migrate" ));
-  $filename = preg_replace( "/[^a-zA-Z0-9\.\-_]/", "", $filename );
+  if( module_exists('token') ) {
+    return '[site-name]';
+  } else {
+    return _backup_migrate_clean_filename( variable_get( site_name, "backup_migrate" ) );
+  }
+}
+
+/**
+ * Construct a default filename using token and some cleaning.
+ */ 
+function _backup_migrate_clean_filename( $filename ) {
+  if (module_exists('token')) {
+    $filename = token_replace($filename, 'global');
+  }
+  $filename = preg_replace( "/[^a-z0-9\.\-_]/", "", strtolower($filename) );
   return $filename;
 }
+
 
 /**
  * Tables to ingore altogether. None by default.
