@@ -24,9 +24,21 @@ Put the module in your drupal modules directory and enable it in
 admin/build/modules. 
 Configure and use the module at admin/content/backup_migrate
 
+OPTIONAL:
+Enable token.module to allow token replacement in backup file names.
+
 -------------------------------------------------------------------------------
 
-WARNINGS:
+VERY IMPORTANT SECURITY NOTE:
+Backup files may contain sensitive data and by default, are saved to your web
+server in a directory normally accessible by the public. This could lead to a
+very serious security vulnerability. Backup and Migrate attempts to protect
+backup files using a .htaccess file, but this is not guaranteed to work on all
+environments (and is guaranteed to fail on web servers that are not apache). You
+should test to see if your backup files are publicly accessible, and if in doubt
+do not save backups to the server.
+
+OTHER WARNINGS:
 A failed restore can destroy your database and therefore your entire Drupal
 installation. ALWAYS TEST BACKUP FILES ON A TEST ENVIRONMENT FIRST. If in doubt
 do not use this module.
@@ -53,11 +65,11 @@ correctly.
 IF A RESTORE FAILS:
 Don't panic, the restore file should work with phpMyAdmin's import function, or
 with the mysql command line tool. If it does not, then it is likely corrupt; you
-may panic now. Make sure that this module is not your only form of backup.
+may panic now. MAKE SURE THAT THIS MODULE IS NOT YOUR ONLY FORM OF BACKUP.
 
 NOTE TO DEVEL USERS:
-If you experience memory limit errors while restoring, try
-disabling the 'Collect query info' setting in devel.
+If you experience memory limit errors while restoring, try disabling the
+'Collect query info' setting in devel.
 
 -------------------------------------------------------------------------------
 
