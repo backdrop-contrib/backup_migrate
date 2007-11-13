@@ -357,7 +357,7 @@ function backup_migrate_restore() {
   if ( user_access('access backup files') ) {
      $form[] = array(
       '#type' => 'markup',
-      '#value' => t('<p>Or you can restore one of the files in the <a href="%url">saved backup directory.</a></p>', array( "%url" => url( "admin/content/backup_migrate/files" ) ) ),
+      '#value' => t('<p>Or you can restore one of the files in the <a href="!url">saved backup directory.</a></p>', array( "!url" => url( "admin/content/backup_migrate/files" ) ) ),
     );
   }
   $form['#attributes'] = array('enctype' => 'multipart/form-data');  
