@@ -111,7 +111,7 @@ function backup_migrate_cron() {
                 "save",
                 variable_get( "backup_migrate_compression", "none" ),
                 "scheduled",
-                true
+                'Y-m-d\TH-i-s'
           );
       
       // set the timestamp to indecate last backup time
@@ -150,7 +150,7 @@ function _backup_migrate_delete() {
  */
 function backup_migrate_delete_confirm($path) {
   $form['path'] = array('#type' => 'value', '#value' => $path);
-  return confirm_form($form, t('Are you sure you want to delete the backup file at %path?', array('%path' => $path)), 'node/'. $node->nid .'/revisions', t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to delete the backup file at %path?', array('%path' => $path)), 'admin/content/backup_migrate/files', t('This action cannot be undone.'), t('Delete'), t('Cancel'));
 }
 
 function backup_migrate_delete_confirm_submit($form_id, $form_values) {
@@ -332,7 +332,7 @@ function _backup_migrate_restore_from_server() {
  */
 function backup_migrate_restore_confirm($path) {
   $form['path'] = array('#type' => 'value', '#value' => $path);
-  return confirm_form($form, t('Are you sure you want to restore the database from the backup at %path?', array('%path' => $path)), 'node/'. $node->nid .'/revisions', t('This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), t('Restore'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to restore the database from the backup at %path?', array('%path' => $path)), 'admin/content/backup_migrate/files', t('This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), t('Restore'), t('Cancel'));
 }
 
 function backup_migrate_restore_confirm_submit($form_id, $form_values) {
@@ -436,7 +436,7 @@ function backup_migrate_action_backup() {
 /**
  * Backup the database with the default settings
  */
-function _backup_migrate_backup_with_defaults() {
+function _backup_migrate_backup_with_defaults( $type = "manual" ) {
   _backup_migrate_dump_tables( 
         variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ), 
         variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() ), 
@@ -444,7 +444,7 @@ function _backup_migrate_backup_with_defaults() {
         'sql',
         'save',
         variable_get( "backup_migrate_compression", "none" ),
-        "manual",
+        $type,
         variable_get( "backup_migrate_append_timestamp", 1 ) ? variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ) : false
   );
 }
@@ -1081,7 +1081,7 @@ function _backup_migrate_clean_filename( $filename ) {
   if (module_exists('token')) {
     $filename = token_replace($filename, 'global');
   }
-  $filename = preg_replace( "/[^a-z0-9\.\-_]/", "", strtolower($filename) );
+  $filename = preg_replace( "/[^a-zA-Z0-9\.\-_]/", "", $filename );
   return $filename;
 }
 
