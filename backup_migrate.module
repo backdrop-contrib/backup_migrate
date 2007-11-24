@@ -181,6 +181,11 @@ function backup_migrate_schedule() {
     "#default_value" => variable_get( "backup_migrate_schedule_backup_keep", 0 ),
   );  
   
+  if( !_backup_migrate_check_destination_dir( 'scheduled' ) ) {
+    $form['backup_migrate_schedule_backup_period']['#disabled'] = true;
+    $form['backup_migrate_schedule_backup_keep']['#disabled'] = true;
+  }
+  
   return system_settings_form($form);  
 }
 
@@ -232,7 +237,7 @@ function backup_migrate_backup() {
   if ( @function_exists( "bzcompress" ) ) {
     $compression_options['bzip'] = "BZip";
   }
-  if ( @defined( "ZIPARCHIVE::CREATE" ) ) {
+  if ( class_exists( 'ZipArchive' ) ) {
     $compression_options['zip'] = "Zip";
   }
   
@@ -242,13 +247,17 @@ function backup_migrate_backup() {
     "#options" => $compression_options,
     "#default_value" => variable_get( "backup_migrate_compression", "none" ),
   );  
+  
+  $destination_options = array(
+    "download" => t( "Download" ),
+  );
+  if( _backup_migrate_check_destination_dir( 'manual' ) ) {
+    $destination_options['save'] = t( "Save to Files Directory" );
+  }
   $form['backup_migrate_destination'] = array(
     "#type" => "radios",
     "#title" => "Destination",
-    "#options" => array( 
-      "download" => "Download", 
-      "save" => "Save to Files Directory",
-     ),
+    "#options" => $destination_options,
     "#default_value" => variable_get( "backup_migrate_destination", "download" ),
   );  
   $form['backup_migrate_append_timestamp'] = array(
@@ -724,7 +733,7 @@ function _backup_migrate_restore_file( $filepath, $filename="", $delete=false ) 
   }
   // zip compression
   if ( substr( $filename, -4, 4 ) == ".zip" ) {
-    if ( @defined( "ZIPARCHIVE::CREATE" ) ) {
+    if ( class_exists( 'ZipArchive' ) ) {
       if ( $filepath != $filename ) {
         rename( $filepath, $filepath .".zip" ); 
         $filepath .= ".zip";
@@ -861,7 +870,7 @@ function _backup_migrate_list_files( $type = "manual" ) {
   if ( $dir = _backup_migrate_check_destination_dir( $type ) ) { 
     if ( $handle = opendir( $dir ) ) {
       while ( false !== ($file = readdir($handle))) {
-        if ( substr( $file, 0, 1 ) != "." ) {
+        if ( substr( $file, 0, 1 ) != "." && $file !== "test.txt" ) {
           $filepath = $dir ."/". $file;
           $files[$file] = array( 
             $file, 
@@ -974,6 +983,22 @@ function _backup_migrate_check_destination_dir( $type="" ) {
       watchdog('security', $message, WATCHDOG_ERROR);
     }
   }
+  
+  // check to see if we can read from the dir
+  if( $out ) {
+    $test_contents = "this file should not be publicly accesible";
+    if (($fp = @fopen($subdir .'/test.txt', 'w')) && @fputs($fp, $test_contents)) {
+      fclose($fp);
+      $result = drupal_http_request(   url( file_create_url( $subdir .'/test.txt' ), NULL, NULL, true ));
+      if( $result->data === $test_contents ) {
+        $message = t("Security notice: Backup and Migrate will not save backup files to the server because the destination directory is publicly accessible. If you want to save files to the server, please secure the '%directory' directory", array('%directory' => $directory));
+        drupal_set_message($message, "error");
+        $out = false;
+      }
+    } else {
+      $out = false;
+    }
+  }
 
   return $out;
 }
@@ -1023,7 +1048,7 @@ function _backup_migrate_bzip_encode( $source, $dest ){
  */
 function _backup_migrate_zip_encode( $source, $dest, $filename ){ 
   $success = false; 
-  if ( @defined( "ZipArchive::CREATE" ) ) {
+  if ( class_exists( 'ZipArchive' ) ) {
     $zip = new ZipArchive;
     $res = $zip->open( $dest, constant( "ZipArchive::CREATE" ) );
     if ($res === TRUE) {
