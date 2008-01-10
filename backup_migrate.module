@@ -111,7 +111,7 @@ function backup_migrate_cron() {
                 "save",
                 variable_get( "backup_migrate_compression", "none" ),
                 "scheduled",
-                'Y-m-d\TH-i-s'
+                variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' )
           );
       
       // set the timestamp to indecate last backup time
@@ -448,6 +448,7 @@ function _backup_migrate_backup_with_defaults( $type = "manual" ) {
         variable_get( "backup_migrate_append_timestamp", 1 ) ? variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ) : false
   );
 }
+
 
 /**
  * Build the database dump file. Takes a list of tables to exclude and some formatting options 
@@ -806,6 +807,48 @@ function _backup_migrate_restore_file( $filepath, $filename="", $delete=false ) 
   Backup File Management
 */
 
+/**
+ * Return a list of backup filetypes
+ */
+function _backup_migrate_filetypes() {
+  return array(
+    "sql" => array(
+      "extension"     => ".sql",
+      "filemime"      => "text/x-sql",
+    ),
+    "gzip" => array(
+      "extension"     => ".gz",
+      "filemime"      => "application/x-gzip",
+    ),
+    "bzip" => array(
+      "extension"     => ".gz",
+      "filemime"      => "application/x-bzip",
+    ),
+    "zip" => array(
+      "extension"     => ".zip",
+      "filemime"      => "application/zip",
+    ),
+  );
+}
+
+/**
+ * Get the basic info for a backup file on the server
+ */
+function _backup_migrate_file_info( $path ) {
+  $types = _backup_migrate_filetypes();
+  foreach( $types as $type ) {
+    $extlen = strlen( $type['extension'] );
+    if( substr( $path, -$extlen, $extlen ) === $type['extension'] ) {
+      $out = $type;
+      $out['filesize']    = filesize( $path );
+      $out['filename']    = basename( $path );
+      $out['filemtime']   = filemtime( $path );
+      $out['filepath']    = $path;
+      return $out;
+    }
+  }
+  return NULL;
+}
 
 /**
  * Save the backup file to the appropriete folder on the server
@@ -829,13 +872,16 @@ function _backup_migrate_save_to_disk( $temp_file, $filename, $data, $type="manu
  */
 function backup_migrate_file_download( $path ) {
   if ( _backup_migrate_path_is_in_save_dir( $path ) && user_access( 'access backup files' ) ) {
-    return array(
-      'Content-Type: text/x-sql',
-      'Content-Length: '. filesize( $contents ),
-      'Content-Disposition: attachment; filename="'. basename($path) .'"',
-    ); 
+    if( $info = _backup_migrate_file_info( $path ) ) {
+      return array(
+        'Content-Type: '. $info['filemime'],
+        'Content-Length: '. $info['filesize'],
+        'Content-Disposition: attachment; filename="'. $info['filename'] .'"',
+      ); 
+    }
   }
 }
+
 
 /**
  * Get a temp file. Store it in the normal save path for slightly better security
@@ -870,12 +916,12 @@ function _backup_migrate_list_files( $type = "manual" ) {
   if ( $dir = _backup_migrate_check_destination_dir( $type ) ) { 
     if ( $handle = opendir( $dir ) ) {
       while ( false !== ($file = readdir($handle))) {
-        if ( substr( $file, 0, 1 ) != "." && $file !== "test.txt" ) {
-          $filepath = $dir ."/". $file;
+        $filepath = $dir ."/". $file;
+        if ( substr( $file, 0, 1 ) != "." && $file !== "test.txt" && $info = _backup_migrate_file_info( $filepath ) ) {
           $files[$file] = array( 
             $file, 
-            date( "m/d/Y h:i a", filemtime( $filepath ) ),
-            format_size( filesize( $filepath ) ),
+            date( "m/d/Y h:i a", $info['filemtime'] ),
+            format_size( $info['filesize'] ),
             l( "download", "system/files/". $filepath ),
             l( "restore", "admin/content/backup_migrate/restorefile/". $filepath ),
             l( "delete", "admin/content/backup_migrate/delete/". $filepath ),
