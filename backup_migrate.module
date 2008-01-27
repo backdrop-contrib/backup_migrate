@@ -1124,7 +1124,7 @@ function _backup_migrate_default_file_name() {
  * Construct a default filename using token and some cleaning.
  */ 
 function _backup_migrate_clean_filename( $filename ) {
-  if (module_exists('token')) {
+  if ( module_exists('token') && function_exists( 'token_replace' ) ) {
     $filename = token_replace($filename, 'global');
   }
   $filename = preg_replace( "/[^a-zA-Z0-9\.\-_]/", "", $filename );
