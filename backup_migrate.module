@@ -821,7 +821,7 @@ function _backup_migrate_filetypes() {
       "filemime"      => "application/x-gzip",
     ),
     "bzip" => array(
-      "extension"     => ".gz",
+      "extension"     => ".bz",
       "filemime"      => "application/x-bzip",
     ),
     "zip" => array(
