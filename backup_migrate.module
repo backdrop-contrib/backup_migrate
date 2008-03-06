@@ -169,14 +169,14 @@ function backup_migrate_schedule() {
   $form = array();
   $form['backup_migrate_schedule_backup_period'] = array(
     "#type" => "textfield",
-    "#title" => "Backup every",
+    "#title" => t( "Backup every" ),
     "#field_suffix" => t( "Hour(s)" ),
     "#description" => t( "Use 0 for no scheduled backup. Cron must be configured to run for backups to work." ),
     "#default_value" => variable_get( "backup_migrate_schedule_backup_period", 0 ),
   );  
   $form['backup_migrate_schedule_backup_keep'] = array(
     "#type" => "textfield",
-    "#title" => "Number of Backup files to keep",
+    "#title" => t( "Number of Backup files to keep" ),
     "#description" => t( "The number of backup files to keep before deleting old ones. Use 0 to never delete backups" ),
     "#default_value" => variable_get( "backup_migrate_schedule_backup_keep", 0 ),
   );  
@@ -198,7 +198,7 @@ function backup_migrate_backup() {
   $form['backup_migrate_exclude_tables'] = array(
     "#type" => "select",
     "#multiple" => true,
-    "#title" => "Exclude the following tables altogether",
+    "#title" => t( "Exclude the following tables altogether" ),
     "#options" => $tables,
     "#default_value" => variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() ),
     "#description" => t( "The selected tables will not be added to the backup file." ),
@@ -206,14 +206,14 @@ function backup_migrate_backup() {
   $form['backup_migrate_nodata_tables'] = array(
     "#type" => "select",
     "#multiple" => true,
-    "#title" => "Exclude the data from the following tables",
+    "#title" => t( "Exclude the data from the following tables" ),
     "#options" => $tables,
     "#default_value" => variable_get( "backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables() ),
     "#description" => t( "The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size." ),    
   );
   $form['backup_migrate_file_name'] = array(
     "#type" => "textfield",
-    "#title" => "Backup file name",
+    "#title" => t( "Backup file name" ),
     "#default_value" => variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ),
   );  
   
@@ -243,7 +243,7 @@ function backup_migrate_backup() {
   
   $form['backup_migrate_compression'] = array(
     "#type" => "radios",
-    "#title" => "Compression",
+    "#title" => t( "Compression" ),
     "#options" => $compression_options,
     "#default_value" => variable_get( "backup_migrate_compression", "none" ),
   );  
@@ -256,24 +256,24 @@ function backup_migrate_backup() {
   }
   $form['backup_migrate_destination'] = array(
     "#type" => "radios",
-    "#title" => "Destination",
+    "#title" => t( "Destination" ),
     "#options" => $destination_options,
     "#default_value" => variable_get( "backup_migrate_destination", "download" ),
   );  
   $form['backup_migrate_append_timestamp'] = array(
     "#type" => "checkbox",
-    "#title" => "Append a timestamp.",
+    "#title" => t( "Append a timestamp." ),
     "#default_value" => variable_get( "backup_migrate_append_timestamp", 1 ),
   );
   $form['backup_migrate_timestamp_format'] = array(
     "#type" => "textfield",
-    "#title" => "Timestamp format",
+    "#title" => t( "Timestamp format" ),
     "#default_value" => variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ),
     "#description" => t( 'Should be a PHP <a href="!url">date()</a> format string.', array( '!url' => 'http://www.php.net/date' ) ),
   );  
   $form['backup_migrate_save_settings'] = array(
     "#type" => "checkbox",
-    "#title" => "Save these settings.",
+    "#title" => t( "Save these settings." ),
     "#default_value" => 1,
   );
    $form[] = array(
@@ -349,7 +349,7 @@ function backup_migrate_restore_confirm_submit($form_id, $form_values) {
 function backup_migrate_restore() {
   $form = array();
   $form['backup_migrate_restore_upload'] = array(
-    '#title' => 'Upload a Backup File',
+    '#title' => t( 'Upload a Backup File' ),
     '#type' => 'file',
     '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array( "%size" => format_size(file_upload_max_size()) ) ),
   );     
