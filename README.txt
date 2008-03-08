@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
-Backup and Migrate for Drupal 5.x
-  by Ronan Dowling, Gorton Studios - ronan (at) gortonstudios (dot) com	
+Backup and Migrate for Drupal 6.x
+  by Ronan Dowling, Gorton Studios - ronan (at) gortonstudios (dot) com
 -------------------------------------------------------------------------------
 
 DESCRIPTION:
@@ -14,8 +14,8 @@ There are options to exclude the data from certain tables (such as cache or
 search index tables) to increase efficiency by ignoring data that does not need
 to be backed up or migrated.
 
-The backup files are a list of SQL statements which can be executed with a tool
-such as phpMyAdmin or the command-line mysql client.
+The backup files are a simply SQL statements which can be imported by this module
+or with a 3rd party tool such as phpMyAdmin or the command-line mysql client.
 
 -------------------------------------------------------------------------------
 
@@ -24,22 +24,34 @@ Put the module in your drupal modules directory and enable it in
 admin/build/modules. 
 Configure and use the module at admin/content/backup_migrate
 
+OPTIONAL:
+Enable token.module to allow token replacement in backup file names.
+
 -------------------------------------------------------------------------------
 
-WARNINGS:
+VERY IMPORTANT SECURITY NOTE:
+Backup files may contain sensitive data and by default, are saved to your web
+server in a directory normally accessible by the public. This could lead to a
+very serious security vulnerability if you do not adequately protect your backup
+files. 
+Backup and Migrate attempts to protect backup files using .htaccess access rules,
+but  this will not work in all environments (it only works with apache configured 
+to allow overrides). You should test to see if your backup files are publicly 
+accessible, and if in doubt do not save backups to the server.
+
+OTHER WARNINGS:
 A failed restore can destroy your database and therefore your entire Drupal
 installation. ALWAYS TEST BACKUP FILES ON A TEST ENVIRONMENT FIRST. If in doubt
 do not use this module.
 
-This module has only be tested with MySQL and probably does not work with any
-other dbms. If you have experiences with Postres or any other dbms and are
-willing to help test and modify the module to work with it, please contact the
-developer at ronan (at) gortonstudios (dot) com.
+This module only supports MySQL. If you have experiences with PostgreSQL or any 
+other dbms and are willing to help test and modify the module to work with it, 
+please contact the developer at ronan (at) gortonstudios (dot) com.
 
 Make sure your php timeout is set high enough to complete a backup or restore
 operation. Larger databases require more time. Also, while the module attempts
-to keep memory needs to a minimum, a backup or restore will require
-significantly more memory then most Drupal operations.
+to keep memory needs to a minimum, a backup or restore will require more memory 
+then most Drupal operations.
 
 If your backup file contains the 'sessions' table you will likely be logged out
 after you run a restore. To avoid this, exclude the sessions table when creating
@@ -53,11 +65,11 @@ correctly.
 IF A RESTORE FAILS:
 Don't panic, the restore file should work with phpMyAdmin's import function, or
 with the mysql command line tool. If it does not, then it is likely corrupt; you
-may panic now. Make sure that this module is not your only form of backup.
+may panic now. MAKE SURE THAT THIS MODULE IS NOT YOUR ONLY FORM OF BACKUP.
 
 NOTE TO DEVEL USERS:
-If you experience memory limit errors while restoring, try
-disabling the 'Collect query info' setting in devel.
+If you experience memory limit errors while restoring, try disabling the
+'Collect query info' setting in devel.
 
 -------------------------------------------------------------------------------
 
