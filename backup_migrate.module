@@ -383,7 +383,7 @@ function backup_migrate_restore_submit($form_id, $form_values) {
     watchdog( 'backup_migrate', t( 'Database restored from upload %file', array( '%file' => $file->filename ) ) );
   }
   
-  return $out;
+  drupal_goto( 'admin/content/backup_migrate/restore' );
 }
 
 /**
@@ -681,7 +681,6 @@ function _backup_migrate_restore_file( $filepath, $filename="", $delete=false ) 
   if ( !$filename ) {
     $filename = $filepath;
   }
-  $goto = "admin/content/backup_migrate/";
   
   $file_is_temp = $delete;
   
@@ -795,16 +794,13 @@ function _backup_migrate_restore_file( $filepath, $filename="", $delete=false ) 
     $message = t( "Restore complete. %num SQL commands executed.", array( "%num" => $num ) );
     $message .= $file_is_temp ? "" : "(". l( t( "Restore Again..." ), "admin/content/backup_migrate/restorefile/". $filepath ) .")";
     drupal_set_message( $message );
-    $goto = "admin/content/backup_migrate/restore";
   }
   else {
     drupal_set_message(t( "Unable to open file %file to restore database", array( "%file" => $filepath )), 'error');
-    $goto = "admin/content/backup_migrate/restore";
   }
   
   // delete any temp files we've created
-  _backup_migrate_temp_file( "", true );          
-  drupal_goto( $goto );
+  _backup_migrate_temp_file( "", true );
 }
 
 /*
