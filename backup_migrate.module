@@ -339,6 +339,7 @@ function backup_migrate_restore_confirm_submit($form_id, $form_values) {
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
     watchdog( 'backup_migrate', t( 'Database restored from %file', array( '%file' => $path ) ) );
     _backup_migrate_restore_file( $path );
+    watchdog( 'backup_migrate', t( 'Database restored from %file', array( '%file' => $path ) ) );
   }
   drupal_goto( user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate" );
 }
@@ -380,6 +381,7 @@ function backup_migrate_restore_submit($form_id, $form_values) {
   if ( $file = file_check_upload('backup_migrate_restore_upload') ) {
     watchdog( 'backup_migrate', t( 'Database restored from upload %file', array( '%file' => $file->filename ) ) );
     _backup_migrate_restore_file( $file->filepath, $file->filename, true );
+    watchdog( 'backup_migrate', t( 'Database restored from upload %file', array( '%file' => $file->filename ) ) );
   }
   
   return $out;
