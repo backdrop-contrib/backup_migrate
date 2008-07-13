@@ -1034,7 +1034,10 @@ function _backup_migrate_check_destination_dir( $type="" ) {
   // check to see if we can read from the dir
   if ( $out ) {
     $test_contents = "this file should not be publicly accesible";
-    if (($fp = @fopen($subdir .'/test.txt', 'w')) && @fputs($fp, $test_contents)) {
+    
+    // check the user agent to make sure we're not responding to a request from drupal itself
+    // that should prevent infinite loops which could be caused by poormanscron in some circumstances
+    if ( strpos( $_SERVER['HTTP_USER_AGENT'], 'Drupal' ) === false && ($fp = @fopen($subdir .'/test.txt', 'w')) && @fputs($fp, $test_contents)) {
       fclose($fp);
       $result = drupal_http_request( url( file_create_url( $subdir .'/test.txt' ), NULL, NULL, true ));
       if ( $result->data === $test_contents ) {
