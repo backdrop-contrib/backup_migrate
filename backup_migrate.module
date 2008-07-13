@@ -158,6 +158,7 @@ function backup_migrate_delete_confirm_submit($form_id, $form_values) {
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
     file_delete( $path );
   }
+  watchdog( 'backup_migrate', t( 'Database backup file %file deleted', array( '%file' => $path ) ) );
   drupal_goto( user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate" );
 }
 
@@ -336,6 +337,7 @@ function backup_migrate_restore_confirm($path) {
 function backup_migrate_restore_confirm_submit($form_id, $form_values) {
   $path = $form_values['path'];  
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
+    watchdog( 'backup_migrate', t( 'Database restored from %file', array( '%file' => $path ) ) );
     _backup_migrate_restore_file( $path );
   }
   drupal_goto( user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate" );
@@ -376,6 +378,7 @@ function backup_migrate_restore() {
  */
 function backup_migrate_restore_submit($form_id, $form_values) {  
   if ( $file = file_check_upload('backup_migrate_restore_upload') ) {
+    watchdog( 'backup_migrate', t( 'Database restored from upload %file', array( '%file' => $file->filename ) ) );
     _backup_migrate_restore_file( $file->filepath, $file->filename, true );
   }
   
@@ -508,6 +511,7 @@ function _backup_migrate_dump_tables( $filename, $exclude_tables, $nodata_tables
       break;
       case "download": 
         _backup_migrate_send_file_to_download( $filename, $file_mime, $temp_file );
+        watchdog('backup_migrate', t('Database backed up to download'));
       break;
     }
   }
@@ -537,6 +541,8 @@ function _backup_migrate_send_file_to_download( $filename, $filetype, $file_path
   
   // delete any temporary files we've created
   _backup_migrate_temp_file( "", true );
+
+  watchdog( 'backup_migrate', t( 'Database backup downloaded' ) );
   
   module_invoke_all('exit');
   exit();
@@ -858,7 +864,8 @@ function _backup_migrate_save_to_disk( $temp_file, $filename, $data, $type="manu
     
     rename( $temp_file, $filepath );
     
-    $message = t( 'Database backup saved to %file. ', array( '%file' => $filename ) );
+    $message = t( 'Database backup saved to %file. ', array( '%file' => $filepath ) );
+    watchdog( 'backup_migrate', $message );
     $message .= user_access( "access backup files" ) ? "(". l( t( "Download" ), "system/files/". $filepath ) .") " : "";
     $message .= user_access( "delete backup files" ) ? "(". l( t( "Delete..." ), "admin/content/backup_migrate/delete/". $filepath ) .") " : "";
     $message .= user_access( "restore from backup" )           ? "(". l( t( "Restore..." ), "admin/content/backup_migrate/restorefile/". $filepath ) .")" : "";
