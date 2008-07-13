@@ -337,7 +337,6 @@ function backup_migrate_restore_confirm($path) {
 function backup_migrate_restore_confirm_submit($form_id, $form_values) {
   $path = $form_values['path'];  
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
-    watchdog( 'backup_migrate', t( 'Database restored from %file', array( '%file' => $path ) ) );
     _backup_migrate_restore_file( $path );
     watchdog( 'backup_migrate', t( 'Database restored from %file', array( '%file' => $path ) ) );
   }
