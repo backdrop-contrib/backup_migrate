@@ -133,11 +133,10 @@ function backup_migrate_perm() {
  * Menu callback. Delete a previous backup
  */
 function _backup_migrate_delete() {
-  $path = "";
-  if ( arg(4) ) {
-    $path = $_GET['q'];
-    $path = substr( $path, strlen( "admin/content/backup_migrate/delete/" ) );
-  }
+  // Merge remainder of arguments from GET['q'], into relative file path.
+  $args = func_get_args();
+  $path = implode('/', $args);
+
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
     return drupal_get_form('backup_migrate_delete_confirm', $path);
   }
@@ -315,11 +314,10 @@ function backup_migrate_backup_submit($form_id, $form_values) {
  * Restore a backup file (from the server)
  */
 function _backup_migrate_restore_from_server() {
-  $path = "";
-  if ( arg(4) ) {
-    $path = $_GET['q'];
-    $path = substr( $path, strlen( "admin/content/backup_migrate/restorefile/" ) );
-  }
+  // Merge remainder of arguments from GET['q'], into relative file path.
+  $args = func_get_args();
+  $path = implode('/', $args);
+  
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
     return drupal_get_form( 'backup_migrate_restore_confirm', $path );
   }
