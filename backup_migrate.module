@@ -150,7 +150,7 @@ function _backup_migrate_delete() {
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
     return drupal_get_form('backup_migrate_delete_confirm', $path);
   }
-  drupal_goto( user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate" );
+  return user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
 }
 
 
@@ -168,7 +168,7 @@ function backup_migrate_delete_confirm_submit($form_id, $form_values) {
   if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
     file_delete( $path );
   }
-  watchdog( 'backup_migrate', t( 'Database backup file %file deleted', array( '%file' => $path ) ) );
+  watchdog( 'backup_migrate', t( 'Database backup file deleted: %file', array( '%file' => $path ) ) );
   return user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
 }
 
@@ -317,7 +317,7 @@ function backup_migrate_backup_submit($form_id, $form_values) {
                 "manual",
                 $form_values['backup_migrate_append_timestamp'] ? $form_values['backup_migrate_timestamp_format'] : false
           );
-  
+
   return "admin/content/backup_migrate";
 }
 
@@ -554,7 +554,7 @@ function _backup_migrate_send_file_to_download( $filename, $filetype, $file_path
   // Delete any temporary files we've created.
   _backup_migrate_temp_file( "", TRUE );
 
-  watchdog( 'backup_migrate', t( 'Database backup file downloaded: %file', array( '%file' => $file_path ) ) );
+  watchdog( 'backup_migrate', t( 'Database backup file' ) );
 
   module_invoke_all('exit');
   exit();
@@ -1042,9 +1042,10 @@ function _backup_migrate_check_destination_dir( $mode = "" ) {
     }
     // Unable to create htaccess... warn the user.
     else {
-      $message = t("Security warning: Couldn't modify .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code> or add them to the existing .htaccess file", array('%directory' => $directory, '!htaccess' => '<br />'. nl2br(check_plain($htaccess_lines))));
-      drupal_set_message($message, "error");
-      watchdog('security', $message, WATCHDOG_ERROR);
+      $message = "Security warning: Couldn't modify .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code> or add them to the existing .htaccess file";
+      $replace = array('%directory' => $directory, '!htaccess' => '<br />'. nl2br(check_plain($htaccess_lines)));
+      drupal_set_message(t($message, $replace), "error");
+      watchdog('security', t($message, $replace), WATCHDOG_ERROR);
       return FALSE;
     }
   }
