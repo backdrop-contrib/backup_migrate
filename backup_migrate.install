@@ -1,4 +1,4 @@
-<?php 
+<?php
 // $Id$
 
 function backup_migrate_install() {
@@ -11,3 +11,4 @@ function backup_migrate_uninstall() {
   db_query("DELETE FROM {variable} WHERE name LIKE 'backup_migrate_%'");
   cache_clear_all('variables', 'cache');
 }
+

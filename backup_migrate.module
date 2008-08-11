@@ -1,6 +1,7 @@
 <?php
 // $Id$
 
+
 /**
  * @file
  * Create (manually or scheduled) and restore backups of your Drupal MySQL
@@ -94,7 +95,7 @@ function backup_migrate_menu($may_cache) {
       'callback' => '_backup_migrate_delete',
       'access' => user_access('delete backup files'),
       'type' => MENU_CALLBACK,
-    ); 
+    );
   }
 
   return $items;
@@ -106,24 +107,24 @@ function backup_migrate_menu($may_cache) {
  * Takes care of scheduled backups.
  */
 function backup_migrate_cron() {
-  if ( $backup_schedule_period = variable_get( "backup_migrate_schedule_backup_period", 0 ) ) {
-    $last_backup = variable_get( "backup_migrate_schedule_last_backup", 0 );
+  if ($backup_schedule_period = variable_get("backup_migrate_schedule_backup_period", 0)) {
+    $last_backup = variable_get("backup_migrate_schedule_last_backup", 0);
     $now = time();
-    if ( $last_backup < ($now - ($backup_schedule_period * 60 * 60)) ) {
+    if ($last_backup < ($now - ($backup_schedule_period * 60 * 60))) {
       // time to run the backup
       _backup_migrate_dump_tables(
-                variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ),
-                variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() ),
-                variable_get( "backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables() ),
-                'sql',
-                "save",
-                variable_get( "backup_migrate_compression", "none" ),
-                "scheduled",
-                variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' )
-          );
+        variable_get("backup_migrate_file_name", _backup_migrate_default_file_name()),
+        variable_get("backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables()),
+        variable_get("backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables()),
+        'sql',
+        "save",
+        variable_get("backup_migrate_compression", "none"),
+        "scheduled",
+        variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s')
+        );
 
       // Set the timestamp to indecate last backup time.
-      variable_set( "backup_migrate_schedule_last_backup", $now );
+      variable_set("backup_migrate_schedule_last_backup", $now);
 
       // Delete older backups if needed.
       _backup_migrate_remove_expired_backups();
@@ -138,6 +139,14 @@ function backup_migrate_perm() {
   return array('perform backup', 'access backup files', 'delete backup files', 'restore from backup');
 }
 
+/**
+ * Implementation of hook_simpletest().
+ */
+function backup_migrate_simpletest() {
+  $dir = drupal_get_path('module', 'backup_migrate') .'/tests';
+  $tests = file_scan_directory($dir, '\.test$');
+  return array_keys($tests);
+}
 
 /**
  * Menu callback. Delete a previous backup.
@@ -147,12 +156,11 @@ function _backup_migrate_delete() {
   $args = func_get_args();
   $path = implode('/', $args);
 
-  if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
+  if ($path && _backup_migrate_path_is_in_save_dir($path)) {
     return drupal_get_form('backup_migrate_delete_confirm', $path);
   }
-  return user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
+  return user_access('access backup files') ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
 }
-
 
 /**
  * Ask confirmation for file deletion.
@@ -165,11 +173,11 @@ function backup_migrate_delete_confirm($path) {
 function backup_migrate_delete_confirm_submit($form_id, $form_values) {
   $path = $form_values['path'];
 
-  if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
-    file_delete( $path );
+  if ($path && _backup_migrate_path_is_in_save_dir($path)) {
+    file_delete($path);
   }
-  watchdog( 'backup_migrate', t( 'Database backup file deleted: %file', array( '%file' => $path ) ) );
-  return user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
+  watchdog('backup_migrate', t('Database backup file deleted: %file', array('%file' => $path)));
+  return user_access('access backup files') ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
 }
 
 /**
@@ -179,19 +187,19 @@ function backup_migrate_schedule() {
   $form = array();
   $form['backup_migrate_schedule_backup_period'] = array(
     "#type" => "textfield",
-    "#title" => t( "Backup every" ),
-    "#field_suffix" => t( "Hour(s)" ),
-    "#description" => t( "Use 0 for no scheduled backup. Cron must be configured to run for backups to work." ),
-    "#default_value" => variable_get( "backup_migrate_schedule_backup_period", 0 ),
+    "#title" => t("Backup every"),
+    "#field_suffix" => t("Hour(s)"),
+    "#description" => t("Use 0 for no scheduled backup. Cron must be configured to run for backups to work."),
+    "#default_value" => variable_get("backup_migrate_schedule_backup_period", 0),
   );
   $form['backup_migrate_schedule_backup_keep'] = array(
     "#type" => "textfield",
-    "#title" => t( "Number of Backup files to keep" ),
-    "#description" => t( "The number of backup files to keep before deleting old ones. Use 0 to never delete backups" ),
-    "#default_value" => variable_get( "backup_migrate_schedule_backup_keep", 0 ),
+    "#title" => t("Number of Backup files to keep"),
+    "#description" => t("The number of backup files to keep before deleting old ones. Use 0 to never delete backups"),
+    "#default_value" => variable_get("backup_migrate_schedule_backup_keep", 0),
   );
 
-  if ( !_backup_migrate_check_destination_dir( 'scheduled' ) ) {
+  if (!_backup_migrate_check_destination_dir('scheduled')) {
     $form['backup_migrate_schedule_backup_period']['#disabled'] = TRUE;
     $form['backup_migrate_schedule_backup_keep']['#disabled'] = TRUE;
   }
@@ -208,23 +216,23 @@ function backup_migrate_backup() {
   $form['backup_migrate_exclude_tables'] = array(
     "#type" => "select",
     "#multiple" => TRUE,
-    "#title" => t( "Exclude the following tables altogether" ),
+    "#title" => t("Exclude the following tables altogether"),
     "#options" => $tables,
-    "#default_value" => variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() ),
-    "#description" => t( "The selected tables will not be added to the backup file." ),
+    "#default_value" => variable_get("backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables()),
+    "#description" => t("The selected tables will not be added to the backup file."),
   );
   $form['backup_migrate_nodata_tables'] = array(
     "#type" => "select",
     "#multiple" => TRUE,
-    "#title" => t( "Exclude the data from the following tables" ),
+    "#title" => t("Exclude the data from the following tables"),
     "#options" => $tables,
-    "#default_value" => variable_get( "backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables() ),
-    "#description" => t( "The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size." ),
+    "#default_value" => variable_get("backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables()),
+    "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
   );
   $form['backup_migrate_file_name'] = array(
     "#type" => "textfield",
-    "#title" => t( "Backup file name" ),
-    "#default_value" => variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ),
+    "#title" => t("Backup file name"),
+    "#default_value" => variable_get("backup_migrate_file_name", _backup_migrate_default_file_name()),
   );
 
   if (module_exists('token')) {
@@ -240,50 +248,50 @@ function backup_migrate_backup() {
     );
   }
 
-  $compression_options = array( "none" => "None" );
-  if ( @function_exists( "gzencode" ) ) {
+  $compression_options = array("none" => "None");
+  if (@function_exists("gzencode")) {
     $compression_options['gzip'] = "GZip";
   }
-  if ( @function_exists( "bzcompress" ) ) {
+  if (@function_exists("bzcompress")) {
     $compression_options['bzip'] = "BZip";
   }
-  if ( class_exists( 'ZipArchive' ) ) {
+  if (class_exists('ZipArchive')) {
     $compression_options['zip'] = "Zip";
   }
 
   $form['backup_migrate_compression'] = array(
     "#type" => "radios",
-    "#title" => t( "Compression" ),
+    "#title" => t("Compression"),
     "#options" => $compression_options,
-    "#default_value" => variable_get( "backup_migrate_compression", "none" ),
+    "#default_value" => variable_get("backup_migrate_compression", "none"),
   );
 
   $destination_options = array(
-    "download" => t( "Download" ),
+    "download" => t("Download"),
   );
-  if ( _backup_migrate_check_destination_dir( 'manual' ) ) {
-    $destination_options['save'] = t( "Save to Files Directory" );
+  if (_backup_migrate_check_destination_dir('manual')) {
+    $destination_options['save'] = t("Save to Files Directory");
   }
   $form['backup_migrate_destination'] = array(
     "#type" => "radios",
-    "#title" => t( "Destination" ),
+    "#title" => t("Destination"),
     "#options" => $destination_options,
-    "#default_value" => variable_get( "backup_migrate_destination", "download" ),
+    "#default_value" => variable_get("backup_migrate_destination", "download"),
   );
   $form['backup_migrate_append_timestamp'] = array(
     "#type" => "checkbox",
-    "#title" => t( "Append a timestamp." ),
-    "#default_value" => variable_get( "backup_migrate_append_timestamp", 1 ),
+    "#title" => t("Append a timestamp."),
+    "#default_value" => variable_get("backup_migrate_append_timestamp", 1),
   );
   $form['backup_migrate_timestamp_format'] = array(
     "#type" => "textfield",
-    "#title" => t( "Timestamp format" ),
-    "#default_value" => variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ),
-    "#description" => t( 'Should be a PHP <a href="!url">date()</a> format string.', array( '!url' => 'http://www.php.net/date' ) ),
+    "#title" => t("Timestamp format"),
+    "#default_value" => variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s'),
+    "#description" => t('Should be a PHP <a href="!url">date()</a> format string.', array('!url' => 'http://www.php.net/date')),
   );
   $form['backup_migrate_save_settings'] = array(
     "#type" => "checkbox",
-    "#title" => t( "Save these settings." ),
+    "#title" => t("Save these settings."),
     "#default_value" => 1,
   );
   $form[] = array(
@@ -297,26 +305,26 @@ function backup_migrate_backup() {
  * Submit the form. Save the values as defaults if desired and output the backup file.
  */
 function backup_migrate_backup_submit($form_id, $form_values) {
-  if ( $form_values['backup_migrate_save_settings'] ) {
-    variable_set( "backup_migrate_exclude_tables",     $form_values['backup_migrate_exclude_tables'] );
-    variable_set( "backup_migrate_nodata_tables",      $form_values['backup_migrate_nodata_tables'] );
-    variable_set( "backup_migrate_file_name",          $form_values['backup_migrate_file_name'] );
-    variable_set( "backup_migrate_destination",        $form_values['backup_migrate_destination'] );
-    variable_set( "backup_migrate_compression",        $form_values['backup_migrate_compression'] );
-    variable_set( "backup_migrate_append_timestamp",   $form_values['backup_migrate_append_timestamp'] );
-    variable_set( "backup_migrate_timestamp_format",   $form_values['backup_migrate_timestamp_format'] );
+  if ($form_values['backup_migrate_save_settings']) {
+    variable_set("backup_migrate_exclude_tables", $form_values['backup_migrate_exclude_tables']);
+    variable_set("backup_migrate_nodata_tables", $form_values['backup_migrate_nodata_tables']);
+    variable_set("backup_migrate_file_name", $form_values['backup_migrate_file_name']);
+    variable_set("backup_migrate_destination", $form_values['backup_migrate_destination']);
+    variable_set("backup_migrate_compression", $form_values['backup_migrate_compression']);
+    variable_set("backup_migrate_append_timestamp", $form_values['backup_migrate_append_timestamp']);
+    variable_set("backup_migrate_timestamp_format", $form_values['backup_migrate_timestamp_format']);
   }
 
-  _backup_migrate_dump_tables( 
-                $form_values['backup_migrate_file_name'], 
-                $form_values['backup_migrate_exclude_tables'], 
-                $form_values['backup_migrate_nodata_tables'],
-                'sql',
-                $form_values['backup_migrate_destination'],
-                $form_values['backup_migrate_compression'],
-                "manual",
-                $form_values['backup_migrate_append_timestamp'] ? $form_values['backup_migrate_timestamp_format'] : false
-          );
+  _backup_migrate_dump_tables(
+    $form_values['backup_migrate_file_name'],
+    $form_values['backup_migrate_exclude_tables'],
+    $form_values['backup_migrate_nodata_tables'],
+    'sql',
+    $form_values['backup_migrate_destination'],
+    $form_values['backup_migrate_compression'],
+    "manual",
+    $form_values['backup_migrate_append_timestamp'] ? $form_values['backup_migrate_timestamp_format'] : false
+    );
 
   return "admin/content/backup_migrate";
 }
@@ -329,12 +337,11 @@ function _backup_migrate_restore_from_server() {
   $args = func_get_args();
   $path = implode('/', $args);
 
-  if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
-    return drupal_get_form( 'backup_migrate_restore_confirm', $path );
+  if ($path && _backup_migrate_path_is_in_save_dir($path)) {
+    return drupal_get_form('backup_migrate_restore_confirm', $path);
   }
-  drupal_goto( user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate" );
+  drupal_goto(user_access('access backup files') ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate");
 }
-
 
 /**
  * Ask confirmation for file restore.
@@ -346,11 +353,11 @@ function backup_migrate_restore_confirm($path) {
 
 function backup_migrate_restore_confirm_submit($form_id, $form_values) {
   $path = $form_values['path'];
-  if ( $path && _backup_migrate_path_is_in_save_dir( $path ) ) {
-    _backup_migrate_restore_file( $path );
-    watchdog( 'backup_migrate', t( 'Database restored from %file', array( '%file' => $path ) ) );
+  if ($path && _backup_migrate_path_is_in_save_dir($path)) {
+    _backup_migrate_restore_file($path);
+    watchdog('backup_migrate', t('Database restored from %file', array('%file' => $path)));
   }
-  return user_access( 'access backup files' ) ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
+  return user_access('access backup files') ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
 }
 
 /**
@@ -359,9 +366,9 @@ function backup_migrate_restore_confirm_submit($form_id, $form_values) {
 function backup_migrate_restore() {
   $form = array();
   $form['backup_migrate_restore_upload'] = array(
-    '#title' => t( 'Upload a Backup File' ),
+    '#title' => t('Upload a Backup File'),
     '#type' => 'file',
-    '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array( "%size" => format_size(file_upload_max_size()) ) ),
+    '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array("%size" => format_size(file_upload_max_size()))),
   );
 
   $form[] = array(
@@ -373,10 +380,10 @@ function backup_migrate_restore() {
     '#type' => 'submit',
     '#value' => t('Restore Database'),
   );
-  if ( user_access('access backup files') ) {
+  if (user_access('access backup files')) {
     $form[] = array(
       '#type' => 'markup',
-      '#value' => t('<p>Or you can restore one of the files in the <a href="!url">saved backup directory.</a></p>', array( "!url" => url( "admin/content/backup_migrate/files" ) ) ),
+      '#value' => t('<p>Or you can restore one of the files in the <a href="!url">saved backup directory.</a></p>', array("!url" => url("admin/content/backup_migrate/files"))),
     );
   }
   $form['#attributes'] = array('enctype' => 'multipart/form-data');
@@ -386,10 +393,10 @@ function backup_migrate_restore() {
 /**
  * The restore submit. Do the restore.
  */
-function backup_migrate_restore_submit($form_id, $form_values) {  
-  if ( $file = file_check_upload('backup_migrate_restore_upload') ) {
-    _backup_migrate_restore_file( $file->filepath, $file->filename, true );
-    watchdog( 'backup_migrate', t( 'Database restored from upload %file', array( '%file' => $file->filename ) ) );
+function backup_migrate_restore_submit($form_id, $form_values) {
+  if ($file = file_check_upload('backup_migrate_restore_upload')) {
+    _backup_migrate_restore_file($file->filepath, $file->filename, true);
+    watchdog('backup_migrate', t('Database restored from upload %file', array('%file' => $file->filename)));
   }
 
   return 'admin/content/backup_migrate/restore';
@@ -407,21 +414,24 @@ function action_backup_migrate_backup($op, $edit = array()) {
 
     case 'metadata':
       return array(
-        'description' => t('Backup the database with the default settings'),
-        'type' => t('Backup and Migrate'),
-        'batchable' => TRUE,
-        'configurable' => FALSE,
-      );
+      'description' => t('Backup the database with the default settings'),
+      'type' => t('Backup and Migrate'),
+      'batchable' => TRUE,
+      'configurable' => FALSE,
+    );
 
     // Return an HTML config form for the action.
+
     case 'form':
       return '';
 
     // Validate the HTML form.
+
     case 'validate':
       return TRUE;
 
     // Process the HTML form to store configuration.
+
     case 'submit':
       return '';
   }
@@ -450,64 +460,65 @@ function backup_migrate_action_backup() {
 /**
  * Backup the database with the default settings.
  */
-function _backup_migrate_backup_with_defaults( $mode = "manual" ) {
+function _backup_migrate_backup_with_defaults($mode = "manual") {
   _backup_migrate_dump_tables(
-        variable_get( "backup_migrate_file_name", _backup_migrate_default_file_name() ),
-        variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() ),
-        variable_get( "backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables() ),
-        'sql',
-        'save',
-        variable_get( "backup_migrate_compression", "none" ),
-        $mode,
-        variable_get( "backup_migrate_append_timestamp", 1 ) ? variable_get( "backup_migrate_timestamp_format", 'Y-m-d\TH-i-s' ) : FALSE
-  );
+    variable_get("backup_migrate_file_name", _backup_migrate_default_file_name()),
+    variable_get("backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables()),
+    variable_get("backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables()),
+    'sql',
+    'save',
+    variable_get("backup_migrate_compression", "none"),
+    $mode,
+    variable_get("backup_migrate_append_timestamp", 1) ? variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s') : FALSE
+    );
 }
-
 
 /**
  * Build the database dump file. Takes a list of tables to exclude and some formatting options.
  */
-function _backup_migrate_dump_tables( $filename, $exclude_tables, $nodata_tables, $type = "sql", $destination = "download", $compression = "none", $mode = "manual", $append_timestamp = FALSE ) {
+function _backup_migrate_dump_tables($filename, $exclude_tables, $nodata_tables, $type = "sql", $destination = "download", $compression = "none", $mode = "manual", $append_timestamp = FALSE) {
   $file_mime = "text/plain";
   $success = FALSE;
 
-  if ( $append_timestamp ) {
-    $filename .= "-". date( $append_timestamp );
+  if ($append_timestamp) {
+    $filename .= "-". date($append_timestamp);
   }
-  $filename = _backup_migrate_clean_filename( $filename );
+  $filename = _backup_migrate_clean_filename($filename);
 
   // Dump the database.
   $temp_file = _backup_migrate_temp_file();
-  switch ( $type ) {
+  switch ($type) {
     case "sql":
-      $success = _backup_migrate_get_dump_sql( $temp_file, $exclude_tables, $nodata_tables );
+      $success = _backup_migrate_get_dump_sql($temp_file, $exclude_tables, $nodata_tables);
       $filename .= ".sql";
       $filemime = 'text/x-sql';
       break;
   }
 
   // Compress the results.
-  if ( $success ) {
-    switch ( $compression ) {
+  if ($success) {
+    switch ($compression) {
       case "gzip":
-        $temp_gz = _backup_migrate_temp_file( 'gz' );
-        if ( $success = _backup_migrate_gzip_encode( $temp_file, $temp_gz, 9 ) ) {
+        $temp_gz = _backup_migrate_temp_file('gz');
+        if ($success = _backup_migrate_gzip_encode($temp_file, $temp_gz, 9)) {
           $temp_file = $temp_gz;
           $filename .= ".gz";
           $filemime = 'application/x-gzip';
         }
         break;
+
       case "bzip":
-        $temp_bz = _backup_migrate_temp_file( 'bz' );
-        if ( $success = _backup_migrate_bzip_encode( $temp_file, $temp_bz ) ) {
+        $temp_bz = _backup_migrate_temp_file('bz');
+        if ($success = _backup_migrate_bzip_encode($temp_file, $temp_bz)) {
           $temp_file = $temp_bz;
           $filename .= ".bz";
           $filemime = 'application/x-bzip';
         }
         break;
+
       case "zip":
-        $temp_zip = _backup_migrate_temp_file( 'zip' );
-        if ( $success = _backup_migrate_zip_encode( $temp_file, $temp_zip, $filename ) ) {
+        $temp_zip = _backup_migrate_temp_file('zip');
+        if ($success = _backup_migrate_zip_encode($temp_file, $temp_zip, $filename)) {
           $temp_file = $temp_zip;
           $filename .= ".zip";
           $filemime = 'application/zip';
@@ -517,31 +528,30 @@ function _backup_migrate_dump_tables( $filename, $exclude_tables, $nodata_tables
   }
 
   // Save or download the results.
-  if ( $success ) {
-    switch ( $destination ) {
+  if ($success) {
+    switch ($destination) {
       case "save":
-        _backup_migrate_save_to_disk( $temp_file, $filename, $mode );
+        _backup_migrate_save_to_disk($temp_file, $filename, $mode);
         break;
+
       case "download":
-        _backup_migrate_send_file_to_download( $filename, $file_mime, $temp_file );
+        _backup_migrate_send_file_to_download($filename, $file_mime, $temp_file);
         break;
     }
   }
 
   // Delete any temporary files we've created.
-  _backup_migrate_temp_file( "", TRUE );
+  _backup_migrate_temp_file("", TRUE);
 }
-
-
 
 /**
  *  Force a browser download for the file.
  */
-function _backup_migrate_send_file_to_download( $filename, $filetype, $file_path ) {
-  header( 'Content-Type: '. $filetype );
-  header( 'Expires: '. gmdate('D, d M Y H:i:s') .' GMT');
-  header( 'Content-Length: '. filesize( $file_path ) );
-  header( 'Content-Disposition: attachment; filename="'. $filename .'"' );
+function _backup_migrate_send_file_to_download($filename, $filetype, $file_path) {
+  header('Content-Type: '. $filetype);
+  header('Expires: '. gmdate('D, d M Y H:i:s') .' GMT');
+  header('Content-Length: '. filesize($file_path));
+  header('Content-Disposition: attachment; filename="'. $filename .'"');
 
   // Transfer file in 1024 byte chunks to save memory usage.
   if ($fd = fopen($file_path, 'rb')) {
@@ -552,9 +562,9 @@ function _backup_migrate_send_file_to_download( $filename, $filetype, $file_path
   }
 
   // Delete any temporary files we've created.
-  _backup_migrate_temp_file( "", TRUE );
+  _backup_migrate_temp_file("", TRUE);
 
-  watchdog( 'backup_migrate', t( 'Database backup file' ) );
+  watchdog('backup_migrate', t('Database backup file'));
 
   module_invoke_all('exit');
   exit();
@@ -565,22 +575,22 @@ function _backup_migrate_send_file_to_download( $filename, $filetype, $file_path
  *  That makes it easier to import without loading the whole file into memory.
  *  The files are a little harder to read, but human-readability is not a priority
  */
-function _backup_migrate_get_dump_sql( $file, $exclude_tables, $nodata_tables ) {
-  if ( $dst = fopen( $file, "w" ) ) {
-    $exclude = variable_get( "backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables() );
-    $nodata = variable_get( "backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables() );
-    fwrite( $dst, _backup_migrate_get_sql_file_header() );
+function _backup_migrate_get_dump_sql($file, $exclude_tables, $nodata_tables) {
+  if ($dst = fopen($file, "w")) {
+    $exclude = variable_get("backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables());
+    $nodata = variable_get("backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables());
+    fwrite($dst, _backup_migrate_get_sql_file_header());
     $alltables = _backup_migrate_get_tables();
-    foreach ( $alltables as $table ) {
-      if ( $table['Name'] && !isset( $exclude[$table['Name']] ) ) {
-        fwrite( $dst, _backup_migrate_get_table_structure_sql( $table ) );
-        if ( !in_array( $table['Name'], $nodata ) ) {
-          _backup_migrate_dump_table_data_sql_to_handle( $dst, $table );
+    foreach ($alltables as $table) {
+      if ($table['Name'] && !isset($exclude[$table['Name']])) {
+        fwrite($dst, _backup_migrate_get_table_structure_sql($table));
+        if (!in_array($table['Name'], $nodata)) {
+          _backup_migrate_dump_table_data_sql_to_handle($dst, $table);
         }
       }
     }
-    fwrite( $dst, _backup_migrate_get_sql_file_footer() );
-    fclose( $dst );
+    fwrite($dst, _backup_migrate_get_sql_file_footer());
+    fclose($dst);
     return TRUE;
   }
   else {
@@ -591,13 +601,13 @@ function _backup_migrate_get_dump_sql( $file, $exclude_tables, $nodata_tables ) 
 /**
  * Get the sql for the structure of the given table.
  */
-function _backup_migrate_get_table_structure_sql( $table ) {
+function _backup_migrate_get_table_structure_sql($table) {
   $out = "";
   $result = db_query("SHOW CREATE TABLE `". $table['Name'] ."`");
-  if ( $create = db_fetch_array($result) ) {
+  if ($create = db_fetch_array($result)) {
     $out .= "DROP TABLE IF EXISTS `". $table['Name'] ."`;\n";
-    $out .= strtr( $create['Create Table'], "\n", " " );
-    if ( $table['Auto_increment'] ) {
+    $out .= strtr($create['Create Table'], "\n", " ");
+    if ($table['Auto_increment']) {
       $out .= " AUTO_INCREMENT=". $table['Auto_increment'];
     }
     $out .= ";\n";
@@ -608,22 +618,21 @@ function _backup_migrate_get_table_structure_sql( $table ) {
 /**
  *  Get the sql to insert the data for a given table
  */
-function _backup_migrate_dump_table_data_sql_to_handle( $dst, $table ) {
-  $data    = db_query("SELECT * FROM `". $table['Name'] ."`");
-  while ( $row = db_fetch_array($data) ) {
+function _backup_migrate_dump_table_data_sql_to_handle($dst, $table) {
+  $data = db_query("SELECT * FROM `". $table['Name'] ."`");
+  while ($row = db_fetch_array($data)) {
     $items = array();
-    foreach ( $row as $key => $value ) {
+    foreach ($row as $key => $value) {
       $items[] = is_null($value) ? "null" : "'". db_escape_string($value) ."'";
     }
-    if ( $items ) {
+    if ($items) {
       fwrite(
         $dst,
-        "INSERT INTO `". $table['Name'] ."` VALUES (". implode( ",", $items ) .");\n"
-      );
+        "INSERT INTO `". $table['Name'] ."` VALUES (". implode(",", $items) .");\n"
+        );
     }
   }
 }
-
 
 /**
  * The header for the top of the sql dump file. These commands set the connection
@@ -660,12 +669,12 @@ function _backup_migrate_get_sql_file_footer() {
 /**
  * Get a list of tables in the db. Works with MySQL, Postgres not tested.
  */
-function _backup_migrate_get_tables( ) {
+function _backup_migrate_get_tables() {
   $out = "";
   // get auto_increment values and names of all tables
   $tables = db_query("show table status");
-  while ( $table = db_fetch_array($tables) ) {
-    $out[] = $table;
+  while ($table = db_fetch_array($tables)) {
+    $out[$table['Name']] = $table;
   }
   return $out;
 }
@@ -673,145 +682,143 @@ function _backup_migrate_get_tables( ) {
 /**
  * Get the list of table names.
  */
-function _backup_migrate_get_table_names( ) {
+function _backup_migrate_get_table_names() {
   $out = "";
   // Get auto_increment values and names of all tables.
   $tables = db_query("show table status");
-  while ( $table = db_fetch_array($tables) ) {
+  while ($table = db_fetch_array($tables)) {
     $out[$table['Name']] = $table['Name'];
   }
   return $out;
 }
 
-
-
 /**
  * Restore from a previously backed up files. Accepts any file created by the backup function.
  */
-function _backup_migrate_restore_file( $filepath, $filename = "", $delete = FALSE ) {
-  if ( !$filename ) {
+function _backup_migrate_restore_file($filepath, $filename = "", $delete = FALSE) {
+  if (!$filename) {
     $filename = $filepath;
   }
 
   $file_is_temp = $delete;
 
-  $open_func = "fopen";
-  $read_func = "fgets";
-  $close_func = "fclose";
+  $open_func    = "fopen";
+  $read_func    = "fgets";
+  $close_func   = "fclose";
 
   // figure out if the file is compressed by the file extention
-  if ( drupal_substr( $filename, -4, 4 ) == ".sql" ) {
+  if (drupal_substr($filename, -4, 4) == ".sql") {
     // No compression.
   }
-  if ( drupal_substr( $filename, -3, 3 ) == ".gz" ) {
-    if ( function_exists( "gzopen" ) ) {
+  if (drupal_substr($filename, -3, 3) == ".gz") {
+    if (function_exists("gzopen")) {
       $open_func  = "gzopen";
       $read_func  = "gzgets";
       $close_func = "gzclose";
     }
     else {
       // GZip compression... not supported.
-      drupal_set_message(t( "This version of PHP does not support gzip comressed files. Please try using an uncompressed sql backup." ), 'error');
-      drupal_goto( "admin/content/backup_migrate/restore" );
+      drupal_set_message(t("This version of PHP does not support gzip comressed files. Please try using an uncompressed sql backup."), 'error');
+      drupal_goto("admin/content/backup_migrate/restore");
     }
   }
   // BZip compression.
-  if ( drupal_substr( $filename, -3, 3 ) == ".bz" ) {
-    if ( function_exists( "bzopen" ) ) {
+  if (drupal_substr($filename, -3, 3) == ".bz") {
+    if (function_exists("bzopen")) {
       $open_func = "fopen";
       $read_func = "fgets";
 
       // Decompress the file to a temp file.
       $tmp = tempnam(file_directory_temp(), 'tmp_');
-      if ( ($dst = fopen( $tmp, "w" )) && ($src = bzopen( $filepath, "r" )) ) {
-        while ( $data = bzread( $src ) ) {
-          fwrite( $dst, $data );
+      if (($dst = fopen($tmp, "w")) && ($src = bzopen($filepath, "r"))) {
+        while ($data = bzread($src)) {
+          fwrite($dst, $data);
         }
-        fclose( $dst );
-        bzclose( $src );
-        if ( $delete ) {
-          unlink( $filepath );
+        fclose($dst);
+        bzclose($src);
+        if ($delete) {
+          unlink($filepath);
         }
         $filepath = $tmp;
         $delete = TRUE;
       }
       else {
-        drupal_set_message(t( "Unable to decompress bzip file. Please try using an uncompressed backup." ), 'error');
-        drupal_goto( "admin/content/backup_migrate/restore" );
+        drupal_set_message(t("Unable to decompress bzip file. Please try using an uncompressed backup."), 'error');
+        drupal_goto("admin/content/backup_migrate/restore");
       }
     }
     else {
       // BZip compression... not supported.
-      drupal_set_message(t( "This version of PHP does not support bzip compressed files. Please try using an uncompressed backup." ), 'error');
-      drupal_goto( "admin/content/backup_migrate/restore" );
+      drupal_set_message(t("This version of PHP does not support bzip compressed files. Please try using an uncompressed backup."), 'error');
+      drupal_goto("admin/content/backup_migrate/restore");
     }
   }
   // Zip compression.
-  if ( drupal_substr( $filename, -4, 4 ) == ".zip" ) {
-    if ( class_exists( 'ZipArchive' ) ) {
-      if ( $filepath != $filename ) {
-        rename( $filepath, $filepath .".zip" );
+  if (drupal_substr($filename, -4, 4) == ".zip") {
+    if (class_exists('ZipArchive')) {
+      if ($filepath != $filename) {
+        rename($filepath, $filepath .".zip");
         $filepath .= ".zip";
       }
 
       $tmp = tempnam(file_directory_temp(), 'tmp_');
       $zip = new ZipArchive;
-      if ( ($dst = fopen( $tmp, "w" )) && ($src = $zip->open($filepath)) ) {
-        if ( $data = $zip->getFromIndex( 0 ) ) {
-          fwrite( $dst, $data );
+      if (($dst = fopen($tmp, "w")) && ($src = $zip->open($filepath))) {
+        if ($data = $zip->getFromIndex(0)) {
+          fwrite($dst, $data);
         }
-        fclose( $dst );
+        fclose($dst);
         $zip->close();
 
-        if ( $delete ) {
-          unlink( $filepath );
+        if ($delete) {
+          unlink($filepath);
         }
         $filepath = $tmp;
         $delete = TRUE;
       }
       else {
-        drupal_set_message(t( "Unable to decompress zip file. Please try using an uncompressed backup." ), 'error');
-        drupal_goto( "admin/content/backup_migrate/restore" );
+        drupal_set_message(t("Unable to decompress zip file. Please try using an uncompressed backup."), 'error');
+        drupal_goto("admin/content/backup_migrate/restore");
       }
     }
     else {
       // Zip compression... not supported.
-      drupal_set_message(t( "This version of PHP does not support zip comressed files. Please try using an uncompressed backup." ), 'error');
-      drupal_goto( "admin/content/backup_migrate/restore" );
+      drupal_set_message(t("This version of PHP does not support zip comressed files. Please try using an uncompressed backup."), 'error');
+      drupal_goto("admin/content/backup_migrate/restore");
     }
   }
 
   // Open the file (with fopen or gzopen depending on file format).
-  if ( $handle = @$open_func( $filepath, "r" ) ) {
+  if ($handle = @$open_func($filepath, "r")) {
     $num = 0;
 
     // Read one line at a time and run the query.
-    while ( $line = $read_func( $handle ) ) {
-      $line = trim( $line );
-      if ( $line ) {
+    while ($line = $read_func($handle)) {
+      $line = trim($line);
+      if ($line) {
         // Use the helper instead of the api function to avoid substitution of '{' etc.
-        _db_query( $line );
+        _db_query($line);
         $num++;
       }
     }
     // Close the file with fclose/gzclose.
-    $close_func( $handle );
+    $close_func($handle);
 
     // Delete the file if it is temporary.
-    if ( $delete ) {
-      unlink( $filepath );
+    if ($delete) {
+      unlink($filepath);
     }
 
-    $message = t( "Restore complete. %num SQL commands executed.", array( "%num" => $num ) );
-    $message .= $file_is_temp ? "" : "(". l( t( "Restore Again..." ), "admin/content/backup_migrate/restorefile/". $filepath ) .")";
-    drupal_set_message( $message );
+    $message = t("Restore complete. %num SQL commands executed.", array("%num" => $num));
+    $message .= $file_is_temp ? "" : "(". l(t("Restore Again..."), "admin/content/backup_migrate/restorefile/". $filepath) .")";
+    drupal_set_message($message);
   }
   else {
-    drupal_set_message(t( "Unable to open file %file to restore database", array( "%file" => $filepath )), 'error');
+    drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $filepath)), 'error');
   }
 
   // Delete any temp files we've created.
-  _backup_migrate_temp_file( "", TRUE );
+  _backup_migrate_temp_file("", TRUE);
 }
 
 /*
@@ -824,20 +831,20 @@ function _backup_migrate_restore_file( $filepath, $filename = "", $delete = FALS
 function _backup_migrate_filetypes() {
   return array(
     "sql" => array(
-      "extension"     => ".sql",
-      "filemime"      => "text/x-sql",
+      "extension" => ".sql",
+      "filemime" => "text/x-sql",
     ),
     "gzip" => array(
-      "extension"     => ".gz",
-      "filemime"      => "application/x-gzip",
+      "extension" => ".gz",
+      "filemime" => "application/x-gzip",
     ),
     "bzip" => array(
-      "extension"     => ".bz",
-      "filemime"      => "application/x-bzip",
+      "extension" => ".bz",
+      "filemime" => "application/x-bzip",
     ),
     "zip" => array(
-      "extension"     => ".zip",
-      "filemime"      => "application/zip",
+      "extension" => ".zip",
+      "filemime" => "application/zip",
     ),
   );
 }
@@ -845,17 +852,17 @@ function _backup_migrate_filetypes() {
 /**
  * Get the basic info for a backup file on the server.
  */
-function _backup_migrate_file_info( $path ) {
+function _backup_migrate_file_info($path) {
   $types = _backup_migrate_filetypes();
-  foreach ( $types as $type ) {
-    $extlen = drupal_strlen( $type['extension'] );
-    if ( drupal_substr( $path, -$extlen, $extlen ) === $type['extension'] ) {
-      $out = $type;
-      $out['filesize']    = filesize( $path );
-      $out['filename']    = basename( $path );
-      $out['filemtime']   = filemtime( $path );
-      $out['filectime']   = filectime( $path );
-      $out['filepath']    = $path;
+  foreach ($types as $type) {
+    $extlen = drupal_strlen($type['extension']);
+    if (drupal_substr($path, -$extlen, $extlen) === $type['extension']) {
+      $out              = $type;
+      $out['filesize']  = filesize($path);
+      $out['filename']  = basename($path);
+      $out['filemtime'] = filemtime($path);
+      $out['filectime'] = filectime($path);
+      $out['filepath']  = $path;
       return $out;
     }
   }
@@ -865,50 +872,53 @@ function _backup_migrate_file_info( $path ) {
 /**
  * Save the backup file to the appropriete folder on the server.
  */
-function _backup_migrate_save_to_disk( $temp_file, $filename, $mode = "manual" ) {
-  if ( $dir = _backup_migrate_check_destination_dir( $mode ) ) {
+function _backup_migrate_save_to_disk($temp_file, $filename, $mode = "manual") {
+  if ($dir = _backup_migrate_check_destination_dir($mode)) {
     $filepath = $dir ."/". $filename;
 
-    rename( $temp_file, $filepath );
+    rename($temp_file, $filepath);
 
-    $message = t( 'Database backup saved to %file. ', array( '%file' => $filepath ) );
-    watchdog( 'backup_migrate', $message );
-    $message .= user_access( "access backup files" ) ? "(". l( t( "Download" ), "system/files/". $filepath ) .") " : "";
-    $message .= user_access( "delete backup files" ) ? "(". l( t( "Delete..." ), "admin/content/backup_migrate/delete/". $filepath ) .") " : "";
-    $message .= user_access( "restore from backup" )           ? "(". l( t( "Restore..." ), "admin/content/backup_migrate/restorefile/". $filepath ) .")" : "";
-    drupal_set_message( $message );
+    $message = t('Database backup saved to %file. ', array('%file' => $filepath));
+    watchdog('backup_migrate', $message);
+    $message .= user_access("access backup files") ? "(". l(t("Download"), "system/files/". $filepath) .") " : "";
+    $message .= user_access("delete backup files") ? "(". l(t("Delete..."), "admin/content/backup_migrate/delete/". $filepath) .") " : "";
+    $message .= user_access("restore from backup") ? "(". l(t("Restore..."), "admin/content/backup_migrate/restorefile/". $filepath) .")" : "";
+    drupal_set_message($message);
   }
 }
 
 /**
- * Implementation of hook_file_download.() 
+ * Implementation of hook_file_download.()
  *
  * Allow users with the appropriate permissions to download backup files.
  */
-function backup_migrate_file_download( $path ) {
-  if ( _backup_migrate_path_is_in_save_dir( $path ) && user_access( 'access backup files' ) ) {
-    if ( $info = _backup_migrate_file_info( $path ) ) {
+function backup_migrate_file_download($path) {
+  if (_backup_migrate_path_is_in_save_dir($path)) {
+    if (user_access('access backup files') && $info = _backup_migrate_file_info($path)) {
       return array(
         'Content-Type: '. $info['filemime'],
         'Content-Length: '. $info['filesize'],
         'Content-Disposition: attachment; filename="'. $info['filename'] .'"',
       );
     }
+    else {
+      return -1;
+    }
   }
+  return NULL;
 }
-
 
 /**
  * Get a temp file. Store it in the normal save path for slightly better security
  *   in shared environments.
  */
-function _backup_migrate_temp_file( $extension = "", $delete_all = FALSE ) {
+function _backup_migrate_temp_file($extension = "", $delete_all = FALSE) {
   static $files = array();
 
-  if ( $delete_all ) {
-    _backup_migrate_temp_files_delete( $files );
+  if ($delete_all) {
+    _backup_migrate_temp_files_delete($files);
   }
-  $file  = tempnam(file_directory_temp(), 'tmp_');
+  $file = tempnam(file_directory_temp(), 'tmp_');
   $file .= $extension ? ".". $extension : "";
   $files[] = $file;
   return $file;
@@ -917,32 +927,31 @@ function _backup_migrate_temp_file( $extension = "", $delete_all = FALSE ) {
 /**
  * Delete all temporary files.
  */
-function _backup_migrate_temp_files_delete( $files ) {
-  foreach ( $files as $file ) {
-    if ( file_exists( $file ) ) {
-      @unlink( $file );
+function _backup_migrate_temp_files_delete($files) {
+  foreach ($files as $file) {
+    if (file_exists($file)) {
+      @unlink($file);
     }
   }
 }
 
-
 /**
  * List the previously created backup files.
  */
-function _backup_migrate_list_files( $mode = "manual" ) {
+function _backup_migrate_list_files($mode = "manual") {
   $files = array();
-  if ( $dir = _backup_migrate_check_destination_dir( $mode ) ) {
-    if ( $handle = opendir( $dir ) ) {
-      while ( FALSE !== ($file = readdir($handle))) {
+  if ($dir = _backup_migrate_check_destination_dir($mode)) {
+    if ($handle = opendir($dir)) {
+      while (FALSE !== ($file = readdir($handle))) {
         $filepath = $dir ."/". $file;
-        if ( $info = _backup_migrate_file_info( $filepath ) ) {
+        if ($info = _backup_migrate_file_info($filepath)) {
           $files[$file] = array(
             $file,
-            date( "m/d/Y h:i a", $info['filemtime'] ),
-            format_size( $info['filesize'] ),
-            l( "download", "system/files/". $filepath ),
-            l( "restore", "admin/content/backup_migrate/restorefile/". $filepath ),
-            l( "delete", "admin/content/backup_migrate/delete/". $filepath ),
+            date("m/d/Y h:i a", $info['filemtime']),
+            format_size($info['filesize']),
+            l("download", "system/files/". $filepath),
+            user_access('restore from backup') ? l("restore", "admin/content/backup_migrate/restorefile/". $filepath) : '',
+            user_access('delete backup files') ? l("delete", "admin/content/backup_migrate/delete/". $filepath) : '',
           );
         }
       }
@@ -950,42 +959,42 @@ function _backup_migrate_list_files( $mode = "manual" ) {
   }
   krsort($files);
 
-  return theme( "table", array(), $files );
+  return theme("table", array(), $files);
 }
 
 /**
  * Remove older backups keeping only the number specified by the aministrator.
  */
 function _backup_migrate_remove_expired_backups() {
-  $num_to_keep = variable_get( "backup_migrate_schedule_backup_keep", 0 );
+  $num_to_keep = variable_get("backup_migrate_schedule_backup_keep", 0);
   // If num to keep is not 0 (0 is infinity).
-  if ( $num_to_keep && $dir = _backup_migrate_check_destination_dir( "scheduled" ) ) {
+  if ($num_to_keep && $dir = _backup_migrate_check_destination_dir("scheduled")) {
 
     // Create a list of backup files indexed by time (with an aditional index to
     // prevent two files with the same create time from overwriting each other).
-    $res = opendir( $dir );
+    $res   = opendir($dir);
     $files = array();
-    $i = 0;
-    if ( $res ) {
+    $i     = 0;
+    if ($res) {
       // Read all files and sort them by modified time.
-      while ( $file = readdir( $res ) ) {
+      while ($file = readdir($res)) {
         $filepath = $dir ."/". $file;
-        if ( $info = _backup_migrate_file_info( $filepath ) ) {
-          $files[$info['filectime'] ." ". $i++] = $filepath;
+        if ($info = _backup_migrate_file_info($filepath)) {
+          $files[str_pad($info['filemtime'], 10, "0", STR_PAD_LEFT) ."-". $i++] = $filepath;
         }
       }
     }
 
     // If we are beyond our limit, remove as many as we need.
-    $num_files = count( $files );
-    if ( $num_files > $num_to_keep ) {
+    $num_files = count($files);
+    if ($num_files > $num_to_keep) {
       $num_to_delete = $num_files - $num_to_keep;
       // Sort by date.
       ksort($files);
       // Delete from the start of the list (earliest).
-      for ( $i = 0; $i < $num_to_delete; $i++ ) {
-        $filepath = array_shift( $files );
-        file_delete( $filepath );
+      for ($i = 0; $i < $num_to_delete; $i++) {
+        $filepath = array_shift($files);
+        file_delete($filepath);
       }
     }
   }
@@ -994,16 +1003,17 @@ function _backup_migrate_remove_expired_backups() {
 /**
  * Return the path on the server to save the dump files.
  */
-function _backup_migrate_path_is_in_save_dir( $path, $mode = "" ) {
-  return ( file_check_location( $path, _backup_migrate_get_save_path($mode) ) );
+function _backup_migrate_path_is_in_save_dir($path, $mode = "") {
+  $backup_dir = _backup_migrate_get_save_path($mode);
+  return file_exists($backup_dir) && file_check_location($path, $backup_dir);
 }
 
 /**
  * Return the path on the server to save the dump files.
  */
-function _backup_migrate_get_save_path( $mode = "" ) {
+function _backup_migrate_get_save_path($mode = "") {
   $dir = file_directory_path() ."/backup_migrate";
-  if ( $mode ) {
+  if ($mode) {
     $dir .= $mode == "manual" ? "/manual" : "/scheduled";
   }
   return $dir;
@@ -1012,29 +1022,29 @@ function _backup_migrate_get_save_path( $mode = "" ) {
 /**
  * Prepare the destination directory for the backups.
  */
-function _backup_migrate_check_destination_dir( $mode = "" ) {
+function _backup_migrate_check_destination_dir($mode = "") {
   $directory = _backup_migrate_get_save_path();
-  $out = $subdir = rtrim( $directory ."/". $mode, "/" );
+  $out = $subdir = rtrim($directory ."/". $mode, "/");
 
   // Check for the main directory.
-  if ( !file_check_directory( $directory, TRUE ) ) {
+  if (!file_check_directory($directory, TRUE)) {
     // unable to create main directory
-    $message = t( "Unable to create or write to the save directory '%directory'. Please check the file permissions on your files directory.", array('%directory' => $directory ) );
+    $message = t("Unable to create or write to the save directory '%directory'. Please check the file permissions on your files directory.", array('%directory' => $directory));
     drupal_set_message($message, "error");
     return FALSE;
   }
 
   // Create subdir if needed.
-  if ( ($subdir != $directory) && !file_check_directory( $subdir, TRUE ) ) {
-    // Unable to create main directory.
-    $message = t( "Unable to create or write to the save directory '%directory'. Please check the file permissions on your files directory.", array('%directory' => $subdir ) );
+  if (($subdir != $directory) && !file_check_directory($subdir, TRUE)) {
+    // Unable to create sub directory.
+    $message = t("Unable to create or write to the save directory '%directory'. Please check the file permissions on your files directory.", array('%directory' => $subdir));
     drupal_set_message($message, "error");
     return FALSE;
   }
 
   // Check for a htaccess file which adequately protects the backup files.
   $htaccess_lines = "order allow,deny\ndeny from all\n";
-  if (!is_file($directory .'/.htaccess') || strpos( file_get_contents($directory .'/.htaccess'), $htaccess_lines ) === FALSE) {
+  if (!is_file($directory .'/.htaccess') || strpos(file_get_contents($directory .'/.htaccess'), $htaccess_lines) === FALSE) {
     // Attempt to protect the backup files from public access using htaccess.
     if (($fp = @fopen($directory .'/.htaccess', 'w')) && @fputs($fp, $htaccess_lines)) {
       fclose($fp);
@@ -1052,14 +1062,14 @@ function _backup_migrate_check_destination_dir( $mode = "" ) {
 
   // Check the user agent to make sure we're not responding to a request from drupal itself.
   // That should prevent infinite loops which could be caused by poormanscron in some circumstances.
-  if (strpos( $_SERVER['HTTP_USER_AGENT'], 'Drupal' ) !== FALSE) {
+  if (strpos($_SERVER['HTTP_USER_AGENT'], 'Drupal') !== FALSE) {
     return FALSE;
   }
 
   // Check to see if the destination is publicly accessible
   $test_contents = "this file should not be publicly accesible";
-  // Create the the text.txt file if it's not already there. 
-  if ( !is_file($subdir .'/test.txt') || file_get_contents($subdir .'/test.txt') != $test_contents ) {
+  // Create the the text.txt file if it's not already there.
+  if (!is_file($subdir .'/test.txt') || file_get_contents($subdir .'/test.txt') != $test_contents) {
     if ($fp = fopen($subdir .'/test.txt', 'w')) {
       @fputs($fp, $test_contents);
       fclose($fp);
@@ -1074,9 +1084,7 @@ function _backup_migrate_check_destination_dir( $mode = "" ) {
   // Attempt to read the test file via http. This may fail for other reasons,
   // so it's not a bullet-proof check.
   $path = trim(substr($subdir .'/test.txt', strlen(file_directory_path())), '\\/');
-  $url = $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
-  $result = drupal_http_request( $url );
-  if ( strpos( $result->data, $test_contents ) !== FALSE ) {
+  if (_backup_migrate_test_file_readable_remotely($filename, $contents)) {
     $message = t("Security notice: Backup and Migrate will not save backup files to the server because the destination directory is publicly accessible. If you want to save files to the server, please secure the '%directory' directory", array('%directory' => $directory));
     drupal_set_message($message, "error");
     return FALSE;
@@ -1085,21 +1093,32 @@ function _backup_migrate_check_destination_dir( $mode = "" ) {
   return $out;
 }
 
+/**
+ * Check if a file can be read remotely via http.
+ */
+function _backup_migrate_test_file_readable_remotely($path, $contents) {
+  $url = $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
+  $result = drupal_http_request($url);
+  if (strpos($result->data, $contents) !== FALSE) {
+    return TRUE;
+  }
+  return FALSE;
+}
 
 /**
  * Gzip encode a file.
  */
-function _backup_migrate_gzip_encode( $source, $dest, $level = 9 ) {
+function _backup_migrate_gzip_encode($source, $dest, $level = 9) {
   $success = FALSE;
-  if ( @function_exists( "gzopen" ) ) {
-    if ( ($fp_out = gzopen( $dest, 'wb'. $level )) && ($fp_in = fopen( $source, 'rb' )) ) {
-      while ( !feof( $fp_in ) ) {
-        gzwrite( $fp_out, fread( $fp_in, 1024*512 ) );
+  if (@function_exists("gzopen")) {
+    if (($fp_out = gzopen($dest, 'wb'. $level)) && ($fp_in = fopen($source, 'rb'))) {
+      while (!feof($fp_in)) {
+        gzwrite($fp_out, fread($fp_in, 1024 * 512));
       }
       $success = TRUE;
     }
-    @fclose( $fp_in );
-    @gzclose( $fp_out );
+    @fclose($fp_in);
+    @gzclose($fp_out);
   }
   return $success;
 }
@@ -1107,20 +1126,20 @@ function _backup_migrate_gzip_encode( $source, $dest, $level = 9 ) {
 /**
  * Bzip encode a file.
  */
-function _backup_migrate_bzip_encode( $source, $dest ) {
+function _backup_migrate_bzip_encode($source, $dest) {
   $success = FALSE;
-  if ( @function_exists( "bzopen" ) ) {
-    if ( ($fp_out = bzopen( $dest, 'w' )) && ($fp_in = fopen( $source, 'rb' )) ) {
-      while ( !feof( $fp_in ) ) {
-        bzwrite( $fp_out, fread( $fp_in, 1024*512 ) );
+  if (@function_exists("bzopen")) {
+    if (($fp_out = bzopen($dest, 'w')) && ($fp_in = fopen($source, 'rb'))) {
+      while (!feof($fp_in)) {
+        bzwrite($fp_out, fread($fp_in, 1024 * 512));
       }
       $success = TRUE;
     }
     else {
       $error = TRUE;
     }
-    @fclose( $fp_in );
-    @bzclose( $fp_out );
+    @fclose($fp_in);
+    @bzclose($fp_out);
   }
   return $success;
 }
@@ -1128,13 +1147,13 @@ function _backup_migrate_bzip_encode( $source, $dest ) {
 /**
  * Zip encode a file.
  */
-function _backup_migrate_zip_encode( $source, $dest, $filename ) {
+function _backup_migrate_zip_encode($source, $dest, $filename) {
   $success = FALSE;
-  if ( class_exists( 'ZipArchive' ) ) {
+  if (class_exists('ZipArchive')) {
     $zip = new ZipArchive;
-    $res = $zip->open( $dest, constant( "ZipArchive::CREATE" ) );
+    $res = $zip->open($dest, constant("ZipArchive::CREATE"));
     if ($res === TRUE) {
-      $zip->addFile( $source, $filename );
+      $zip->addFile($source, $filename);
       $success = $zip->close();
     }
   }
@@ -1149,25 +1168,30 @@ function _backup_migrate_zip_encode( $source, $dest, $filename ) {
  * Construct a default filename using the site's name.
  */
 function _backup_migrate_default_file_name() {
-  if ( module_exists('token') ) {
+  if (module_exists('token')) {
     return '[site-name]';
   }
   else {
-    return _backup_migrate_clean_filename( variable_get( site_name, "backup_migrate" ) );
+    return _backup_migrate_clean_filename(variable_get(site_name, "backup_migrate"));
   }
 }
 
 /**
  * Construct a default filename using token and some cleaning.
  */
-function _backup_migrate_clean_filename( $filename ) {
-  if ( module_exists('token') && function_exists('token_replace') ) {
+function _backup_migrate_clean_filename($filename) {
+  if (module_exists('token') && function_exists('token_replace')) {
     $filename = token_replace($filename, 'global');
   }
-  $filename = preg_replace( "/[^a-zA-Z0-9\.\-_]/", "", $filename );
+  $filename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $filename);
+  if (strlen($filename) > 50) {
+    $filename = drupal_substr($filename, 0, 50);
+  }
+  if (strlen($filename) == 0) {
+    $filename = 'untitled';
+  }
   return $filename;
 }
-
 
 /**
  * Tables to ingore altogether. None by default.
