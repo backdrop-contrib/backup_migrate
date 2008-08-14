@@ -880,10 +880,12 @@ function _backup_migrate_save_to_disk($temp_file, $filename, $mode = "manual") {
 
     $message = t('Database backup saved to %file. ', array('%file' => $filepath));
     watchdog('backup_migrate', $message);
-    $message .= user_access("access backup files") ? "(". l(t("Download"), "system/files/". $filepath) .") " : "";
-    $message .= user_access("delete backup files") ? "(". l(t("Delete..."), "admin/content/backup_migrate/delete/". $filepath) .") " : "";
-    $message .= user_access("restore from backup") ? "(". l(t("Restore..."), "admin/content/backup_migrate/restorefile/". $filepath) .")" : "";
-    drupal_set_message($message);
+    if ($mode == "manual" && user_access('perform backup')) {
+      $message .= user_access("access backup files") ? "(". l(t("Download"), "system/files/". $filepath) .") " : "";
+      $message .= user_access("delete backup files") ? "(". l(t("Delete..."), "admin/content/backup_migrate/delete/". $filepath) .") " : "";
+      $message .= user_access("restore from backup") ? "(". l(t("Restore..."), "admin/content/backup_migrate/restorefile/". $filepath) .")" : "";
+      drupal_set_message($message);
+    }
   }
 }
 

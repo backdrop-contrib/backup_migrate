@@ -1,6 +1,14 @@
 <?php
 // $Id$
 
+/**
+ * @file
+ * backup and migrate install/uninstall hooks
+ */
+
+/**
+ * Implementation of hook_install().
+ */
 function backup_migrate_install() {
 }
 
