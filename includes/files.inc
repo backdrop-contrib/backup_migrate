@@ -3,7 +3,7 @@
 
 
 /**
- * @file files.inc
+ * @file
  * General file handling code for Backup and Migrate.
  */
 
@@ -349,10 +349,10 @@ function _backup_migrate_clean_filename($filename) {
     $filename = token_replace($filename, 'global');
   }
   $filename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $filename);
-  if (strlen($filename) > 50) {
+  if (drupal_strlen($filename) > 50) {
     $filename = drupal_substr($filename, 0, 50);
   }
-  if (strlen($filename) == 0) {
+  if (drupal_strlen($filename) == 0) {
     $filename = 'untitled';
   }
   return $filename;

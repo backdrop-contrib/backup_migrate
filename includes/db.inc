@@ -3,7 +3,7 @@
 
 
 /**
- * @file db.inc
+ * @file
  * General database dump/restore code for Backup and Migrate.
  */
 

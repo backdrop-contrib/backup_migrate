@@ -3,7 +3,7 @@
 
 
 /**
- * @file destinations.email.inc
+ * @file
  * Functions to handle the email backup destination.
  */
 
@@ -38,9 +38,9 @@ function backup_migrate_destination_email_conf($destination, $form) {
 /**
  * Validate the configuration form. Make sure the email address is valid.
  */
-function backup_migrate_destination_email_conf_validate($form_id, $form_values) {
-  if (!valid_email_address($form_values['location'])) {
-    form_set_error('[location]', t('The e-mail address %mail is not valid.', array('%mail' => $form_values['location'])));
+function backup_migrate_destination_email_conf_validate($form, &$form_state) {
+  if (!valid_email_address($form_state['values']['location'])) {
+    form_set_error('[location]', t('The e-mail address %mail is not valid.', array('%mail' => $form_state['values']['location'])));
   }
 }
 

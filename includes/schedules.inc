@@ -3,7 +3,7 @@
 
 
 /**
- * @file schedule.inc
+ * @file
  * All of the schedule handling code needed for Backup and Migrate.
  */
 
@@ -63,7 +63,7 @@ function backup_migrate_backup_migrate_schedules() {
   // Get the saved scheduless
   $result = db_query('SELECT * FROM {backup_migrate_schedules}');
   while ($schedule = db_fetch_array($result)) {
-    $schedule['db'] = true;
+    $schedule['db'] = TRUE;
     $out[$schedule['schedule_id']] = $schedule;
   }
   return $out;
@@ -78,36 +78,8 @@ function backup_migrate_schedule_save_schedule(&$schedule) {
   $period             = $periods[$schedule['period']['type']];
   $schedule['period'] = $schedule['period']['number'] * $period['seconds'];
 
-  if ($schedule['schedule_id']) {
-    db_query("UPDATE {backup_migrate_schedules} 
-                 SET  name = '%s',
-                      destination_id = '%s',
-                      profile_id = %d,
-                      keep = %d,
-                      period = %d,
-                      enabled = %d
-               WHERE schedule_id = %d",
-      $schedule['name'],
-      $schedule['destination_id'],
-      $schedule['profile_id'],
-      $schedule['keep'],
-      $schedule['period'],
-      $schedule['enabled'],
-      $schedule['schedule_id']
-      );
-  }
-  else {
-    $schedule['schedule_id'] = db_next_id('{backup_migrate_schedules}_schedule_id');
-    db_query("INSERT INTO {backup_migrate_schedules} (schedule_id, name, destination_id, profile_id, keep, period, enabled) VALUES (%d, '%s', '%s', %d, %d, %d, %d)",
-      $schedule['schedule_id'],
-      $schedule['name'],
-      $schedule['destination_id'],
-      $schedule['profile_id'],
-      $schedule['keep'],
-      $schedule['period'],
-      $schedule['enabled']
-      );
-  }
+  drupal_write_record('backup_migrate_schedules', $schedule, $schedule['schedule_id'] ? array('schedule_id') : array());
+  _backup_migrate_message('Schedule saved: %schedule', array('%schedule' => $schedule['name']));
 }
 
 /**
@@ -194,7 +166,7 @@ function backup_migrate_ui_schedule_configure($schedule_id) {
 /**
  * Get a form to configure the schedule.
  */
-function backup_migrate_ui_schedule_configure_form($schedule) {
+function backup_migrate_ui_schedule_configure_form(&$form_state, $schedule) {
   if ($schedule) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/profiles.inc';
@@ -280,11 +252,11 @@ function backup_migrate_ui_schedule_configure_form($schedule) {
 /**
  * Validate the schedule configuration form.
  */
-function backup_migrate_ui_schedule_configure_form_validate($form_id, $form_values) {
-  if (!is_numeric($form_values['period']['number']) || $form_values['period']['number'] <= 0) {
+function backup_migrate_ui_schedule_configure_form_validate($form, &$form_state) {
+  if (!is_numeric($form_state['values']['period']['number']) || $form_state['values']['period']['number'] <= 0) {
     form_set_error('[period][number]', t('Backup period must be a number greater than 0.'));
   }
-  if (!is_numeric($form_values['keep']) || $form_values['keep'] < 0) {
+  if (!is_numeric($form_state['values']['keep']) || $form_state['values']['keep'] < 0) {
     form_set_error('[keep]', t('Number to keep must be an integer greater than or equal to 0.'));
   }
 }
@@ -292,9 +264,9 @@ function backup_migrate_ui_schedule_configure_form_validate($form_id, $form_valu
 /**
  * Submit the schedule configuration form.
  */
-function backup_migrate_ui_schedule_configure_form_submit($form_id, $form_values) {
-  backup_migrate_schedule_save_schedule($form_values);
-  return "admin/content/backup_migrate/schedule";
+function backup_migrate_ui_schedule_configure_form_submit($form, &$form_state) {
+  backup_migrate_schedule_save_schedule($form_state['values']);
+  $form_state['redirect'] = "admin/content/backup_migrate/schedule";
 }
 
 /**
@@ -307,7 +279,7 @@ function backup_migrate_ui_schedule_delete($schedule_id) {
 /**
  * Ask confirmation for deletion of a schedule.
  */
-function backup_migrate_ui_schedule_delete_confirm($schedule_id) {
+function backup_migrate_ui_schedule_delete_confirm(&$form_state, $schedule_id) {
   $form['schedule_id'] = array('#type' => 'value', '#value' => $schedule_id);
   $schedule = backup_migrate_get_schedule($schedule_id);
   return confirm_form($form, t('Are you sure you want to delete the schedule %schedule?', array('%schedule' => $schedule['name'])), 'admin/content/backup_migrate/schedule', t('This will cannot be undone.'), t('Delete'), t('Cancel'));
@@ -316,10 +288,10 @@ function backup_migrate_ui_schedule_delete_confirm($schedule_id) {
 /**
  * Delete a destination after confirmation.
  */
-function backup_migrate_ui_schedule_delete_confirm_submit($form_id, $form_values) {
-  $schedule_id = $form_values['schedule_id'];
+function backup_migrate_ui_schedule_delete_confirm_submit($form, &$form_state) {
+  $schedule_id = $form_state['values']['schedule_id'];
   backup_migrate_schedule_delete_schedule($schedule_id);
-  return "admin/content/backup_migrate/schedule";
+  $form_state['redirect'] = "admin/content/backup_migrate/schedule";
 }
 
 
@@ -347,7 +319,7 @@ function _backup_migrate_schedule_set_last_run($schedule_id, $timestamp = NULL) 
     $timestamp = time();
   }
   if ($schedule_id) {
-    db_query("UPDATE {backup_migrate_schedules} 
+    db_query("UPDATE {backup_migrate_schedules}
                  SET  last_run = %d
                WHERE schedule_id = '%s'",
       $timestamp,

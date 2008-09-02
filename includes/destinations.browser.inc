@@ -3,7 +3,7 @@
 
 
 /**
- * @file destinations.browser.inc
+ * @file
  * Functions to handle the browser upload/download backup destination.
  */
 
@@ -22,7 +22,7 @@ function backup_migrate_destination_browser_save($destination, $file, $settings)
  */
 function backup_migrate_destination_browser_load($destination, $file_id) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-  if ($file = file_check_upload('backup_migrate_restore_upload')) {
+  if ($file = file_save_upload('backup_migrate_restore_upload')) {
     $filepath = backup_migrate_temp_file($file->filename);
     rename($file->filepath, $filepath);
     return backup_migrate_file_info($filepath);

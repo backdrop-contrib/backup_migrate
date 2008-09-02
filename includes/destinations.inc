@@ -3,7 +3,7 @@
 
 
 /**
- * @file destinations.inc
+ * @file
  * All of the destination handling code needed for Backup and Migrate.
  */
 
@@ -247,38 +247,11 @@ function backup_migrate_destination_delete_file($destination_id, $file_id) {
 function backup_migrate_destination_save_destination(&$destination) {
   // Any extra settings get serialized into the settings variable.
   $settings = serialize($destination['settings']);
-  if ($destination['destination_id']) {
-    db_query("UPDATE {backup_migrate_destinations}
-                 SET  name = '%s',
-                      type = '%s',
-                      location = '%s',
-                      username = '%s',
-                      password = '%s',
-                      settings = '%s'
-               WHERE destination_id = %d",
-      $destination['name'],
-      $destination['type'],
-      $destination['location'],
-      $destination['username'],
-      $destination['password'],
-      $settings,
-      $destination['destination_id']
-      );
-    _backup_migrate_message('Backup destination updated: %dest', array('%dest' => $destination['name']));
-  }
-  else {
-    $destination['destination_id'] = db_next_id('{backup_migrate_destinations}_destination_id');
-    db_query("INSERT INTO {backup_migrate_destinations} (name, type , location, username, password, settings, destination_id) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', %d)",
-      $destination['name'],
-      $destination['type'],
-      $destination['location'],
-      $destination['username'],
-      $destination['password'],
-      $settings,
-      $destination['destination_id']
-      );
-    _backup_migrate_message('Backup destination created: %dest', array('%dest' => $destination['name']));
-  }
+
+  drupal_write_record('backup_migrate_destinations', $destination, $destination['destination_id'] ? array('destination_id') : array());
+  _backup_migrate_message('Backup destination saved: %dest', array('%dest' => $destination['name']));
+
+  $destination['settings'] = unserialize($destination['settings']);
 }
 
 /**
@@ -412,7 +385,7 @@ function backup_migrate_ui_destination_configure($destination_id) {
 /**
  * Get a form to configure the destination.
  */
-function backup_migrate_ui_destination_configure_form($destination) {
+function backup_migrate_ui_destination_configure_form(&$form_state, $destination) {
   if ($destination) {
     $form = array();
     $form['type'] = array(
@@ -452,11 +425,11 @@ function backup_migrate_ui_destination_configure_form($destination) {
 /**
  * Submit the destination configuration form.
  */
-function backup_migrate_ui_destination_configure_form_submit($form_id, $form_values) {
+function backup_migrate_ui_destination_configure_form_submit($form, &$form_state) {
   // Any extra settings get serialized into the settings variable.
-  $form_values['settings'] = serialize($form_values['settings']);
-  backup_migrate_destination_save_destination($form_values);
-  return "admin/content/backup_migrate/destination";
+  $form_state['values']['settings'] = serialize($form_state['values']['settings']);
+  backup_migrate_destination_save_destination($form_state['values']);
+  $form_state['redirect'] = "admin/content/backup_migrate/destination";
 }
 
 /**
@@ -469,7 +442,7 @@ function backup_migrate_ui_destination_delete_destination($destination_id) {
 /**
  * Ask confirmation for deletion of a destination.
  */
-function backup_migrate_ui_destination_delete_destination_confirm($destination_id) {
+function backup_migrate_ui_destination_delete_destination_confirm(&$form_state, $destination_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $destination = backup_migrate_get_destination($destination_id);
   return confirm_form($form, t('Are you sure you want to delete the backup destination %dest?', array('%dest' => $destination['name'])), 'admin/content/backup_migrate/destinations', t('This will not delete the backup files stored in the destination.'), t('Delete'), t('Cancel'));
@@ -478,10 +451,12 @@ function backup_migrate_ui_destination_delete_destination_confirm($destination_i
 /**
  * Delete a destination after confirmation.
  */
-function backup_migrate_ui_destination_delete_confirm_submit($form_id, $form_values) {
-  $destination_id = $form_values['destination_id'];
-  backup_migrate_destination_delete_destination($destination_id);
-  return "admin/content/backup_migrate/destination";
+function backup_migrate_ui_destination_delete_destination_confirm_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+    $destination_id = $form_state['values']['destination_id'];
+    backup_migrate_destination_delete_destination($destination_id);
+  }
+  $form_state['redirect'] = "admin/content/backup_migrate/destination";
 }
 
 /**
@@ -516,12 +491,12 @@ function backup_migrate_ui_destination_restore_file_confirm($destination_id, $fi
 /**
  * Do the file restore.
  */
-function backup_migrate_ui_destination_restore_file_confirm_submit($form_id, $form_values) {
-  $destination_id = $form_values['destination_id'];
-  $file_id = $form_values['file_id'];
+function backup_migrate_ui_destination_restore_file_confirm_submit($form, &$form_state) {
+  $destination_id = $form_state['values']['destination_id'];
+  $file_id = $form_state['values']['file_id'];
   if ($destination_id && $file_id) {
     backup_migrate_perform_restore($destination_id, $file_id);
-    watchdog('backup_migrate', t('Database restored from %file_id', array('%file_id' => $file_id)));
+    _backup_migrate_message('Database restored from %file_id', array('%file_id' => $file_id));
   }
   return user_access('access backup files') ? "admin/content/backup_migrate/destination/files/". $destination_id : "admin/content/backup_migrate";
 }
@@ -548,14 +523,12 @@ function backup_migrate_ui_destination_delete_file_confirm($destination_id, $fil
 /**
  * Delete confirmed, perform the delete.
  */
-function backup_migrate_ui_destination_delete_file_confirm_submit($form_id, $form_values) {
+function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_state) {
   if (user_access('delete backup files')) {
-    $destination_id = $form_values['destination_id'];
-    $file_id = $form_values['file_id'];
+    $destination_id = $form_state['values']['destination_id'];
+    $file_id = $form_state['values']['file_id'];
     backup_migrate_destination_delete_file($destination_id, $file_id);
-    $message = t('Database backup file deleted: %file_id', array('%file_id' => $file_id));
-    watchdog('backup_migrate', $message);
-    drupal_set_message($message);
+    _backup_migrate_message('Database backup file deleted: %file_id', array('%file_id' => $file_id));
   }
   return user_access('access backup files') ? "admin/content/backup_migrate/files" : "admin/content/backup_migrate";
 }

@@ -3,7 +3,7 @@
 
 
 /**
- * @file destinations.file.inc
+ * @file
  * Functions to handle the local server directory backup destinations.
  */
 
@@ -145,7 +145,7 @@ function _backup_migrate_destination_file_check_web_dir($directory) {
 
   // Attempt to read the test file via http. This may fail for other reasons,
   // so it's not a bullet-proof check.
-  $path = trim(substr($directory .'/test.txt', strlen(file_directory_path())), '\\/');
+  $path = trim(drupal_substr($directory .'/test.txt', drupal_strlen(file_directory_path())), '\\/');
   if (_backup_migrate_test_file_readable_remotely($filename, $contents)) {
     $message = t("Security notice: Backup and Migrate will not save backup files to the server because the destination directory is publicly accessible. If you want to save files to the server, please secure the '%directory' directory", array('%directory' => $directory));
     drupal_set_message($message, "error");

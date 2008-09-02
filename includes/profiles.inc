@@ -42,7 +42,7 @@ function backup_migrate_backup_migrate_profiles() {
   // Get the saved profiless
   $result = db_query('SELECT * FROM {backup_migrate_profiles}');
   while ($profile = db_fetch_array($result)) {
-    $profile['db'] = true;
+    $profile['db'] = TRUE;
     $profile['exclude_tables'] = unserialize($profile['exclude_tables']);
     $profile['nodata_tables'] = unserialize($profile['nodata_tables']);
     $out[$profile['profile_id']] = $profile;
@@ -54,42 +54,14 @@ function backup_migrate_backup_migrate_profiles() {
  * Update an existing profile or create a new one.
  */
 function backup_migrate_profile_save_profile(&$profile) {
-  $nodata_tables = serialize(array_filter($profile['nodata_tables']));
-  $exclude_tables = serialize(array_filter($profile['exclude_tables']));
-  if ($profile['profile_id']) {
-    db_query("UPDATE {backup_migrate_profiles} 
-                 SET  name = '%s',
-                      exclude_tables = '%s',
-                      nodata_tables = '%s',
-                      filename = '%s',
-                      append_timestamp = %d,
-                      timestamp_format = '%s',
-                      compression = '%s'
-               WHERE profile_id = %d",
-      $profile['name'],
-      $exclude_tables,
-      $nodata_tables,
-      $profile['filename'],
-      $profile['append_timestamp'],
-      $profile['timestamp_format'],
-      $profile['compression'],
-      $profile['profile_id']
-      );
-  }
-  else {
-    $profile['profile_id'] = db_next_id('{backup_migrate_profiles}_profile_id');
-    db_query("INSERT INTO {backup_migrate_profiles} (profile_id, name, exclude_tables, nodata_tables, filename, append_timestamp, timestamp_format, compression) VALUES (%d, '%s', '%s', '%s', '%s', %d, '%s', '%s')",
-      $profile['profile_id'],
-      $profile['name'],
-      $exclude_tables,
-      $nodata_tables,
-      $profile['filename'],
-      $profile['append_timestamp'],
-      $profile['timestamp_format'],
-      $profile['compression']
-      );
-  }
-  return $profile;
+  $profile['nodata_tables'] = serialize(array_filter($profile['nodata_tables']));
+  $profile['exclude_tables'] = serialize(array_filter($profile['exclude_tables']));
+
+  drupal_write_record('backup_migrate_profiles', $profile, $profile['profile_id'] ? array('profile_id') : array());
+  _backup_migrate_message('Profile setting saved: %profile', array('%profile' => $profile['name']));
+
+  $profile['nodata_tables'] = unserialize($profile['nodata_tables']);
+  $profile['exclude_tables'] = serialize($profile['exclude_tables']);
 }
 
 /**
@@ -165,7 +137,7 @@ function backup_migrate_ui_profile_configure($profile_id) {
 /**
  * Get a form to configure the profile.
  */
-function backup_migrate_ui_profile_configure_form($profile) {
+function backup_migrate_ui_profile_configure_form(&$form_state, $profile) {
   if ($profile) {
     $form = array();
     $form['name'] = array(
@@ -191,9 +163,9 @@ function backup_migrate_ui_profile_configure_form($profile) {
 /**
  * Submit the profile configuration form.
  */
-function backup_migrate_ui_profile_configure_form_submit($form_id, $form_values) {
-  backup_migrate_profile_save_profile($form_values);
-  return "admin/content/backup_migrate/profile";
+function backup_migrate_ui_profile_configure_form_submit($form, &$form_state) {
+  backup_migrate_profile_save_profile($form_state['values']);
+  $form_state['redirect'] = "admin/content/backup_migrate/profile";
 }
 
 /**
@@ -206,7 +178,7 @@ function backup_migrate_ui_profile_delete($profile_id) {
 /**
  * Ask confirmation for deletion of a profile.
  */
-function backup_migrate_ui_profile_delete_confirm($profile_id) {
+function backup_migrate_ui_profile_delete_confirm(&$form_state, $profile_id) {
   $form['profile_id'] = array('#type' => 'value', '#value' => $profile_id);
   $profile = backup_migrate_get_profile($profile_id);
   return confirm_form($form, t('Are you sure you want to delete the profile %profile?', array('%profile' => $profile['name'])), 'admin/content/backup_migrate/profile', t('This will cannot be undone.'), t('Delete'), t('Cancel'));
@@ -215,10 +187,10 @@ function backup_migrate_ui_profile_delete_confirm($profile_id) {
 /**
  * Delete a destination after confirmation.
  */
-function backup_migrate_ui_profile_delete_confirm_submit($form_id, $form_values) {
-  $profile_id = $form_values['profile_id'];
+function backup_migrate_ui_profile_delete_confirm_submit($form, &$form_state) {
+  $profile_id = $form_state['values']['profile_id'];
   backup_migrate_profile_delete_profile($profile_id);
-  return "admin/content/backup_migrate/profile";
+  $form_state['redirect'] = "admin/content/backup_migrate/profile";
 }
 
 /* Utilities */
@@ -238,7 +210,7 @@ function _backup_migrate_get_profile_form_item_options() {
  * Get a form to configure the profile.
  */
 function _backup_migrate_ui_backup_settings_form($profile) {
-  drupal_add_js(array('backup_migrate' => array('checkbox_link_text' => t('View as checkboxes'))), 'setting');
+  drupal_add_js(array('backup_migrate' => array('checkboxLinkText' => t('View as checkboxes'))), 'setting');
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
   drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
