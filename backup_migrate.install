@@ -1,22 +1,115 @@
 <?php
 // $Id$
 
-/**
- * @file
- * backup and migrate install/uninstall hooks
- */
 
 /**
- * Implementation of hook_install().
+ * @file
+ * Install hooks for Backup and Migrate.
  */
+function backup_migrate_requirements($phase) {
+  $requirements = array();
+  if ($GLOBALS['db_type'] !== 'mysqli' && $GLOBALS['db_type'] !== 'mysql') {
+    $requirements['db_type']['description'] = $t('This module is only compatible with MySQL databases.');
+    $requirements['db_type']['severity'] = REQUIREMENT_ERROR;
+  }
+}
+
 function backup_migrate_install() {
+  _backup_migreate_install_tables();
+  _backup_migrate_setup_databaase_defaults();
+}
+
+function _backup_migreate_install_tables() {
+  if ($GLOBALS['db_type'] == 'mysqli' || $GLOBALS['db_type'] == 'mysql') {
+    drupal_set_message("Creating required backup_migrate.module MySQL tables for first install");
+    db_query("CREATE TABLE {backup_migrate_profiles} (
+      profile_id int(10) UNSIGNED NOT NULL PRIMARY KEY,
+      name varchar(255) NOT NULL default '',
+      exclude_tables text NOT NULL,
+      nodata_tables text NOT NULL,
+      filename varchar(50) NOT NULL default '',
+      append_timestamp tinyint(1),
+      timestamp_format varchar(14) NOT NULL default '',
+      compression varchar(8) NOT NULL default '',
+      destination_id varchar(32) NOT NULL default ''
+    ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+
+    db_query("CREATE TABLE {backup_migrate_destinations} (
+      destination_id int(10) UNSIGNED NOT NULL PRIMARY KEY,
+      name varchar(255) NOT NULL default '',
+      type varchar(32) NOT NULL default '',
+      location text NOT NULL,
+      username varchar(255) NOT NULL default '',
+      password varchar(255) NOT NULL default '',
+      settings text default ''
+    ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+
+    db_query("CREATE TABLE {backup_migrate_schedules} (
+      schedule_id int(10) UNSIGNED NOT NULL PRIMARY KEY,
+      name varchar(255) NOT NULL default '',
+      destination_id varchar(32) NOT NULL default '',
+      profile_id varchar(32) NOT NULL default '',
+      keep int(10) unsigned NOT NULL default '0',
+      period int(10) unsigned NOT NULL default '0',
+      last_run int(10) unsigned NOT NULL default '0',
+      enabled tinyint(1) default 1,
+      cron tinyint(1) default 1
+    ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
+  }
+}
+
+function _backup_migrate_setup_databaase_defaults() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/profiles.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+
+  // Set up the default schedules.
+  if (variable_get("backup_migrate_schedule_backup_period", 0) !== 0) {
+    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/schedules.inc';
+    $schedule = array(
+      'name' => t('Default Schedule'),
+      'destination_id' => 'schedule,',
+      'period' => variable_get("backup_migrate_schedule_backup_period", 0),
+      'keep' => variable_get("backup_migrate_schedule_backup_keep", 0),
+    );
+    backup_migrate_schedule_save_schedule($schedule);
+  }
+  if (variable_get("backup_migrate_file_name", NULL)) {
+    $settings = array(
+      'exclude_tables' => variable_get("backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables()),
+      'nodata_tables' => variable_get("backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables()),
+      'filename' => variable_get("backup_migrate_file_name", _backup_migrate_default_filename()),
+      'append_timestamp' => variable_get("backup_migrate_append_timestamp", FALSE) ? 1 : 0,
+      'timestamp_format' => variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s'),
+      'compression' => variable_get("backup_migrate_compression", "none"),
+    );
+  }
+  else {
+    $settings = _backup_migrate_profile_default_profile();
+  }
+  $settings['name'] = t('Default Profile');
+  backup_migrate_profile_save_profile($settings);
 }
 
 /**
  * Remove variables on uninstall.
  */
 function backup_migrate_uninstall() {
+  db_query("DROP TABLE {backup_migrate_profiles}");
+  db_query("DROP TABLE {backup_migrate_destinations}");
+  db_query("DROP TABLE {backup_migrate_schedules}");
+
   db_query("DELETE FROM {variable} WHERE name LIKE 'backup_migrate_%'");
   cache_clear_all('variables', 'cache');
+}
+
+/**
+ * Update from 1.x to 2.x.
+ */
+function backup_migrate_update_2000() {
+  // Updating from version 1.x, need to populate the db.
+  _backup_migreate_install_tables();
+  _backup_migrate_setup_databaase_defaults();
+  return array();
 }
 

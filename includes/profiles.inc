@@ -1,0 +1,366 @@
+<?php
+// $Id$
+
+
+/**
+ * @file
+ * All of the settings profiles handling code for Backup and Migrate.
+ */
+
+/**
+ * Get all the available backup profiles.
+ */
+function backup_migrate_get_profiles() {
+  static $profiles = NULL;
+
+  // Get the list of profiles and cache them locally.
+  if ($profiles === NULL) {
+    $profiles = array();
+    $all_profiles = module_invoke_all('backup_migrate_profiles');
+    // Reindex since module_invoke_all stomps on numerical indices (thanks to array_merge).
+    foreach ($all_profiles as $profile) {
+      $profiles[$profile['profile_id']] = $profile;
+    }
+  }
+  return $profiles;
+}
+
+/**
+ * Get the profile info for the profile with the given ID, or NULL if none exists.
+ */
+function backup_migrate_get_profile($profile_id) {
+  $profiles = backup_migrate_get_profiles();
+  return @$profiles[$profile_id];
+}
+
+/**
+ * Implementation of hook_backup_migrate_profiles().
+ *
+ * Get the backup profiles stored in the db.
+ */
+function backup_migrate_backup_migrate_profiles() {
+  // Get the saved profiless
+  $result = db_query('SELECT * FROM {backup_migrate_profiles}');
+  while ($profile = db_fetch_array($result)) {
+    $profile['db'] = true;
+    $profile['exclude_tables'] = unserialize($profile['exclude_tables']);
+    $profile['nodata_tables'] = unserialize($profile['nodata_tables']);
+    $out[$profile['profile_id']] = $profile;
+  }
+  return $out;
+}
+
+/**
+ * Update an existing profile or create a new one.
+ */
+function backup_migrate_profile_save_profile(&$profile) {
+  $nodata_tables = serialize(array_filter($profile['nodata_tables']));
+  $exclude_tables = serialize(array_filter($profile['exclude_tables']));
+  if ($profile['profile_id']) {
+    db_query("UPDATE {backup_migrate_profiles} 
+                 SET  name = '%s',
+                      exclude_tables = '%s',
+                      nodata_tables = '%s',
+                      filename = '%s',
+                      append_timestamp = %d,
+                      timestamp_format = '%s',
+                      compression = '%s'
+               WHERE profile_id = %d",
+      $profile['name'],
+      $exclude_tables,
+      $nodata_tables,
+      $profile['filename'],
+      $profile['append_timestamp'],
+      $profile['timestamp_format'],
+      $profile['compression'],
+      $profile['profile_id']
+      );
+  }
+  else {
+    $profile['profile_id'] = db_next_id('{backup_migrate_profiles}_profile_id');
+    db_query("INSERT INTO {backup_migrate_profiles} (profile_id, name, exclude_tables, nodata_tables, filename, append_timestamp, timestamp_format, compression) VALUES (%d, '%s', '%s', '%s', '%s', %d, '%s', '%s')",
+      $profile['profile_id'],
+      $profile['name'],
+      $exclude_tables,
+      $nodata_tables,
+      $profile['filename'],
+      $profile['append_timestamp'],
+      $profile['timestamp_format'],
+      $profile['compression']
+      );
+  }
+  return $profile;
+}
+
+/**
+ * Delete a saved profile from the database.
+ */
+function backup_migrate_profile_delete_profile($profile_id) {
+  $profile = backup_migrate_get_profile($profile_id);
+  if ($profile && $profile['db']) {
+    db_query("DELETE FROM {backup_migrate_profiles} WHERE profile_id = %d", $profile_id);
+    _backup_migrate_message('profile deleted: %profile', array('%profile' => $profile['name']));
+  }
+}
+
+/**
+ * List the the available profiles in the UI.
+ */
+function backup_migrate_ui_profile_display_profiles() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
+  $out = array();
+  foreach (backup_migrate_get_profiles() as $profile) {
+    $row = array(
+      check_plain($profile['name']),
+      check_plain($profile['filename']),
+      $profile['exclude_tables'] ? implode(", ", $profile['exclude_tables']) : t("None"),
+      $profile['nodata_tables'] ? implode(", ", $profile['nodata_tables']) : t("None"),
+      implode(" | ", _backup_migrate_profile_get_links($profile['profile_id'])),
+    );
+
+    if (!$profile['enabled']) {
+      foreach ($row as $key => $field) {
+        $row[$key] = array('data' => $field, 'class' => 'profile-list-disabled');
+      }
+    }
+    $out[] = $row;
+  }
+
+  $headers = array(
+    t('Name'),
+    t('Filename'),
+    t('Exclude'),
+    t('No Data'),
+    t('Operations'),
+  );
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  if ($out) {
+    $out = theme("table", $headers, $out);
+  }
+  else {
+    $out = t('There are no profiles to display.');
+  }
+  return $out .' '. l(t("Create new profile..."), 'admin/content/backup_migrate/profile/add');
+}
+
+/**
+ * Get a form to create a new profile.
+ */
+function backup_migrate_ui_profile_create() {
+  $profile = _backup_migrate_profile_default_profile() + array('name' => "Untitled Profile");
+  $output = drupal_get_form('backup_migrate_ui_profile_configure_form', $profile);
+  return $output;
+}
+
+/**
+ * Get a form to configure the profile.
+ */
+function backup_migrate_ui_profile_configure($profile_id) {
+  if ($profile = backup_migrate_get_profile($profile_id)) {
+    return drupal_get_form('backup_migrate_ui_profile_configure_form', $profile);
+  }
+  return NULL;
+}
+
+/**
+ * Get a form to configure the profile.
+ */
+function backup_migrate_ui_profile_configure_form($profile) {
+  if ($profile) {
+    $form = array();
+    $form['name'] = array(
+      "#type" => "textfield",
+      "#title" => t("Profile Name"),
+      "#default_value" => $profile['name'],
+    );
+
+    $form += _backup_migrate_ui_backup_settings_form($profile);
+    $form['profile_id'] = array(
+      '#type' => 'value',
+      '#value' => $profile['profile_id'],
+    );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save Profile'),
+    );
+    return $form;
+  }
+  return array();
+}
+
+/**
+ * Submit the profile configuration form.
+ */
+function backup_migrate_ui_profile_configure_form_submit($form_id, $form_values) {
+  backup_migrate_profile_save_profile($form_values);
+  return "admin/content/backup_migrate/profile";
+}
+
+/**
+ * Delete a profile.
+ */
+function backup_migrate_ui_profile_delete($profile_id) {
+  return drupal_get_form('backup_migrate_ui_profile_delete_confirm', $profile_id);
+}
+
+/**
+ * Ask confirmation for deletion of a profile.
+ */
+function backup_migrate_ui_profile_delete_confirm($profile_id) {
+  $form['profile_id'] = array('#type' => 'value', '#value' => $profile_id);
+  $profile = backup_migrate_get_profile($profile_id);
+  return confirm_form($form, t('Are you sure you want to delete the profile %profile?', array('%profile' => $profile['name'])), 'admin/content/backup_migrate/profile', t('This will cannot be undone.'), t('Delete'), t('Cancel'));
+}
+
+/**
+ * Delete a destination after confirmation.
+ */
+function backup_migrate_ui_profile_delete_confirm_submit($form_id, $form_values) {
+  $profile_id = $form_values['profile_id'];
+  backup_migrate_profile_delete_profile($profile_id);
+  return "admin/content/backup_migrate/profile";
+}
+
+/* Utilities */
+
+/**
+ * Get the available profiles as an options array for a form item.
+ */
+function _backup_migrate_get_profile_form_item_options() {
+  $out = array();
+  foreach (backup_migrate_get_profiles() as $key => $profile) {
+    $out[$key] = $profile['name'];
+  }
+  return $out;
+}
+
+/**
+ * Get a form to configure the profile.
+ */
+function _backup_migrate_ui_backup_settings_form($profile) {
+  drupal_add_js(array('backup_migrate' => array('checkbox_link_text' => t('View as checkboxes'))), 'setting');
+  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
+  $form           = array();
+  $tables         = _backup_migrate_get_table_names();
+  $form['tables'] = array(
+    "#type" => "fieldset",
+    "#title" => t("Database Tables"),
+    "#collapsible" => TRUE,
+    "#collapsed" => TRUE,
+    "#tree" => FALSE,
+    "#description" => t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Drupal install, so <strong>do not change these settings unless you know what you're doing</strong>."),
+  );
+  $form['tables']['exclude_tables'] = array(
+    "#type" => "select",
+    "#multiple" => TRUE,
+    "#title" => t("Exclude the following tables altogether"),
+    "#options" => $tables,
+    "#default_value" => $profile['exclude_tables'],
+    "#description" => t("The selected tables will not be added to the backup file."),
+  );
+  $form['tables']['nodata_tables'] = array(
+    "#type" => "select",
+    "#multiple" => TRUE,
+    "#title" => t("Exclude the data from the following tables"),
+    "#options" => $tables,
+    "#default_value" => $profile['nodata_tables'],
+    "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
+  );
+  $form['file'] = array(
+    "#type" => "fieldset",
+    "#title" => t("Backup File"),
+    "#collapsible" => TRUE,
+    "#collapsed" => FALSE,
+    "#tree" => FALSE,
+  );
+  $form['file']['filename'] = array(
+    "#type" => "textfield",
+    "#title" => t("Backup file name"),
+    "#default_value" => $profile['filename'],
+  );
+  if (module_exists('token')) {
+    $form['file']['token_help'] = array(
+      '#title' => t('Replacement patterns'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#description' => t('Prefer raw-text replacements for text to avoid problems with HTML entities!'),
+    );
+    $form['file']['token_help']['help'] = array(
+      '#value' => theme('token_help', ''),
+    );
+    $form['file']['filename']['#description'] = t('You can use tokens to in the file name.', array('!tokenurl' => 'http://drupal.org/project/token'));
+  }
+  else {
+    $form['file']['filename']['#description'] = t('If you install the <a href="!tokenurl">Token Module</a> you can use tokens to in the file name.', array('!tokenurl' => 'http://drupal.org/project/token'));
+  }
+  $form['file']['append_timestamp'] = array(
+    "#type" => "checkbox",
+    "#title" => t("Append a timestamp."),
+    "#default_value" => $profile['append_timestamp'],
+  );
+  $form['file']['timestamp_format'] = array(
+    "#type" => "textfield",
+    "#title" => t("Timestamp format"),
+    "#default_value" => $profile['timestamp_format'],
+    "#description" => t('Should be a PHP <a href="!url">date()</a> format string.', array('!url' => 'http://www.php.net/date')),
+  );
+  $compression_options = _backup_migrate_get_compression_form_item_options();
+  $form['file']['compression'] = array(
+    "#type" => count($compression_options) > 1 ? "select" : 'value',
+    "#title" => t("Compression"),
+    "#options" => $compression_options,
+    "#default_value" => $profile['compression'],
+  );
+  return $form;
+}
+
+/**
+ * Get the action links for a profile.
+ */
+function _backup_migrate_profile_get_links($profile_id) {
+  $out = array();
+  if ($profile = backup_migrate_get_profile($profile_id)) {
+    if ($profile['db']) {
+      $out[] = l(t("Configure..."), "admin/content/backup_migrate/profile/configure/". $profile_id);
+      $out[] = l(t("Delete..."), "admin/content/backup_migrate/profile/delete/". $profile_id);
+    }
+  }
+  return $out;
+}
+
+/**
+ * Get the default profile.
+ */
+function _backup_migrate_profile_default_profile() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  return array(
+    'exclude_tables' => _backup_migrate_default_exclude_tables(),
+    'nodata_tables' => _backup_migrate_default_structure_only_tables(),
+    'filename' => _backup_migrate_default_filename(),
+    'append_timestamp' => 1,
+    'timestamp_format' => 'Y-m-d\TH-i-s',
+    'compression' => "none",
+  );
+}
+
+/**
+ * Get the default profile saved by the user (or the module default if none exists).
+ */
+function _backup_migrate_profile_saved_default_profile($profile_id = NULL) {
+  $profile_id = $profile_id ? $profile_id : variable_get("backup_migrate_profile_id", NULL);
+  if (is_numeric($profile_id)) {
+    $profile = backup_migrate_get_profile($profile_id);
+  }
+  if (!$profile) {
+    $profile = _backup_migrate_profile_default_profile();
+  }
+  return $profile;
+}
+
