@@ -31,7 +31,7 @@ function backup_migrate_destination_email_conf($destination, $form) {
     "#required" => TRUE,
     "#description" => t('Enter the email address to send the backup files to. Make sure the email sever can handle large file attachments'),
   );
-  $form['#validate'] = array('backup_migrate_destination_email_conf_validate' => array());
+  $form['#validate'] = array('backup_migrate_destination_email_conf_validate');
   return $form;
 }
 

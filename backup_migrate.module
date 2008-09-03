@@ -525,7 +525,6 @@ function backup_migrate_perform_backup(&$settings) {
  */
 function backup_migrate_perform_restore($destination_id, $file_id) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
   if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
@@ -534,6 +533,22 @@ function backup_migrate_perform_restore($destination_id, $file_id) {
 
   // Load the file from the destination.
   $file = backup_migrate_destination_get_file($destination_id, $file_id);
+  $file = backup_migrate_perform_restore_file($file);
+  return $file;
+}
+
+/**
+ * Restore from a file in the given destination.
+ */
+function backup_migrate_perform_restore_file($file) {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
+
+  // If not in 'safe mode', increase the maximum execution time:
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
+    set_time_limit(600);
+  }
+
   $filename = $file['filename'];
   if ($file) {
     $file = backup_migrate_file_decompress($file);

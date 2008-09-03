@@ -37,6 +37,13 @@ function backup_migrate_schema() {
         'type' => 'text',
         'not null' => TRUE
       ),
+      'source' => array(
+        'description' => t('The db source to backup from.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'default' => 'default',
+        'not null' => TRUE
+      ),
       'nodata_tables' => array(
         'description' => t('The no-data tables.'),
         'type' => 'text',

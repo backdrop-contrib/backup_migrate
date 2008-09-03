@@ -200,3 +200,27 @@ function _backup_migrate_default_structure_only_tables() {
   return $alltables;
 }
 
+/**
+ * Switch to the db described by the DB URL, or back to previous if none selected.
+ */
+function _backup_migrate_db_switch_db($in_url = NULL) {
+  static $db_stack = array();
+  global $db_url;
+
+  // If no DB URL is specified, pop the previous one and set to it.
+  if ($in_url === NULL && $db_stack) {
+    db_set_active(array_pop($db_stack));
+  }
+
+  // If there is a valid DB URL, switch to it.
+  if ($in_url) {
+    // Make the db_url into an array if needed.
+    if (!is_array($db_url)) {
+      $db_url = array('default' => $db_url);
+    }
+    // Add the new db to the db_url array.
+    $db_url[$in_url] = $in_url;
+    // Switch to the new db and push the old one on the stack
+    $db_stack[] = db_set_active($in_url);
+  }
+}
