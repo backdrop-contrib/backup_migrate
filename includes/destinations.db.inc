@@ -22,6 +22,8 @@ function backup_migrate_destination_db_save($destination, $file, $settings) {
 
   // Switch back to the old db.
   _backup_migrate_db_switch_db();
+
+  return $file;
 }
 
 /**

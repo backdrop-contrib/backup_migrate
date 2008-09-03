@@ -150,7 +150,7 @@ function _backup_migrate_get_sql_file_footer() {
  * Get a list of tables in the db. Works with MySQL, Postgres not tested.
  */
 function _backup_migrate_get_tables() {
-  $out = "";
+  $out = array();
   // get auto_increment values and names of all tables
   $tables = db_query("show table status");
   while ($table = db_fetch_array($tables)) {
@@ -163,7 +163,7 @@ function _backup_migrate_get_tables() {
  * Get the list of table names.
  */
 function _backup_migrate_get_table_names() {
-  $out = "";
+  $out = array();
   // Get auto_increment values and names of all tables.
   $tables = db_query("show table status");
   while ($table = db_fetch_array($tables)) {
