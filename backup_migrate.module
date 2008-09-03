@@ -528,18 +528,26 @@ function backup_migrate_perform_restore($destination_id, $file_id) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 240) {
-    set_time_limit(240);
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
+    set_time_limit(600);
   }
 
   // Load the file from the destination.
   $file = backup_migrate_destination_get_file($destination_id, $file_id);
+  $filename = $file['filename'];
   if ($file) {
     $file = backup_migrate_file_decompress($file);
   }
   if ($file) {
-    backup_migrate_db_restore($file);
+    $num = backup_migrate_db_restore($file);
   }
+
+  $destination = backup_migrate_get_destination($destination_id);
+  $message = 'Database restored from %destination file %file. %num SQL commands executed.';
+  if ($destination && in_array('list files', $destination['ops'])) {
+    $message .= ' (<a href="!restoreurl">Restore again...</a>)';
+  }
+  _backup_migrate_message($message, array("%destination" => $destination['name'], "%num" => $num, '%file' => $filename, '!restoreurl' => url('admin/content/backup_migrate/destination/restorefile/'.$destination_id."/".$file_id)));
 
   // Delete any temp files we've created.
   backup_migrate_temp_file("", TRUE);

@@ -30,11 +30,6 @@ function backup_migrate_db_restore($file) {
   else {
     drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $file['filepath'])), 'error');
   }
-  if ($num) {
-    $message = "Restore complete. %num SQL commands executed.";
-    $message .= " (". l(t("Restore Again..."), "admin/content/backup_migrate/restorefile/". $destination_id ."/". $file_id) .")";
-    _backup_migrate_message($message, array("%num" => $num));
-  }
   return $num;
 }
 

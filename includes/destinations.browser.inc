@@ -25,7 +25,9 @@ function backup_migrate_destination_browser_load($destination, $file_id) {
   if ($file = file_save_upload('backup_migrate_restore_upload')) {
     $filepath = backup_migrate_temp_file($file->filename);
     rename($file->filepath, $filepath);
-    return backup_migrate_file_info($filepath);
+    $out = backup_migrate_file_info($filepath);
+    $out['filename'] = $file->filename;
+    return $out;
   }
   return NULL;
 }
