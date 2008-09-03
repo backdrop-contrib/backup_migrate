@@ -37,7 +37,6 @@ function backup_migrate_db_restore($file) {
  * Build the database dump file. Takes a list of tables to exclude and some formatting options.
  */
 function backup_migrate_db_backup($source, $file, &$settings) {
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
   $settings['filename'] .= ".sql";
   $settings['filemime'] = 'text/x-sql';
 

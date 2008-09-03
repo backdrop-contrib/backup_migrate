@@ -56,12 +56,6 @@ function backup_migrate_backup_migrate_destination_types() {
       'conf_callback' => 'backup_migrate_destination_db_conf',
       'ops' => array('source', 'manual backup', 'scheduled backup')
       ),
-    'config_db' => array(
-      'type_name' => t('Config Database'),
-      'description' => t('Import the dump directly into a database specified in the Drupal settings.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
-      'ops' => array('source')
-      ),
   );
 }
 
