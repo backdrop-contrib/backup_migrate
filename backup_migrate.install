@@ -37,11 +37,11 @@ function backup_migrate_schema() {
         'type' => 'text',
         'not null' => TRUE
       ),
-      'source' => array(
+      'source_id' => array(
         'description' => t('The db source to backup from.'),
         'type' => 'varchar',
         'length' => 32,
-        'default' => 'default',
+        'default' => 'db_url:default',
         'not null' => TRUE
       ),
       'nodata_tables' => array(
@@ -139,7 +139,8 @@ function backup_migrate_schema() {
         'not null' => TRUE
       ),
       'destination_id' => array(
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 32,
         'not null' => TRUE,
         'default' => 0,
         'description' => t('The primary identifier for a destination.'),

@@ -36,12 +36,20 @@ function backup_migrate_db_restore($file) {
 /**
  * Build the database dump file. Takes a list of tables to exclude and some formatting options.
  */
-function backup_migrate_db_backup($file, &$settings) {
+function backup_migrate_db_backup($source, $file, &$settings) {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
   $settings['filename'] .= ".sql";
   $settings['filemime'] = 'text/x-sql';
 
+  // Switch to a different db if specified.
+  _backup_migrate_db_switch_db(_backup_migrate_destination_glue_url($source, FALSE));
+
   // Dump the database.
   $success = _backup_migrate_get_dump_sql($file, $settings['exclude_tables'], $settings['nodata_tables']);
+
+  // Switch back to the previous db.
+  _backup_migrate_db_switch_db();
+
   return $success ? $file : FALSE;
 }
 

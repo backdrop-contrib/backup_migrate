@@ -82,8 +82,10 @@ function backup_migrate_ui_profile_display_profiles() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
   $out = array();
   foreach (backup_migrate_get_profiles() as $profile) {
+    $source = backup_migrate_get_destination($profile['source_id']);
     $row = array(
       check_plain($profile['name']),
+      $source ? $source['name'] : t("Missing"),
       check_plain($profile['filename']),
       $profile['exclude_tables'] ? implode(", ", $profile['exclude_tables']) : t("None"),
       $profile['nodata_tables'] ? implode(", ", $profile['nodata_tables']) : t("None"),
@@ -100,6 +102,7 @@ function backup_migrate_ui_profile_display_profiles() {
 
   $headers = array(
     t('Name'),
+    t('Source'),
     t('Filename'),
     t('Exclude'),
     t('No Data'),
@@ -119,7 +122,7 @@ function backup_migrate_ui_profile_display_profiles() {
  * Get a form to create a new profile.
  */
 function backup_migrate_ui_profile_create() {
-  $profile = _backup_migrate_profile_default_profile() + array('name' => "Untitled Profile");
+  $profile = _backup_migrate_profile_default_profile() + array('name' => "Untitled Profile", 'source' => 'db_url:default');
   $output = drupal_get_form('backup_migrate_ui_profile_configure_form', $profile);
   return $output;
 }
@@ -219,6 +222,31 @@ function _backup_migrate_ui_backup_settings_form($profile) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
   $form           = array();
   $tables         = _backup_migrate_get_table_names();
+
+  $sources = _backup_migrate_get_destination_form_item_options('source');
+  if (count($sources) > 1) {
+    $form['source'] = array(
+      "#type" => "fieldset",
+      "#title" => t("Backup Source"),
+      "#collapsible" => TRUE,
+      "#collapsed" => FALSE,
+      "#tree" => FALSE,
+      "#description" => t("Choose the database to backup. Any database destinations you have created and any databases specified in your settings.php can be backed up."),
+    );
+    $form['source']['source_id'] = array(
+      "#type" => "select",
+      "#title" => t("Source"),
+      "#options" => _backup_migrate_get_destination_form_item_options('source'),
+      "#default_value" => $profile['source_id'],
+    );
+  }
+  else {
+    $form['source_id'] = array(
+      "#type" => "value",
+      "#value" => $profile['source_id'],
+      );
+  }
+
   $form['tables'] = array(
     "#type" => "fieldset",
     "#title" => t("Database Tables"),

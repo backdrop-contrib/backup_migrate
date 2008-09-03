@@ -504,15 +504,39 @@ function backup_migrate_perform_backup(&$settings) {
   }
   $settings['filename'] = _backup_migrate_clean_filename($settings['filename']);
 
+  $source = backup_migrate_get_destination($settings['source_id']);
+  if (!$source) {
+    _backup_migrate_message("Could not run backup because the source '%source' is missing.", array('%source' => $settings['source_id']), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
+  }
+  
   $file = backup_migrate_temp_file('sql');
-  if ($file) {
-    $file = backup_migrate_db_backup($file, $settings);
+  if (!$file) {
+    _backup_migrate_message("Could not run backup because a temporary file could not be created.", array(), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
   }
-  if ($file) {
-    $file = backup_migrate_file_compress($file, $settings);
+
+  $file = backup_migrate_db_backup($source, $file, $settings);
+  if (!$file) {
+    _backup_migrate_message("Could not backup the database.", array(), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
   }
-  if ($file) {
-    $file = backup_migrate_destination_save_file($file, $settings);
+
+  $file = backup_migrate_file_compress($file, $settings);
+  if (!$file) {
+    _backup_migrate_message("Could not run backup because the backup file could not be compressed.", array(), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
+  }
+
+  $file = backup_migrate_destination_save_file($file, $settings);
+  if (!$file) {
+    _backup_migrate_message("Could not run backup because the file could not be saved to the destination.", array(), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
   }
 
   // Delete any temporary files we've created.
@@ -533,7 +557,17 @@ function backup_migrate_perform_restore($destination_id, $file_id) {
 
   // Load the file from the destination.
   $file = backup_migrate_destination_get_file($destination_id, $file_id);
+  if (!$file) {
+    _backup_migrate_message("Could not restore because the file could not be loaded from the destination.", array(), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
+  }
   $file = backup_migrate_perform_restore_file($file);
+  if (!$file) {
+    _backup_migrate_message("Could not restore the database.", array(), 'error');
+    backup_migrate_temp_file("", TRUE);
+    return FALSE;
+  }
   return $file;
 }
 

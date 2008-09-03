@@ -54,7 +54,13 @@ function backup_migrate_backup_migrate_destination_types() {
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
       'save_callback' => 'backup_migrate_destination_db_save',
       'conf_callback' => 'backup_migrate_destination_db_conf',
-      'ops' => array('manual backup', 'scheduled backup', 'scheduled backup')
+      'ops' => array('source', 'manual backup', 'scheduled backup')
+      ),
+    'config_db' => array(
+      'type_name' => t('Config Database'),
+      'description' => t('Import the dump directly into a database specified in the Drupal settings.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
+      'ops' => array('source')
       ),
   );
 }
@@ -113,6 +119,7 @@ function backup_migrate_backup_migrate_destinations() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc';
   $out = array();
 
+  // Upload is scheduled backup only.
   $out[] = array(
     'destination_id' => 'upload',
     'name' => t("Upload"),
@@ -120,13 +127,30 @@ function backup_migrate_backup_migrate_destinations() {
     'ops' => array('restore'),
   );
 
-  // Manual backup only destinations
+  // Download is manual backup only.
   $out[] = array(
     'destination_id' => 'download',
     'name' => t("Download"),
     'type' => 'browser',
     'ops' => array('manual backup'),
   );
+
+  // Expose the configured databases as sources.
+  global $db_url;
+  $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
+  foreach ((array)$urls as $key => $url) {
+    $url_parts = _backup_migrate_destination_parse_url($url);
+    $location = _backup_migrate_destination_glue_url($url_parts);
+    $out[] = array(
+      'destination_id' => 'db_url:'.$key,
+      'name' => ($key == 'default' ? t("Default Database") : ($key .": ". $location)),
+      'type' => 'db',
+      'location' => $location,
+      'password' => $url_parts['pass'],
+      'conf_callback' => '',
+      'ops' => array('source'),
+    );
+  }
 
   // Manual backup only destinations
   if ($location = _backup_migrate_check_destination_dir('manual')) {
