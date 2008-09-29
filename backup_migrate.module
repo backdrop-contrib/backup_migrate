@@ -429,11 +429,12 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
 
     if ($success) {
       require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
-      $message = 'Database backup file %file saved to destination %dest.';
+      $message = 'Database backup file %file saved to destination %dest. !links';
+      $links = "";
       if ($links = _backup_migrate_destination_get_file_links($form_state['values']['destination_id'], $settings['file_id'])) {
-        $message .= ' ('. implode(", ", $links) .')';
+        $links = ' ('. implode(", ", $links) .')';
       }
-      _backup_migrate_message($message, array('%file' => $settings['filename'], '%dest' => $settings['destination']['name']));
+      _backup_migrate_message($message, array('%file' => $settings['filename'], '%dest' => $settings['destination']['name'], '!links' => $links));
     }
   }
   $form_state['redirect'] = "admin/content/backup_migrate";

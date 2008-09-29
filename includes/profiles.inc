@@ -87,8 +87,8 @@ function backup_migrate_ui_profile_display_profiles() {
       check_plain($profile['name']),
       $source ? $source['name'] : t("Missing"),
       check_plain($profile['filename']),
-      $profile['exclude_tables'] ? implode(", ", $profile['exclude_tables']) : t("None"),
-      $profile['nodata_tables'] ? implode(", ", $profile['nodata_tables']) : t("None"),
+      $profile['exclude_tables'] ? implode(", ", $profile['exclude_tables']) : t("No Tables"),
+      $profile['nodata_tables'] ? implode(", ", $profile['nodata_tables']) : t("No Tables"),
       implode(" | ", _backup_migrate_profile_get_links($profile['profile_id'])),
     );
 
@@ -122,7 +122,7 @@ function backup_migrate_ui_profile_display_profiles() {
  * Get a form to create a new profile.
  */
 function backup_migrate_ui_profile_create() {
-  $profile = _backup_migrate_profile_default_profile() + array('name' => "Untitled Profile", 'source' => 'db_url:default');
+  $profile = _backup_migrate_profile_default_profile() + array('name' => t("Untitled Profile"), 'source' => 'db_url:default');
   $output = drupal_get_form('backup_migrate_ui_profile_configure_form', $profile);
   return $output;
 }

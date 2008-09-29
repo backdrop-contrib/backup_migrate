@@ -212,15 +212,15 @@ function _backup_migrate_temp_files_delete($files) {
  * Get the compression options as an options array for a form item.
  */
 function _backup_migrate_get_compression_form_item_options() {
-  $compression_options = array("none" => "None");
+  $compression_options = array("none" => t("No Compression"));
   if (@function_exists("gzencode")) {
-    $compression_options['gzip'] = "GZip";
+    $compression_options['gzip'] = t("GZip");
   }
   if (@function_exists("bzcompress")) {
-    $compression_options['bzip'] = "BZip";
+    $compression_options['bzip'] = t("BZip");
   }
   if (class_exists('ZipArchive')) {
-    $compression_options['zip'] = "Zip";
+    $compression_options['zip'] = t("Zip");
   }
   return $compression_options;
 }

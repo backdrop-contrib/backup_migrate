@@ -148,7 +148,7 @@ function backup_migrate_ui_schedule_display_schedules() {
  * Get a form to create a new schedule.
  */
 function backup_migrate_ui_schedule_create() {
-  $schedule = array('name' => "Untitled Schedule", 'enabled' => 1, 'keep' => 0, 'period' => 60 * 60 * 24);
+  $schedule = array('name' => t("Untitled Schedule"), 'enabled' => 1, 'keep' => 0, 'period' => 60 * 60 * 24);
   $output = drupal_get_form('backup_migrate_ui_schedule_configure_form', $schedule);
   return $output;
 }
@@ -194,7 +194,7 @@ function backup_migrate_ui_schedule_configure_form(&$form_state, $schedule) {
     );
     $form['profile_id']['#description'] .= ' '. l(t("Create new profile..."), "admin/content/backup_migrate/profile/add");
     if (!$form['profile_id']['#options']) {
-      $form['profile_id']['#options'] = array('0' => '-- None Available --');
+      $form['profile_id']['#options'] = array('0' => t('-- None Available --'));
     }
 
     $period_options = array();
@@ -384,11 +384,11 @@ function _backup_migrate_schedule_get_frequency_period($frequency) {
  */
 function _backup_migrate_frequency_periods() {
   return array(
-    'seconds' => array('type' => 'seconds', 'seconds' => 1, 'title' => 'Seconds', 'singular' => t('Once a second'), 'plural' => t('Every @count seconds')),
-    'minutes' => array('type' => 'minutes', 'seconds' => 60, 'title' => 'Minutes', 'singular' => t('Once a minute'), 'plural' => t('Every @count minutes')),
-    'hours' => array('type' => 'hours', 'seconds' => 3600, 'title' => 'Hours', 'singular' => t('Once an hour'), 'plural' => t('Every @count hours')),
-    'days' => array('type' => 'days', 'seconds' => 86400, 'title' => 'Days', 'singular' => t('Once a day'), 'plural' => t('Every @count days')),
-    'weeks' => array('type' => 'weeks', 'seconds' => 604800, 'title' => 'Weeks', 'singular' => t('Once a week'), 'plural' => t('Every @count weeks')),
+    'seconds' => array('type' => 'seconds', 'seconds' => 1, 'title' => t('Seconds'), 'singular' => t('Once a second'), 'plural' => t('Every @count seconds')),
+    'minutes' => array('type' => 'minutes', 'seconds' => 60, 'title' => t('Minutes'), 'singular' => t('Once a minute'), 'plural' => t('Every @count minutes')),
+    'hours' => array('type' => 'hours', 'seconds' => 3600, 'title' => t('Hours'), 'singular' => t('Once an hour'), 'plural' => t('Every @count hours')),
+    'days' => array('type' => 'days', 'seconds' => 86400, 'title' => t('Days'), 'singular' => t('Once a day'), 'plural' => t('Every @count days')),
+    'weeks' => array('type' => 'weeks', 'seconds' => 604800, 'title' => t('Weeks'), 'singular' => t('Once a week'), 'plural' => t('Every @count weeks')),
   );
 }
 

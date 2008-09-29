@@ -376,7 +376,7 @@ function backup_migrate_ui_destination_create($type = NULL) {
 
   // If a valid type has been specified, present a form
   if (isset($types[$type])) {
-    $destination = array('type' => $type, 'name' => "Untitled Destination") + $types[$type];
+    $destination = array('type' => $type, 'name' => t("Untitled Destination")) + $types[$type];
     $output = drupal_get_form('backup_migrate_ui_destination_configure_form', $destination);
   }
   else {
@@ -385,7 +385,7 @@ function backup_migrate_ui_destination_create($type = NULL) {
     foreach ($types as $key => $type) {
       if ($type['conf_callback']) {
         $type_url_str = str_replace('_', '-', $key);
-        $out = '<dt>'. l($type['type_name'], "admin/content/backup_migrate/destination/add/$type_url_str", array('title' => t('Add a new @s destination.', array('@s' => $type['type_name'])))) .'</dt>';
+        $out = '<dt>'. l($type['type_name'], "admin/content/backup_migrate/destination/add/$type_url_str", array('attributes' => array('title' => t('Add a new @s destination.', array('@s' => $type['type_name']))))) .'</dt>';
         $out .= '<dd>'. filter_xss_admin($type['description']) .'</dd>';
         $items[] = $out;
       }
