@@ -218,6 +218,7 @@ function _backup_migrate_setup_databaase_defaults() {
   }
   if (variable_get("backup_migrate_file_name", NULL)) {
     $settings = array(
+      'source_id' => 'db_url:default',
       'exclude_tables' => variable_get("backup_migrate_exclude_tables", _backup_migrate_default_exclude_tables()),
       'nodata_tables' => variable_get("backup_migrate_nodata_tables", _backup_migrate_default_structure_only_tables()),
       'filename' => variable_get("backup_migrate_file_name", _backup_migrate_default_filename()),

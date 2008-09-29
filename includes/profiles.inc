@@ -341,6 +341,7 @@ function _backup_migrate_profile_default_profile() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
   return array(
+    'source_id' => 'db_url:default',
     'exclude_tables' => _backup_migrate_default_exclude_tables(),
     'nodata_tables' => _backup_migrate_default_structure_only_tables(),
     'filename' => _backup_migrate_default_filename(),
