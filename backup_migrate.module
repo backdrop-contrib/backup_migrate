@@ -239,13 +239,29 @@ function backup_migrate_menu() {
 }
 
 /**
- * Implementation of hook_cron(),
+ * Implementation of hook_cron().
  *
- * Takes care of scheduled backups.
+ * Takes care of scheduled backups and deletes abandoned temp files.
  */
 function backup_migrate_cron() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/schedules.inc';
   backup_migrate_schedules_run();
+
+  // Delete temp files abandoned for 6 or more hours.
+  foreach (file_scan_directory(file_directory_temp(), 'backup_migrate_*', array('.', '..'), 0, FALSE) as $file) {
+    if (filectime($file->filename) < time() - 21600) {
+      unlink($file->filename);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_exit().
+ */
+function backup_migrate_exit() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  // Delete any temporary files generated during this execution.
+  backup_migrate_temp_file('', TRUE);
 }
 
 /**

@@ -135,8 +135,11 @@ function backup_migrate_temp_file($extension = "", $delete_all = FALSE) {
     return;
   }
   else {
-    $file = tempnam(file_directory_temp(), 'tmp_');
-    $file .= $extension ? ".". $extension : "";
+    $file = tempnam(file_directory_temp(), 'backup_migrate_');
+    if (!empty($extension)) {
+      unlink($file);
+      $file .= '.'. $extension;
+    }
     $files[] = $file;
     return $file;
   }
