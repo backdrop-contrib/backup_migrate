@@ -45,6 +45,7 @@ function backup_migrate_backup_migrate_profiles() {
     $profile['db'] = TRUE;
     $profile['exclude_tables'] = unserialize($profile['exclude_tables']);
     $profile['nodata_tables'] = unserialize($profile['nodata_tables']);
+    $profile['filters'] = unserialize($profile['filters']);
     $out[$profile['profile_id']] = $profile;
   }
   return $out;
@@ -53,15 +54,13 @@ function backup_migrate_backup_migrate_profiles() {
 /**
  * Update an existing profile or create a new one.
  */
-function backup_migrate_profile_save_profile(&$profile) {
-  $profile['nodata_tables'] = serialize(array_filter($profile['nodata_tables']));
-  $profile['exclude_tables'] = serialize(array_filter($profile['exclude_tables']));
+function backup_migrate_profile_save_profile($profile) {
+  $profile['nodata_tables'] = serialize(array_filter((array)$profile['nodata_tables']));
+  $profile['exclude_tables'] = serialize(array_filter((array)$profile['exclude_tables']));
+  $profile['filters'] = serialize(array_filter((array)$profile['filters']));
 
   drupal_write_record('backup_migrate_profiles', $profile, $profile['profile_id'] ? array('profile_id') : array());
   _backup_migrate_message('Profile setting saved: %profile', array('%profile' => $profile['name']));
-
-  $profile['nodata_tables'] = unserialize($profile['nodata_tables']);
-  $profile['exclude_tables'] = serialize($profile['exclude_tables']);
 }
 
 /**
@@ -220,6 +219,8 @@ function _backup_migrate_ui_backup_settings_form($profile) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+
   $form           = array();
   $tables         = _backup_migrate_get_table_names();
 
@@ -310,6 +311,7 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#default_value" => $profile['timestamp_format'],
     "#description" => t('Should be a PHP <a href="!url">date()</a> format string.', array('!url' => 'http://www.php.net/date')),
   );
+  /*
   $compression_options = _backup_migrate_get_compression_form_item_options();
   $form['file']['compression'] = array(
     "#type" => count($compression_options) > 1 ? "select" : 'value',
@@ -317,6 +319,9 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#options" => $compression_options,
     "#default_value" => $profile['compression'],
   );
+  */
+  $form = array_merge_recursive($form, backup_migrate_filters_settings_form($profile['filters']));
+
   return $form;
 }
 
@@ -340,6 +345,7 @@ function _backup_migrate_profile_get_links($profile_id) {
 function _backup_migrate_profile_default_profile() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
   return array(
     'source_id' => 'db_url:default',
     'exclude_tables' => _backup_migrate_default_exclude_tables(),
@@ -348,6 +354,7 @@ function _backup_migrate_profile_default_profile() {
     'append_timestamp' => 1,
     'timestamp_format' => 'Y-m-d\TH-i-s',
     'compression' => "none",
+    'filters' => backup_migrate_filters_settings_default(),
   );
 }
 

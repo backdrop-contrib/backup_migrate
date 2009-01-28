@@ -259,9 +259,11 @@ function backup_migrate_cron() {
  * Implementation of hook_exit().
  */
 function backup_migrate_exit() {
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-  // Delete any temporary files generated during this execution.
-  backup_migrate_temp_file('', TRUE);
+  if (function_exists('drupal_get_path')) {
+    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    // Delete any temporary files generated during this execution.
+    _backup_migrate_temp_files_delete();
+  }
 }
 
 /**
@@ -450,7 +452,7 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
       if ($links = _backup_migrate_destination_get_file_links($form_state['values']['destination_id'], $settings['file_id'])) {
         $links = ' ('. implode(", ", $links) .')';
       }
-      _backup_migrate_message($message, array('%file' => $settings['filename'], '%dest' => $settings['destination']['name'], '!links' => $links));
+      _backup_migrate_message($message, array('%file' => $settings['filename'], '%dest' => $settings['destination']['name'], '!links' => $links ? $links : ""));
     }
   }
   $form_state['redirect'] = "admin/content/backup_migrate";
@@ -509,6 +511,7 @@ function backup_migrate_perform_backup(&$settings) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
   if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
@@ -523,40 +526,40 @@ function backup_migrate_perform_backup(&$settings) {
   $source = backup_migrate_get_destination($settings['source_id']);
   if (!$source) {
     _backup_migrate_message("Could not run backup because the source '%source' is missing.", array('%source' => $settings['source_id']), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
-  
-  $file = backup_migrate_temp_file('sql');
+
+  $file = new backup_file();
+  $file->filename($settings['filename']);
   if (!$file) {
     _backup_migrate_message("Could not run backup because a temporary file could not be created.", array(), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
 
   $file = backup_migrate_db_backup($source, $file, $settings);
   if (!$file) {
     _backup_migrate_message("Could not backup the database.", array(), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
 
-  $file = backup_migrate_file_compress($file, $settings);
+  $file = backup_migrate_filters_backup($file, $settings);
   if (!$file) {
-    _backup_migrate_message("Could not run backup because the backup file could not be compressed.", array(), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
-
+ 
   $file = backup_migrate_destination_save_file($file, $settings);
   if (!$file) {
     _backup_migrate_message("Could not run backup because the file could not be saved to the destination.", array(), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
 
   // Delete any temporary files we've created.
-  backup_migrate_temp_file("", TRUE);
+  _backup_migrate_temp_files_delete();
   return $file;
 }
 
@@ -565,6 +568,7 @@ function backup_migrate_perform_backup(&$settings) {
  */
 function backup_migrate_perform_restore($destination_id, $file_id) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
   if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
@@ -575,13 +579,21 @@ function backup_migrate_perform_restore($destination_id, $file_id) {
   $file = backup_migrate_destination_get_file($destination_id, $file_id);
   if (!$file) {
     _backup_migrate_message("Could not restore because the file could not be loaded from the destination.", array(), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
+
+  // Load the file from the destination.
+  $file = backup_migrate_filters_restore($file);
+  if (!$file) {
+    _backup_migrate_temp_files_delete();
+    return FALSE;
+  }
+
   $file = backup_migrate_perform_restore_file($file);
   if (!$file) {
     _backup_migrate_message("Could not restore the database.", array(), 'error');
-    backup_migrate_temp_file("", TRUE);
+    _backup_migrate_temp_files_delete();
     return FALSE;
   }
   return $file;
@@ -599,23 +611,17 @@ function backup_migrate_perform_restore_file($file) {
     set_time_limit(600);
   }
 
-  $filename = $file['filename'];
-  if ($file) {
-    $file = backup_migrate_file_decompress($file);
-  }
-  if ($file) {
-    $num = backup_migrate_db_restore($file);
-  }
+  $num = backup_migrate_db_restore($file);
 
   $destination = backup_migrate_get_destination($destination_id);
   $message = 'Database restored from %destination file %file. %num SQL commands executed.';
   if ($destination && in_array('list files', $destination['ops'])) {
     $message .= ' (<a href="!restoreurl">Restore again...</a>)';
   }
-  _backup_migrate_message($message, array("%destination" => $destination['name'], "%num" => $num, '%file' => $filename, '!restoreurl' => url('admin/content/backup_migrate/destination/restorefile/'.$destination_id."/".$file_id)));
+  _backup_migrate_message($message, array("%destination" => $destination['name'], "%num" => $num, '%file' => $file->filename(), '!restoreurl' => url('admin/content/backup_migrate/destination/restorefile/'.$destination_id."/".$file_id)));
 
   // Delete any temp files we've created.
-  backup_migrate_temp_file("", TRUE);
+  _backup_migrate_temp_files_delete();
   return $file;
 }
 

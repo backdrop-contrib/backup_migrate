@@ -346,14 +346,18 @@ function backup_migrate_ui_destination_display_files($destination_id) {
     $can_delete = !empty($destination['delete_callback']);
 
     $i          = 0;
-    foreach ((array)$files as $info) {
-      $sort[] = $info[$sort_key];
-      $out[] = array(
-        check_plain($info['filename']),
-        format_date($info['filemtime'], 'small'),
-        format_size($info['filesize']),
-        implode(" | ", _backup_migrate_destination_get_file_links($destination_id, $info['file_id'])),
-      );
+    foreach ((array)$files as $file) {
+      $info = $file->info();
+      // Show only files that can be restored from.
+      if ($file->can_backup() || $file->can_restore()) {
+        $sort[] = $info[$sort_key];
+        $out[] = array(
+          check_plain($info['filename']),
+          format_date($info['filemtime'], 'small'),
+          format_size($info['filesize']),
+          implode(" | ", _backup_migrate_destination_get_file_links($destination_id, $info['file_id'])),
+        );
+      }
     }
 
     array_multisort($sort, $sort_dir, $out);
@@ -491,9 +495,9 @@ function backup_migrate_ui_destination_delete_destination_confirm_submit($form, 
  * Download a file to the browser.
  */
 function backup_migrate_ui_destination_download_file($destination_id, $file_id) {
-  if ($info = backup_migrate_destination_get_file($destination_id, $file_id)) {
+  if ($file = backup_migrate_destination_get_file($destination_id, $file_id)) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-    backup_migrate_file_transfer($info);
+    $file->transfer();
   }
 }
 
@@ -510,7 +514,7 @@ function backup_migrate_ui_destination_restore_file($destination_id, $file_id) {
 /**
  * Ask confirmation for file restore.
  */
-function backup_migrate_ui_destination_restore_file_confirm($destination_id, $file_id) {
+function backup_migrate_ui_destination_restore_file_confirm(&$form_state, $destination_id, $file_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
   return confirm_form($form, t('Are you sure you want to restore the database?'), "admin/content/backup_migrate/destination/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));

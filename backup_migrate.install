@@ -70,10 +70,9 @@ function backup_migrate_schema() {
         'length' => 14,
         'not null' => TRUE
       ),
-      'compression' => array(
-        'description' => t('The compression of the file.'),
-        'type' => 'varchar',
-        'length' => 8,
+      'filters' => array(
+        'description' => t('The filter settings for the profile.'),
+        'type' => 'text',
         'not null' => TRUE
       ),
     ),
@@ -224,7 +223,7 @@ function _backup_migrate_setup_databaase_defaults() {
       'filename' => variable_get("backup_migrate_file_name", _backup_migrate_default_filename()),
       'append_timestamp' => variable_get("backup_migrate_append_timestamp", FALSE) ? 1 : 0,
       'timestamp_format' => variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s'),
-      'compression' => variable_get("backup_migrate_compression", "none"),
+      'filters' => array('compression' => variable_get("backup_migrate_compression", "none")),
     );
   }
   else {

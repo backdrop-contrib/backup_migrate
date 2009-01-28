@@ -7,204 +7,26 @@
  * General file handling code for Backup and Migrate.
  */
 
-/**
- * Transfer file using http to client. Similar to the built in file_transfer,
- *  but it calls module_invoke_all('exit') so that temp files can be deleted.
- *
- * @param $info An info array (as returned by backup_migrate_file_info) for the file.
- */
-function backup_migrate_file_transfer($info) {
-  $headers = array(
-    'Content-Type: '. ($info['filemime'] ? $info['filemime'] : 'application/octet-stream'),
-    'Content-Disposition: attachment; filename="'. $info['filename'] .'"',
-  );
-  if ($info['filesize']) {
-    $headers[] = 'Content-Length: '. $info['filesize'];
-  }
-
-  ob_end_clean();
-
-  foreach ($headers as $header) {
-    // To prevent HTTP header injection, we delete new lines that are
-    // not followed by a space or a tab.
-    // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-    $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
-    drupal_set_header($header);
-  }
-
-  // Transfer file in 1024 byte chunks to save memory usage.
-  if ($fd = fopen($info['filepath'], 'rb')) {
-    while (!feof($fd)) {
-      print fread($fd, 1024);
-    }
-    fclose($fd);
-  }
-  else {
-    drupal_not_found();
-  }
-  module_invoke_all('exit');
-  exit();
-}
 
 /**
- * Decompress a file with the given settings.
- *  Also updates settings to reflect new file mime and file extension.
+ * Add a file to the temporary files list for deletion when we're done.
  */
-function backup_migrate_file_decompress(&$file) {
-  $success = FALSE;
-  $temp_sql = backup_migrate_temp_file('sql');
-
-  switch ($file['type']) {
-    case "sql":
-      return $file;
-    break;
-
-    case "gzip":
-      $success = _backup_migrate_gzip_decode($file['filepath'], $temp_sql);
-      break;
-
-    case "bzip":
-      $success = _backup_migrate_bzip_decode($file['filepath'], $temp_sql);
-      break;
-
-    case "zip":
-      $success = _backup_migrate_zip_decode($file['filepath'], $temp_sql);
-      break;
-  }
-
-  if ($success) {
-    $file['filepath'] = $temp_sql;
-    $file = backup_migrate_file_info($file['filepath']);
-  }
-  else {
-    _backup_migrate_message("Could not decompress backup file. Please check that the file is valid.", array(), 'error');
-  }
-  return $success ? $file : NULL;
-}
-
-/**
- * Compress a file with the given settings.
- *  Also updates settings to reflect new file mime and file extension.
- */
-function backup_migrate_file_compress($file, &$settings) {
-  switch ($settings['compression']) {
-    case "gzip":
-      $temp_gz = backup_migrate_temp_file('gz');
-      if ($success = _backup_migrate_gzip_encode($file, $temp_gz, 9)) {
-        $file = $temp_gz;
-        $settings['filename'] .= ".gz";
-        $settings['filemime'] = 'application/x-gzip';
-      }
-      break;
-
-    case "bzip":
-      $temp_bz = backup_migrate_temp_file('bz');
-      if ($success = _backup_migrate_bzip_encode($file, $temp_bz)) {
-        $file = $temp_bz;
-        $settings['filename'] .= ".bz";
-        $settings['filemime'] = 'application/x-bzip';
-      }
-      break;
-
-    case "zip":
-      $temp_zip = backup_migrate_temp_file('zip');
-      if ($success = _backup_migrate_zip_encode($file, $temp_zip, $filename)) {
-        $file = $temp_zip;
-        $settings['filename'] .= ".zip";
-        $settings['filemime'] = 'application/zip';
-      }
-      break;
-  }
-  if (!$file) {
-    _backup_migrate_message("Could not compress backup file. Try backing up without compression.", array(), 'error');
-  }
-
-  return $file;
-}
-
-/**
- * Get a temp file. Store it in the normal save path for slightly better security
- *   in shared environments.
- */
-function backup_migrate_temp_file($extension = "", $delete_all = FALSE) {
+function backup_migrate_temp_files_add($filepath = NULL) {
   static $files = array();
-
-  if ($delete_all) {
-    _backup_migrate_temp_files_delete($files);
-    $files = array();
-    return;
+  if (!$filepath) {
+    return $files;
   }
   else {
-    $file = tempnam(file_directory_temp(), 'backup_migrate_');
-    if (!empty($extension)) {
-      unlink($file);
-      $file .= '.'. $extension;
-    }
-    $files[] = $file;
-    return $file;
+    $files[] = $filepath;
   }
 }
 
-/**
- * Get the basic info for a backup file on the server.
- */
-function backup_migrate_file_info($path) {
-  if ($type = _backup_migrate_file_get_filetype($path)) {
-    $out              = $type;
-    $out['filesize']  = filesize($path);
-    $out['filename']  = basename($path);
-    $out['file_id']   = basename($path);
-    $out['filemtime'] = filemtime($path);
-    $out['filectime'] = filectime($path);
-    $out['filepath']  = $path;
-    return $out;
-  }
-  return NULL;
-}
-
-/**
- * Return a list of backup filetypes.
- */
-function _backup_migrate_filetypes() {
-  return array(
-    "sql" => array(
-      "extension" => ".sql",
-      "filemime" => "text/x-sql",
-    ),
-    "gzip" => array(
-      "extension" => ".gz",
-      "filemime" => "application/x-gzip",
-    ),
-    "bzip" => array(
-      "extension" => ".bz",
-      "filemime" => "application/x-bzip",
-    ),
-    "zip" => array(
-      "extension" => ".zip",
-      "filemime" => "application/zip",
-    ),
-  );
-}
-
-/**
- * Get the filetype info of the given file, or false if the file is not a valid type.
- */
-function _backup_migrate_file_get_filetype($filename) {
-  $types = _backup_migrate_filetypes();
-  foreach ($types as $key => $type) {
-    $extlen = drupal_strlen($type['extension']);
-    if (drupal_substr($filename, -$extlen, $extlen) === $type['extension']) {
-      return $type + array('type' => $key);
-    }
-  }
-  return FALSE;
-}
 
 /**
  * Delete all temporary files.
  */
-function _backup_migrate_temp_files_delete($files) {
-  foreach ($files as $file) {
+function _backup_migrate_temp_files_delete() {
+  foreach (backup_migrate_temp_files_add() as $file) {
     if (file_exists($file)) {
       @unlink($file);
     }
@@ -212,137 +34,22 @@ function _backup_migrate_temp_files_delete($files) {
 }
 
 /**
- * Get the compression options as an options array for a form item.
+ * Return a list of backup filetypes.
  */
-function _backup_migrate_get_compression_form_item_options() {
-  $compression_options = array("none" => t("No Compression"));
-  if (@function_exists("gzencode")) {
-    $compression_options['gzip'] = t("GZip");
-  }
-  if (@function_exists("bzcompress")) {
-    $compression_options['bzip'] = t("BZip");
-  }
-  if (class_exists('ZipArchive')) {
-    $compression_options['zip'] = t("Zip");
-  }
-  return $compression_options;
+function _backup_migrate_filetypes() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+  $out = array(
+    "sql" => array(
+      "extension" => "sql",
+      "filemime" => "text/x-sql",
+      "backup" => TRUE,
+      "restore" => TRUE,
+    ),
+  );
+  $out += backup_migrate_filters_file_types();
+  return $out;
 }
 
-/**
- * Gzip encode a file.
- */
-function _backup_migrate_gzip_encode($source, $dest, $level = 9) {
-  $success = FALSE;
-  if (@function_exists("gzopen")) {
-    if (($fp_out = gzopen($dest, 'wb'. $level)) && ($fp_in = fopen($source, 'rb'))) {
-      while (!feof($fp_in)) {
-        gzwrite($fp_out, fread($fp_in, 1024 * 512));
-      }
-      $success = TRUE;
-    }
-    @fclose($fp_in);
-    @gzclose($fp_out);
-  }
-  return $success;
-}
-
-/**
- * Gzip decode a file.
- */
-function _backup_migrate_gzip_decode($source, $dest) {
-  $success = FALSE;
-  if (@function_exists("gzopen")) {
-    if (($fp_out = fopen($dest, 'wb')) && ($fp_in = gzopen($source, 'rb'))) {
-      while (!feof($fp_in)) {
-        fwrite($fp_out, gzread($fp_in, 1024 * 512));
-      }
-      $success = TRUE;
-    }
-    @gzclose($fp_in);
-    @fclose($fp_out);
-  }
-  return $success;
-}
-
-/**
- * Bzip encode a file.
- */
-function _backup_migrate_bzip_encode($source, $dest) {
-  $success = FALSE;
-  if (@function_exists("bzopen")) {
-    if (($fp_out = bzopen($dest, 'w')) && ($fp_in = fopen($source, 'rb'))) {
-      while (!feof($fp_in)) {
-        bzwrite($fp_out, fread($fp_in, 1024 * 512));
-      }
-      $success = TRUE;
-    }
-    else {
-      $error = TRUE;
-    }
-    @fclose($fp_in);
-    @bzclose($fp_out);
-  }
-  return $success;
-}
-
-/**
- * Bzip decode a file.
- */
-function _backup_migrate_bzip_decode($source, $dest) {
-  $success = FALSE;
-  if (@function_exists("bzopen")) {
-    if (($fp_out = fopen($dest, 'w')) && ($fp_in = bzopen($source, 'rb'))) {
-      while (!feof($fp_in)) {
-        fwrite($fp_out, gzread($fp_in, 1024 * 512));
-      }
-      $success = TRUE;
-    }
-    else {
-      $error = TRUE;
-    }
-    @bzclose($fp_in);
-    @fclose($fp_out);
-  }
-  return $success;
-}
-
-/**
- * Zip encode a file.
- */
-function _backup_migrate_zip_encode($source, $dest, $filename) {
-  $success = FALSE;
-  if (class_exists('ZipArchive')) {
-    $zip = new ZipArchive;
-    $res = $zip->open($dest, constant("ZipArchive::CREATE"));
-    if ($res === TRUE) {
-      $zip->addFile($source, $filename);
-      $success = $zip->close();
-    }
-  }
-  return $success;
-}
-
-/**
- * Zip decode a file.
- */
-function _backup_migrate_zip_decode($source, $dest, $filename) {
-  $success = FALSE;
-  $zip = new ZipArchive;
-  if (class_exists('ZipArchive')) {
-    if (($fp_out = fopen($dest, "w")) && ($zip->open($source)) && ($fp_in = $zip->getStream($filename))) {
-      while (!feof($fp_in)) {
-        fwrite($fp_out, fread($fp_in, 1024 * 512));
-      }
-      $success = TRUE;
-    }
-    else {
-      $error = TRUE;
-    }
-    @fclose($fp_in);
-    @fclose($fp_out);
-  }
-  return $success;
-}
 
 /**
  * Construct a filename using token and some cleaning.
@@ -373,3 +80,261 @@ function _backup_migrate_default_filename() {
   }
 }
 
+/**
+ * A backup file which allows for saving to and reading from the server.
+ */
+class backup_file {
+  var $file_info = array();
+  var $type = array();
+  var $ext = array();
+  var $path = "";
+  var $name = "";
+
+  /**
+   * Construct a file object given a file path, or create a temp file for writing.
+   */
+  function backup_file($path = NULL) {
+    if ($path) {
+      $this->set_filepath($path);
+    }
+    else {
+      $this->temporary_file();
+    }
+  }
+
+  /**
+   * Get the current filepath.
+   */
+  function filepath() {
+    return $this->path;
+  }
+
+  /**
+   * Get the final filename.
+   */
+  function filename($name = NULL) {
+    if ($name) {
+      $this->name = $name;
+    }
+    return $this->name .'.'. $this->extension();
+  }
+
+
+  /**
+   * Set the current filepath.
+   */
+  function set_filepath($path) {
+    $this->path = $path;
+    $this->calculate_file_info();
+  }
+
+  /**
+   * Get one or all pieces of info for the file.
+   */
+  function info($key = NULL) {
+    if ($key) {
+      return $this->file_info[$key];
+    }
+    return $this->file_info;
+  }
+
+  /**
+   * Get the file extension.
+   */
+  function extension() {
+    return implode(".", $this->ext);
+  }
+
+  /**
+   * Get the file type.
+   */
+  function type() {
+    return $this->type;
+  }
+
+  /**
+   * Get the file mimetype.
+   */
+  function mimetype() {
+    return @$this->type['filemime'] ? $this->type['filemime'] : 'application/octet-stream';
+  }
+
+
+  /**
+   * Can this file be used to backup to.
+   */
+  function can_backup() {
+    return $this->type['backup'];
+  }
+
+  /**
+   * Can this file be used to restore to.
+   */
+  function can_restore() {
+    return $this->type['restore'];
+  }
+
+  /**
+   * Open a file for reading or writing.
+   */
+  function open($write = FALSE, $binary = FALSE) {
+    if (!$this->handle) {
+      $mode = ($write ? "w" : "r") . ($binary ? "b" : "");
+      $this->handle = fopen($this->filepath(), $write ? "w" : "r");
+      return $this->handle;
+    }
+    return NULL;
+  }
+
+  /**
+   * Close a file when we're done reading/writing.
+   */
+  function close() {
+    fclose($this->handle);
+    $this->handle = NULL;
+  }
+
+  /**
+   * Write a line to the file.
+   */
+  function write($data) {
+    if ($this->handle) {
+      fwrite($this->handle, $data);
+    }
+  }
+
+  /**
+   * Read a line from the file.
+   */
+  function read($size = NULL) {
+    if ($this->handle) {
+      return $size ? fgets($this->handle, $size) : fgets($this->handle);
+    }
+    return NULL;
+  }
+  
+  /**
+   * Transfer file using http to client. Similar to the built in file_transfer,
+   *  but it calls module_invoke_all('exit') so that temp files can be deleted.
+   */
+  function transfer() {
+    $headers = array(
+      'Content-Type: '. $this->mimetype(),
+      'Content-Disposition: attachment; filename="'. $this->filename() .'"',
+    );
+    if ($size = $this->info('filesize')) {
+      $headers[] = 'Content-Length: '. $size;
+    }
+
+    ob_end_clean();
+
+    foreach ($headers as $header) {
+      // To prevent HTTP header injection, we delete new lines that are
+      // not followed by a space or a tab.
+      // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+      $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
+      drupal_set_header($header);
+    }
+
+    // Transfer file in 1024 byte chunks to save memory usage.
+    if ($this->open(FALSE, TRUE)) {
+      while ($data = $this->read(1024)) {
+        print $data;
+      }
+      $this->close();
+    }
+    else {
+      drupal_not_found();
+    }
+    module_invoke_all('exit');
+    exit();
+  }
+
+  /**
+   * Push a file extension onto the file and return the previous file path.
+   */
+  function push_type($extension) {
+    $types = _backup_migrate_filetypes();
+    if ($type = @$types[$extension]) {
+      $this->push_filetype($type);
+    }
+
+    $out = $this->filepath();
+    $this->temporary_file();
+    return $out;
+  }
+
+  /**
+   * Push a file extension onto the file and return the previous file path.
+   */
+  function pop_type() {
+    $this->pop_filetype();
+    $out = $this->filepath();
+    $this->temporary_file();
+    return $out;
+  }
+
+  /**
+   * Set the current file type.
+   */
+  function set_filetype($type) {
+    $this->type = $type;
+    $this->ext = array($type['extension']);
+  }
+
+  /**
+   * Set the current file type.
+   */
+  function push_filetype($type) {
+    $this->ext[] = $type['extension'];
+    $this->type = $type;
+  }
+
+  /**
+   * Set the current file type.
+   */
+  function pop_filetype() {
+    array_pop($this->ext);
+    $this->detect_filetype_from_extension();
+  }
+
+  /**
+   * Get the basic info for a backup file on the server.
+   */
+  function calculate_file_info() {
+    $path = $this->filepath();
+    if (file_exists($path)) {
+      $this->file_info['filesize']  = filesize($path);
+      $this->file_info['filename']  = basename($path);
+      $this->file_info['file_id']   = basename($path);
+      $this->file_info['filemtime'] = filemtime($path);
+      $this->file_info['filectime'] = filectime($path);
+      $this->ext = explode('.', $this->file_info['filename']);
+      $this->filename(array_shift($this->ext));
+      $this->detect_filetype_from_extension();
+    }
+  }
+
+  /**
+   * Get the filetype info of the given file, or false if the file is not a valid type.
+   */
+  function detect_filetype_from_extension() {
+    $ext = end($this->ext);
+    $types = _backup_migrate_filetypes();
+    foreach ($types as $key => $type) {
+      if ($ext === $type['extension']) {
+        $this->type = $type;
+      }
+    }
+  }
+
+  /**
+  * Get a temporary file name with path.
+  */
+  function temporary_file() {
+    $file = file_directory_temp() .'/'. uniqid('backup_migrate_');
+    $file .= '.'. $this->extension();
+    backup_migrate_temp_files_add($file);
+    $this->set_filepath($file);
+  }
+}

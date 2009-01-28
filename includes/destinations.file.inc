@@ -10,11 +10,11 @@
 /**
  * File save destination callback.
  */
-function backup_migrate_destination_file_save($destination, $file, &$settings) {
+function backup_migrate_destination_file_save($destination, $file, $settings) {
   if ($dir = @$destination['location']) {
     if (_backup_migrate_destination_file_check_dir($dir)) {
-      $filepath = rtrim($dir, "/") ."/". $settings['filename'];
-      rename($file, $filepath);
+      $filepath = rtrim($dir, "/") ."/". $file->filename();
+      rename($file->filepath(), $filepath);
       return $file;
     }
   }
@@ -27,7 +27,7 @@ function backup_migrate_destination_file_load($destination, $file_id) {
   $filepath = rtrim($destination['location'], '/') .'/'. $file_id;
   if (file_exists($filepath)) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-    return backup_migrate_file_info($filepath);
+    return new backup_file($filepath);
   }
 }
 
@@ -49,9 +49,7 @@ function backup_migrate_destination_files_list($destination) {
       require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
       while (FALSE !== ($file = readdir($handle))) {
         $filepath = $dir ."/". $file;
-        if ($info = backup_migrate_file_info($filepath)) {
-          $files[$file] = $info;
-        }
+        $files[$file] = new backup_file($filepath);
       }
     }
   }

@@ -11,12 +11,12 @@
  * Restore from a previously backed up files. File must be a decompressed SQL file.
  */
 function backup_migrate_db_restore($file) {
-  // Open the file (with fopen or gzopen depending on file format).
-  if ($handle = @fopen($file['filepath'], "r")) {
-    $num = 0;
+  $num = 0;
 
+  // Open the file (with fopen or gzopen depending on file format).
+  if ($file->open()) {
     // Read one line at a time and run the query.
-    while ($line = fgets($handle)) {
+    while ($line = $file->read()) {
       $line = trim($line);
       if ($line) {
         // Use the helper instead of the api function to avoid substitution of '{' etc.
@@ -25,10 +25,10 @@ function backup_migrate_db_restore($file) {
       }
     }
     // Close the file with fclose/gzclose.
-    fclose($handle);
+    $file->close();
   }
   else {
-    drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $file['filepath'])), 'error');
+    drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $file->filepath())), 'error');
   }
   return $num;
 }
@@ -36,9 +36,8 @@ function backup_migrate_db_restore($file) {
 /**
  * Build the database dump file. Takes a list of tables to exclude and some formatting options.
  */
-function backup_migrate_db_backup($source, $file, &$settings) {
-  $settings['filename'] .= ".sql";
-  $settings['filemime'] = 'text/x-sql';
+function backup_migrate_db_backup($source, $file, $settings) {
+  $file->push_type('sql');
 
   // Switch to a different db if specified.
   _backup_migrate_db_switch_db(_backup_migrate_destination_glue_url($source, FALSE));
@@ -58,19 +57,19 @@ function backup_migrate_db_backup($source, $file, &$settings) {
  *  The files are a little harder to read, but human-readability is not a priority
  */
 function _backup_migrate_get_dump_sql($file, $exclude, $nodata) {
-  if ($dst = fopen($file, "w")) {
-    fwrite($dst, _backup_migrate_get_sql_file_header());
+  if ($file->open(TRUE)) {
+    $file->write(_backup_migrate_get_sql_file_header());
     $alltables = _backup_migrate_get_tables();
     foreach ($alltables as $table) {
       if ($table['Name'] && !isset($exclude[$table['Name']])) {
-        fwrite($dst, _backup_migrate_get_table_structure_sql($table));
+        $file->write(_backup_migrate_get_table_structure_sql($table));
         if (!in_array($table['Name'], $nodata)) {
-          _backup_migrate_dump_table_data_sql_to_handle($dst, $table);
+          _backup_migrate_dump_table_data_sql_to_file($file, $table);
         }
       }
     }
-    fwrite($dst, _backup_migrate_get_sql_file_footer());
-    fclose($dst);
+    $file->write(_backup_migrate_get_sql_file_footer());
+    $file->close();
     return TRUE;
   }
   else {
@@ -98,7 +97,7 @@ function _backup_migrate_get_table_structure_sql($table) {
 /**
  *  Get the sql to insert the data for a given table
  */
-function _backup_migrate_dump_table_data_sql_to_handle($dst, $table) {
+function _backup_migrate_dump_table_data_sql_to_file($file, $table) {
   $data = db_query("SELECT * FROM `". $table['Name'] ."`");
   while ($row = db_fetch_array($data)) {
     $items = array();
@@ -106,10 +105,7 @@ function _backup_migrate_dump_table_data_sql_to_handle($dst, $table) {
       $items[] = is_null($value) ? "null" : "'". db_escape_string($value) ."'";
     }
     if ($items) {
-      fwrite(
-        $dst,
-        "INSERT INTO `". $table['Name'] ."` VALUES (". implode(",", $items) .");\n"
-        );
+      $file->write("INSERT INTO `". $table['Name'] ."` VALUES (". implode(",", $items) .");\n");
     }
   }
 }
