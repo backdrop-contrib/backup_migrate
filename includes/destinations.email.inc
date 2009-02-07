@@ -8,39 +8,45 @@
  */
 
 /**
- * Email save destination callback.
+ * A destination for emailing database backups.
+ *
+ * @ingroup backup_migrate_destinations
  */
-function backup_migrate_destination_email_save($destination, $file, &$settings) {
-  if ($to = @$destination['location']) {
+class backup_migrate_destination_email extends backup_migrate_destination {
+  var $supported_ops = array('scheduled backup', 'manual backup', 'configure');
+
+  /**
+   * Save to (ie. email the database file) to the email destination.
+   */
+  function save_file($file, $settings) {
     $attachment = new stdClass();
-    $attachment->filename = $settings['filename'];
-    $attachment->path = $file;
-    _backup_migrate_destination_email_mail_backup($attachment, $to);
+    $attachment->filename = $file->filename();
+    $attachment->path = $file->filepath();
+    _backup_migrate_destination_email_mail_backup($attachment, $this->location());
     return $file;
   }
-}
 
-/**
- * Destination configuration callback.
- */
-function backup_migrate_destination_email_conf($destination, $form) {
-  $form['location'] = array(
-    "#type" => "textfield",
-    "#title" => t("Email Address"),
-    "#default_value" => $destination['location'],
-    "#required" => TRUE,
-    "#description" => t('Enter the email address to send the backup files to. Make sure the email sever can handle large file attachments'),
-  );
-  $form['#validate'] = array('backup_migrate_destination_email_conf_validate');
-  return $form;
-}
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function settings_form($form) {
+    $form['location'] = array(
+      "#type" => "textfield",
+      "#title" => t("Email Address"),
+      "#default_value" => $this->location(),
+      "#required" => TRUE,
+      "#description" => t('Enter the email address to send the backup files to. Make sure the email sever can handle large file attachments'),
+    );
+    return $form;
+  }
 
-/**
- * Validate the configuration form. Make sure the email address is valid.
- */
-function backup_migrate_destination_email_conf_validate($form, &$form_state) {
-  if (!valid_email_address($form_state['values']['location'])) {
-    form_set_error('[location]', t('The e-mail address %mail is not valid.', array('%mail' => $form_state['values']['location'])));
+  /**
+   * Validate the configuration form. Make sure the email address is valid.
+   */
+  function settings_form_validate($values) {
+    if (!valid_email_address($values['location'])) {
+      form_set_error('[location]', t('The e-mail address %mail is not valid.', array('%mail' => $form_state['values']['location'])));
+    }
   }
 }
 

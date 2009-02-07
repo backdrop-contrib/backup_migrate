@@ -60,6 +60,7 @@ function backup_migrate_get_schedule($schedule_id) {
  * Get the backup schedules stored in the db.
  */
 function backup_migrate_backup_migrate_schedules() {
+  $out = array();
   // Get the saved scheduless
   $result = db_query('SELECT * FROM {backup_migrate_schedules}');
   while ($schedule = db_fetch_array($result)) {
@@ -107,20 +108,20 @@ function backup_migrate_ui_schedule_display_schedules() {
     $profile     = backup_migrate_get_profile($schedule['profile_id']);
     $row         = array(
       check_plain($schedule['name']),
-      $destination ? l($destination['name'], 'admin/content/backup_migrate/destination/files/'. $destination['destination_id']) : t("Missing"),
+      $destination ? l($destination->name(), 'admin/content/backup_migrate/destination/files/'. $destination->id()) : t("Missing"),
       $profile ? $profile['name'] : t("Missing"),
       _backup_migrate_schedule_format_frequency($schedule['period']),
       $schedule['keep'] ? $schedule['keep'] : t('All'),
       $schedule['enabled'] ? t('Enabled') : t('Disabled'),
       $schedule['last_run'] ? format_date($schedule['last_run'], 'small') : t('Never'),
-      implode(" | ", _backup_migrate_schedule_get_links($schedule['schedule_id'])),
     );
 
-    if (!$schedule['enabled']) {
+    if (!$schedule['enabled'] || !$destination || !$profile) {
       foreach ($row as $key => $field) {
         $row[$key] = array('data' => $field, 'class' => 'schedule-list-disabled');
       }
     }
+    $row[] = implode(" | ", _backup_migrate_schedule_get_links($schedule['schedule_id']));
     $out[] = $row;
   }
 
@@ -141,7 +142,7 @@ function backup_migrate_ui_schedule_display_schedules() {
   else {
     $out = t('There are no schedules to display.');
   }
-  return $out .' '. l(t("Create new schedule..."), 'admin/content/backup_migrate/schedule/add');
+  return $out .' '. l(t("Create new schedule"), 'admin/content/backup_migrate/schedule/add');
 }
 
 /**
@@ -173,26 +174,26 @@ function backup_migrate_ui_schedule_configure_form(&$form_state, $schedule) {
     $form = array();
     $form['schedule_id'] = array(
       "#type" => "value",
-      "#default_value" => $schedule['schedule_id'],
+      "#default_value" => @$schedule['schedule_id'],
     );
     $form['enabled'] = array(
       "#type" => "checkbox",
       "#title" => t("Enabled"),
       "#field_suffix" => t("Hour(s)"),
-      "#default_value" => $schedule['enabled'],
+      "#default_value" => @$schedule['enabled'],
     );
     $form['name'] = array(
       "#type" => "textfield",
       "#title" => t("Schedule Name"),
-      "#default_value" => $schedule['name'],
+      "#default_value" => @$schedule['name'],
     );
     $form['profile_id'] = array(
       "#type" => "select",
       "#title" => t("Settings Profile"),
       "#options" => _backup_migrate_get_profile_form_item_options(),
-      "#default_value" => $schedule['profile_id'],
+      "#default_value" => @$schedule['profile_id'],
     );
-    $form['profile_id']['#description'] .= ' '. l(t("Create new profile..."), "admin/content/backup_migrate/profile/add");
+    $form['profile_id']['#description'] = ' '. l(t("Create new profile"), "admin/content/backup_migrate/profile/add");
     if (!$form['profile_id']['#options']) {
       $form['profile_id']['#options'] = array('0' => t('-- None Available --'));
     }
@@ -235,15 +236,14 @@ function backup_migrate_ui_schedule_configure_form(&$form_state, $schedule) {
       "#title" => t("Destination"),
       "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them."),
       "#options" => $destination_options,
-      "#default_value" => $schedule['destination_id'],
+      "#default_value" => @$schedule['destination_id'],
     );
-    $form['destination_id']['#description'] .= ' '. l(t("Create new destination..."), "admin/content/backup_migrate/destination/add");
+    $form['destination_id']['#description'] .= ' '. l(t("Create new destination"), "admin/content/backup_migrate/destination/add");
 
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#weight' => 99,
-      '#value' => t('Save Schedule'),
-    );
+    $form['actions'] = array('#prefix' => '<div class="container-inline">', '#suffix' => '</div>', '#weight' => 99);
+    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save Schedule'));
+    $form['actions']['cancel'] = array('#value' => l(t('Cancel'), 'admin/content/backup_migrate/schedule'));
+
     return $form;
   }
   return array();
@@ -304,8 +304,8 @@ function _backup_migrate_schedule_get_links($schedule_id) {
   $out = array();
   if ($schedule = backup_migrate_get_schedule($schedule_id)) {
     if ($schedule['db']) {
-      $out[] = l(t("Configure..."), "admin/content/backup_migrate/schedule/configure/". $schedule_id);
-      $out[] = l(t("Delete..."), "admin/content/backup_migrate/schedule/delete/". $schedule_id);
+      $out[] = l(t("configure"), "admin/content/backup_migrate/schedule/list/configure/". $schedule_id);
+      $out[] = l(t("delete"), "admin/content/backup_migrate/schedule/list/delete/". $schedule_id);
     }
   }
   return $out;

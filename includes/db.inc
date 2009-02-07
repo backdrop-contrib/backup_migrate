@@ -40,7 +40,7 @@ function backup_migrate_db_backup($source, $file, $settings) {
   $file->push_type('sql');
 
   // Switch to a different db if specified.
-  _backup_migrate_db_switch_db(_backup_migrate_destination_glue_url($source, FALSE));
+  _backup_migrate_db_switch_db($source->location());
 
   // Dump the database.
   $success = _backup_migrate_get_dump_sql($file, $settings['exclude_tables'], $settings['nodata_tables']);
@@ -227,3 +227,4 @@ function _backup_migrate_db_switch_db($in_url = NULL) {
     $db_stack[] = db_set_active($in_url);
   }
 }
+

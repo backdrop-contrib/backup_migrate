@@ -205,7 +205,7 @@ function _backup_migrate_setup_databaase_defaults() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
 
   // Set up the default schedules.
-  if (variable_get("backup_migrate_schedule_backup_period", 0) !== 0) {
+  if (variable_get("backup_migrate_schedule_backup_period", 0)) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/schedules.inc';
     $schedule = array(
       'name' => t('Default Schedule'),
@@ -215,6 +215,7 @@ function _backup_migrate_setup_databaase_defaults() {
     );
     backup_migrate_schedule_save_schedule($schedule);
   }
+
   if (variable_get("backup_migrate_file_name", NULL)) {
     $settings = array(
       'source_id' => 'db_url:default',
@@ -225,12 +226,9 @@ function _backup_migrate_setup_databaase_defaults() {
       'timestamp_format' => variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s'),
       'filters' => array('compression' => variable_get("backup_migrate_compression", "none")),
     );
+    $settings['name'] = t('Default Profile');
+    backup_migrate_profile_save_profile($settings);
   }
-  else {
-    $settings = _backup_migrate_profile_default_profile();
-  }
-  $settings['name'] = t('Default Profile');
-  backup_migrate_profile_save_profile($settings);
 }
 
 /**

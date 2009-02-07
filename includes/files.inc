@@ -7,7 +7,6 @@
  * General file handling code for Backup and Migrate.
  */
 
-
 /**
  * Add a file to the temporary files list for deletion when we're done.
  */
@@ -20,7 +19,6 @@ function backup_migrate_temp_files_add($filepath = NULL) {
     $files[] = $filepath;
   }
 }
-
 
 /**
  * Delete all temporary files.
@@ -49,7 +47,6 @@ function _backup_migrate_filetypes() {
   $out += backup_migrate_filters_file_types();
   return $out;
 }
-
 
 /**
  * Construct a filename using token and some cleaning.
@@ -89,6 +86,9 @@ class backup_file {
   var $ext = array();
   var $path = "";
   var $name = "";
+  var $handle = NULL;
+  var $file_id = NULL;
+  var $destination = NULL;
 
   /**
    * Construct a file object given a file path, or create a temp file for writing.
@@ -100,6 +100,28 @@ class backup_file {
     else {
       $this->temporary_file();
     }
+  }
+
+  /**
+   * Get the file destination and id. This is set after a file has been saved to a destination.
+   */
+  function set_destination($destination, $file_id) {
+    $this->destination = $destination;
+    $this->file_id = $file_id;
+  }
+
+  /**
+   * Get the file destination if the file has been saved to a destination.
+   */
+  function destination() {
+    return $this->destination;
+  }
+
+  /**
+   * Get the file_id if the file has been saved to a destination.
+   */
+  function file_id() {
+    return $this->file_id;
   }
 
   /**
@@ -119,7 +141,6 @@ class backup_file {
     return $this->name .'.'. $this->extension();
   }
 
-
   /**
    * Set the current filepath.
    */
@@ -133,7 +154,7 @@ class backup_file {
    */
   function info($key = NULL) {
     if ($key) {
-      return $this->file_info[$key];
+      return @$this->file_info[$key];
     }
     return $this->file_info;
   }
@@ -159,19 +180,18 @@ class backup_file {
     return @$this->type['filemime'] ? $this->type['filemime'] : 'application/octet-stream';
   }
 
-
   /**
    * Can this file be used to backup to.
    */
   function can_backup() {
-    return $this->type['backup'];
+    return @$this->type['backup'];
   }
 
   /**
    * Can this file be used to restore to.
    */
   function can_restore() {
-    return $this->type['restore'];
+    return @$this->type['restore'];
   }
 
   /**
@@ -180,7 +200,7 @@ class backup_file {
   function open($write = FALSE, $binary = FALSE) {
     if (!$this->handle) {
       $mode = ($write ? "w" : "r") . ($binary ? "b" : "");
-      $this->handle = fopen($this->filepath(), $write ? "w" : "r");
+      $this->handle = fopen($this->filepath(), $mode);
       return $this->handle;
     }
     return NULL;
@@ -207,12 +227,12 @@ class backup_file {
    * Read a line from the file.
    */
   function read($size = NULL) {
-    if ($this->handle) {
-      return $size ? fgets($this->handle, $size) : fgets($this->handle);
+    if ($this->handle && !feof($this->handle)) {
+      return $size ? fread($this->handle, $size) : fgets($this->handle);
     }
     return NULL;
   }
-  
+
   /**
    * Transfer file using http to client. Similar to the built in file_transfer,
    *  but it calls module_invoke_all('exit') so that temp files can be deleted.
@@ -226,26 +246,31 @@ class backup_file {
       $headers[] = 'Content-Length: '. $size;
     }
 
-    ob_end_clean();
+    // Suppress the warning you get when the buffer is empty.
+    @ob_end_clean();
 
-    foreach ($headers as $header) {
-      // To prevent HTTP header injection, we delete new lines that are
-      // not followed by a space or a tab.
-      // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-      $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
-      drupal_set_header($header);
-    }
-
-    // Transfer file in 1024 byte chunks to save memory usage.
     if ($this->open(FALSE, TRUE)) {
+      foreach ($headers as $header) {
+        // To prevent HTTP header injection, we delete new lines that are
+        // not followed by a space or a tab.
+        // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+        $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
+        drupal_set_header($header);
+      }
+      // Transfer file in 1024 byte chunks to save memory usage.
       while ($data = $this->read(1024)) {
         print $data;
       }
       $this->close();
+
+      // Ask devel.module not to print it's footer.
+      $GLOBALS['devel_shutdown'] = FALSE;
     }
     else {
       drupal_not_found();
     }
+
+    ob_start();
     module_invoke_all('exit');
     exit();
   }
@@ -304,9 +329,9 @@ class backup_file {
   function calculate_file_info() {
     $path = $this->filepath();
     if (file_exists($path)) {
-      $this->file_info['filesize']  = filesize($path);
-      $this->file_info['filename']  = basename($path);
-      $this->file_info['file_id']   = basename($path);
+      $this->file_info['filesize'] = filesize($path);
+      $this->file_info['filename'] = basename($path);
+      $this->file_info['file_id'] = basename($path);
       $this->file_info['filemtime'] = filemtime($path);
       $this->file_info['filectime'] = filectime($path);
       $this->ext = explode('.', $this->file_info['filename']);
@@ -329,8 +354,8 @@ class backup_file {
   }
 
   /**
-  * Get a temporary file name with path.
-  */
+   * Get a temporary file name with path.
+   */
   function temporary_file() {
     $file = file_directory_temp() .'/'. uniqid('backup_migrate_');
     $file .= '.'. $this->extension();
@@ -338,3 +363,4 @@ class backup_file {
     $this->set_filepath($file);
   }
 }
+

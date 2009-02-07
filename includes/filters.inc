@@ -10,17 +10,25 @@
 /**
  * Get the available destination types.
  */
-function backup_migrate_get_filters() {
-  $out = array();
-  $filters = module_invoke_all('backup_migrate_filters');
-  foreach ($filters as $filter) {
-    // Include the necessary file if specified by the filter.
-    if (!empty($filter['file'])) {
-      require_once './'. $filter['file'];
+function backup_migrate_get_filters($op = NULL) {
+  static $filters = NULL;
+  if ($filters === NULL) {
+    $filters = array();
+    $definitions = module_invoke_all('backup_migrate_filters');
+    foreach ($definitions as $definition) {
+      // Include the necessary file if specified by the filter.
+      if (!empty($definition['file'])) {
+        require_once './'. $definition['file'];
+      }
+      $filters[] = new $definition['class'];
     }
-    $out[] = new $filter['class'];
   }
-  return $out;
+  // Sort the filters based on the weight for the given operation.
+  foreach ($filters as $filter) {
+    $sort[] = $filter->weight($op);
+  }
+  array_multisort($filters, $sort);
+  return $filters;
 }
 
 /**
@@ -31,10 +39,9 @@ function backup_migrate_get_filters() {
 function backup_migrate_backup_migrate_filters() {
   return array(
     'compression' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/backup_migrate_filter_compression.inc',
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
       'class' => 'backup_migrate_filter_compression',
-      'weight' => 10,
-      ),
+    ),
   );
 }
 
@@ -42,12 +49,12 @@ function backup_migrate_backup_migrate_filters() {
  * Invoke the given method on all of the available filters.
  */
 function backup_migrate_filters_invoke_all() {
-  $args = func_get_args();
-  $method = array_shift($args);
-  $out = array();
+  $args    = func_get_args();
+  $op      = array_shift($args);
+  $out     = array();
   $filters = backup_migrate_get_filters();
   foreach ($filters as $filter) {
-    $out += (array)call_user_func_array(array($filter, $method), $args);
+    $out += (array)call_user_func_array(array($filter, $op), $args);
   }
   return $out;
 }
@@ -56,7 +63,7 @@ function backup_migrate_filters_invoke_all() {
  * Filter a backup file before sending it to the destination.
  */
 function backup_migrate_filters_backup($file, $settings) {
-  $filters = backup_migrate_get_filters();
+  $filters = backup_migrate_get_filters('backup_file');
   foreach ($filters as $filter) {
     $file = $filter->backup_file($file, $settings);
   }
@@ -74,12 +81,11 @@ function backup_migrate_filters_restore($file) {
   return $file;
 }
 
-
 /**
- * Get the settings for all of the filters.
+ * Get the backup settings for all of the filters.
  */
-function backup_migrate_filters_settings_form($settings) {
-  $out = backup_migrate_filters_invoke_all('settings_form', $settings);
+function backup_migrate_filters_backup_settings_form($settings, $op) {
+  $out = backup_migrate_filters_invoke_all($op .'_settings_form', $settings);
   $out = backup_migrate_filters_settings_form_set_parents($out);
   return $out;
 }
@@ -102,10 +108,9 @@ function backup_migrate_filters_settings_form_set_parents($form) {
 /**
  * Get the default settings for the filters.
  */
-function backup_migrate_filters_settings_default() {
-  return backup_migrate_filters_invoke_all('settings_default');
+function backup_migrate_filters_settings_default($op) {
+  return backup_migrate_filters_invoke_all($op .'_settings_default');
 }
-
 
 /**
  * Get the file types for all of the filters.
@@ -114,64 +119,96 @@ function backup_migrate_filters_file_types() {
   return backup_migrate_filters_invoke_all('file_types');
 }
 
-
 /**
  * A base class for basing filters on.
- */ 
+ */
 class backup_migrate_filter {
+  var $weight = 0;
+  var $op_weights = array();
+
+  /**
+   * Get the weight of the filter for the given op.
+   */
+  function weight($op = NULL) {
+    if ($op && isset($this->op_weights[$op])) {
+      return $this->op_weights[$op];
+    }
+    return $this->weight;
+  }
+
   /**
    * Get the form for the settings for this filter.
-   */ 
-  function settings_default() {
+   */
+  function backup_settings_default() {
     return array();
   }
 
   /**
    * Get the form for the settings for this filter.
-   */ 
-  function settings_form($settings) {
+   */
+  function backup_settings_form($settings) {
     return array();
   }
 
   /**
    * Get the form for the settings for this filter.
-   */ 
-  function settings_form_validate($form_values) {
+   */
+  function backup_settings_form_validate($form_values) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
-   */ 
-  function settings_form_submit($form_values) {
+   */
+  function backup_settings_form_submit($form_values) {
     return $form_values;
   }
-}
 
-/**
- * A base class for basing filters on.
- */ 
-class backup_migrate_file_filter extends backup_migrate_filter {
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_default() {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_form($settings) {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_form_validate($form_values) {
+  }
+
+  /**
+   * Submit the settings form. Any values returned will be saved.
+   */
+  function restore_settings_form_submit($form_values) {
+    return $form_values;
+  }
 
   /**
    * Get a list of file types handled by this filter.
-   */ 
+   */
   function file_types() {
-    return $form_values;
+    return array();
   }
-  
+
   /**
    * This function is called on a backup file after the backup has been completed.
-   */ 
+   */
   function backup_file($file, $settings) {
     return $file;
   }
 
   /**
    * This function is called on a backup file before importing it.
-   */ 
+   */
   function restore_file($file, $settings) {
     return $file;
   }
-  
 }
 
