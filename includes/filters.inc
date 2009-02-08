@@ -42,6 +42,10 @@ function backup_migrate_backup_migrate_filters() {
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
       'class' => 'backup_migrate_filter_compression',
     ),
+    'statusnotify' => array(
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.statusnotify.inc',
+      'class' => 'backup_migrate_filter_statusnotify',
+    ),
   );
 }
 
@@ -54,7 +58,9 @@ function backup_migrate_filters_invoke_all() {
   $out     = array();
   $filters = backup_migrate_get_filters();
   foreach ($filters as $filter) {
-    $out += (array)call_user_func_array(array($filter, $op), $args);
+    if (method_exists($filter, $op)) {
+      $out += (array)call_user_func_array(array($filter, $op), $args);
+    }
   }
   return $out;
 }
@@ -84,7 +90,7 @@ function backup_migrate_filters_restore($file) {
 /**
  * Get the backup settings for all of the filters.
  */
-function backup_migrate_filters_backup_settings_form($settings, $op) {
+function backup_migrate_filters_settings_form($settings, $op) {
   $out = backup_migrate_filters_invoke_all($op .'_settings_form', $settings);
   $out = backup_migrate_filters_settings_form_set_parents($out);
   return $out;

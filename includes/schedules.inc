@@ -22,7 +22,7 @@ function backup_migrate_schedules_run() {
         _backup_migrate_schedule_remove_expired_backups($schedule['destination_id'], $schedule['keep']);
       }
       else {
-        _backup_migrate_message("Schedule '%schedule' could not be run because requires a profile which is missing.", array('%schedule' => $schedule['name']), 'error');
+        backup_migrate_backup_fail("Schedule '%schedule' could not be run because requires a profile which is missing.", array('%schedule' => $schedule['name']), $settings);
       }
     }
   }

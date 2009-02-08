@@ -21,8 +21,10 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
    */
   function save_file($file, $settings) {
     $ftp = $this->ftp_object();
-    drupal_ftp_file_to_ftp($file->filepath(), $file->filename(), '.', $ftp);
-    return $file;
+    if (drupal_ftp_file_to_ftp($file->filepath(), $file->filename(), '.', $ftp)) {
+      return $file;
+    }
+    return FALSE;
   }
 
   /**
@@ -32,8 +34,10 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
     $file = new backup_file(array('filename' => $file_id));
     $this->ftp_object();
-    drupal_ftp_ftp_to_file($file->filepath(), $file_id, '.', $this->ftp);
-    return $file;
+    if (drupal_ftp_ftp_to_file($file->filepath(), $file_id, '.', $this->ftp)) {
+      return $file;
+    }
+    return FALSE;
   }
 
 /**

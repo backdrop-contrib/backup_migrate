@@ -312,8 +312,16 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#default_value" => $profile['nodata_tables'],
     "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
   );
+  $form['advanced'] = array();
+  $form = array_merge_recursive($form, backup_migrate_filters_settings_form($profile['filters'], 'backup'));
 
-  $form = array_merge_recursive($form, backup_migrate_filters_backup_settings_form($profile['filters'], 'backup'));
+  // Add the advanced fieldset if there are any fields in it.
+  if ($form['advanced']) {
+    $form['advanced']['#type'] = 'fieldset';
+    $form['advanced']['#title'] = t('Advanced Options');
+    $form['advanced']['#collapsed'] = true;
+    $form['advanced']['#collapsible'] = true;
+  }
 
   return $form;
 }

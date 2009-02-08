@@ -530,22 +530,19 @@ function backup_migrate_perform_backup(&$settings) {
 
   $source = backup_migrate_get_destination($settings['source_id']);
   if (!$source) {
-    _backup_migrate_message("Could not run backup because the source '%source' is missing.", array('%source' => $settings['source_id']), 'error');
-    _backup_migrate_temp_files_delete();
+    backup_migrate_backup_fail("Could not run backup because the source '%source' is missing.", array('%source' => $settings['source_id']), $settings);
     return FALSE;
   }
 
   $file = new backup_file(array('filename' => $settings['filename']));
   if (!$file) {
-    _backup_migrate_message("Could not run backup because a temporary file could not be created.", array(), 'error');
-    _backup_migrate_temp_files_delete();
+    backup_migrate_backup_fail("Could not run backup because a temporary file could not be created.", array(), $settings);
     return FALSE;
   }
 
   $file = backup_migrate_db_backup($source, $file, $settings);
   if (!$file) {
-    _backup_migrate_message("Could not backup the database.", array(), 'error');
-    _backup_migrate_temp_files_delete();
+    backup_migrate_backup_fail("Could not backup the database.", array(), $settings);
     return FALSE;
   }
 
@@ -557,15 +554,36 @@ function backup_migrate_perform_backup(&$settings) {
 
   $file = backup_migrate_destination_save_file($file, $settings);
   if (!$file) {
-    _backup_migrate_message("Could not run backup because the file could not be saved to the destination.", array(), 'error');
-    _backup_migrate_temp_files_delete();
+    backup_migrate_backup_fail("Could not run backup because the file could not be saved to the destination.", array(), $settings);
     return FALSE;
   }
 
+  backup_migrate_backup_succeed("Site backed up successfully.", array(), $settings);
   // Delete any temporary files we've created.
   _backup_migrate_temp_files_delete();
   return $file;
 }
+
+/**
+ * Clean up when a backup operation fails.
+ */
+function backup_migrate_backup_fail($message, $params, $settings) {
+  _backup_migrate_message($message, $params, 'error');
+  _backup_migrate_temp_files_delete();
+  backup_migrate_filters_invoke_all('backup_fail', $settings, $message, $params);
+  return FALSE;
+}
+
+/**
+ * Clean up when a backup operation suceeds.
+ */
+function backup_migrate_backup_succeed($message, $params, $settings) {
+  _backup_migrate_message($message, $params);
+  _backup_migrate_temp_files_delete();
+  backup_migrate_filters_invoke_all('backup_succeed', $settings, $message, $params);
+  return FALSE;
+}
+
 
 /**
  * Restore from a file in the given destination.
@@ -710,6 +728,20 @@ function _backup_migrate_message($message, $replace = array(), $type = 'status')
     drupal_set_message(t($message, $replace), $type);
   }
   watchdog('backup_migrate', $message, $replace, $type == 'error' ? WATCHDOG_ERROR : WATCHDOG_NOTICE);
+
+  // Store the message in case it's needed (for the status notification filter for example).
+  _backup_migrate_messages($message, $replace, $type);
+}
+
+/**
+ * Helper function to set a drupal message and watchdog message depending on whether the module is being run interactively.
+ */
+function _backup_migrate_messages($message = NULL, $replace = array(), $type = 'status') {
+  static $messages = array();
+  if ($message) {
+    $messages[] = array('message' => $message, 'replace' => $replace, 'type' => 'status');
+  }
+  return $messages;
 }
 
 /**

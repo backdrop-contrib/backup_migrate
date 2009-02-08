@@ -21,8 +21,10 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    */
   function save_file($file, $settings) {
     $s3 = $this->s3_object();
-    $s3->putObject($s3->inputFile($file->filepath(), FALSE), $this->dest_url['path'], $file->filename(), S3::ACL_PRIVATE);
-    return $file;
+    if ($s3->putObject($s3->inputFile($file->filepath(), FALSE), $this->dest_url['path'], $file->filename(), S3::ACL_PRIVATE)) {
+      return $file;
+    }
+    return FALSE;
   }
 
   /**
