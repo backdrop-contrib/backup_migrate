@@ -27,7 +27,7 @@ function backup_migrate_get_filters($op = NULL) {
   foreach ($filters as $filter) {
     $sort[] = $filter->weight($op);
   }
-  array_multisort($filters, $sort);
+  array_multisort($sort, SORT_ASC, SORT_NUMERIC, $filters);
   return $filters;
 }
 
@@ -41,6 +41,10 @@ function backup_migrate_backup_migrate_filters() {
     'compression' => array(
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
       'class' => 'backup_migrate_filter_compression',
+    ),
+    'encryption' => array(
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.encryption.inc',
+      'class' => 'backup_migrate_filter_encryption',
     ),
     'statusnotify' => array(
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.statusnotify.inc',
@@ -59,7 +63,7 @@ function backup_migrate_filters_invoke_all() {
   $filters = backup_migrate_get_filters();
   foreach ($filters as $filter) {
     if (method_exists($filter, $op)) {
-      $out += (array)call_user_func_array(array($filter, $op), $args);
+      $out = array_merge_recursive($out, (array)call_user_func_array(array($filter, $op), $args));
     }
   }
   return $out;
@@ -71,7 +75,9 @@ function backup_migrate_filters_invoke_all() {
 function backup_migrate_filters_backup($file, $settings) {
   $filters = backup_migrate_get_filters('backup_file');
   foreach ($filters as $filter) {
-    $file = $filter->backup_file($file, $settings);
+    if ($file) {
+      $file = $filter->backup_file($file, $settings);
+    }
   }
   return $file;
 }
@@ -80,9 +86,11 @@ function backup_migrate_filters_backup($file, $settings) {
  * Filter a backup file before sending it to the destination.
  */
 function backup_migrate_filters_restore($file) {
-  $filters = backup_migrate_get_filters();
+  $filters = backup_migrate_get_filters('restore_file');
   foreach ($filters as $filter) {
-    $file = $filter->restore_file($file, $settings);
+    if ($file) {
+      $file = $filter->restore_file($file, $settings);
+    }
   }
   return $file;
 }

@@ -173,6 +173,14 @@ class backup_file {
   }
 
   /**
+   * Get the file mimetype.
+   */
+  function type_id() {
+    return @$this->type['id'];
+  }
+
+
+  /**
    * Can this file be used to backup to.
    */
   function can_backup() {
@@ -210,6 +218,9 @@ class backup_file {
    * Write a line to the file.
    */
   function write($data) {
+    if (!$this->handle) {
+      $this->handle = $this->open(TRUE);
+    }
     if ($this->handle) {
       fwrite($this->handle, $data);
     }
@@ -219,6 +230,9 @@ class backup_file {
    * Read a line from the file.
    */
   function read($size = NULL) {
+    if (!$this->handle) {
+      $this->handle = $this->open();
+    }
     if ($this->handle && !feof($this->handle)) {
       return $size ? fread($this->handle, $size) : fgets($this->handle);
     }
@@ -299,8 +313,8 @@ class backup_file {
    * Push a file extension onto the file and return the previous file path.
    */
   function pop_type() {
+    $out = new backup_file(array('filepath' => $this->filepath()));
     $this->pop_filetype();
-    $out = $this->filepath();
     $this->temporary_file();
     return $out;
   }
@@ -322,7 +336,7 @@ class backup_file {
   }
 
   /**
-   * Set the current file type.
+   * Pop the current file type.
    */
   function pop_filetype() {
     array_pop($this->ext);
@@ -335,7 +349,7 @@ class backup_file {
   function set_file_info($file_info) {
     $this->file_info = $file_info;
 
-    $this->ext = explode('.', $this->file_info['filename']);
+    $this->ext = explode('.', @$this->file_info['filename']);
     $this->filename(array_shift($this->ext));
     $this->detect_filetype_from_extension();
   }
@@ -345,10 +359,12 @@ class backup_file {
    */
   function detect_filetype_from_extension() {
     $ext = end($this->ext);
+    $this->type = array();
     $types = _backup_migrate_filetypes();
     foreach ($types as $key => $type) {
-      if ($ext === $type['extension']) {
+      if (trim($ext, "_0123456789") === $type['extension']) {
         $this->type = $type;
+        $this->type['id'] = $key;
       }
     }
   }

@@ -210,7 +210,7 @@ function _backup_migrate_setup_databaase_defaults() {
     $schedule = array(
       'name' => t('Default Schedule'),
       'destination_id' => 'schedule,',
-      'period' => variable_get("backup_migrate_schedule_backup_period", 0),
+      'period' => array('number' => variable_get("backup_migrate_schedule_backup_period", 0), 'type' => 'hours'),
       'keep' => variable_get("backup_migrate_schedule_backup_keep", 0),
     );
     backup_migrate_schedule_save_schedule($schedule);
@@ -249,5 +249,19 @@ function backup_migrate_update_2000() {
   drupal_install_schema('backup_migrate');
   _backup_migrate_setup_databaase_defaults();
   return array();
+}
+
+/**
+ * Adding filter field for dev release of 2009-01-28
+ */
+function backup_migrate_update_2001() {
+  $ret = array();
+  // Add the filters field to the db.
+  db_add_field($ret, 'backup_migrate_profiles', 'filters', array('description' => t('The filter settings for the profile.'),'type' => 'text', 'not null' => TRUE));
+  // Add the source field
+  db_add_field($ret, 'backup_migrate_profiles', 'source_id', array('description' => t('The db source to backup from.'), 'type' => 'varchar', 'length' => 32, 'default' => 'db_url:default', 'not null' => TRUE));
+  // Remove the compression field.
+  db_drop_field($ret, 'backup_migrate_profiles', 'compression');
+  return $ret;
 }
 

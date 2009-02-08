@@ -635,7 +635,7 @@ function backup_migrate_perform_restore_file($file, $destination_id) {
 
   $num = backup_migrate_db_restore($file);
 
-  if ($destination = backup_migrate_get_destination($destination_id)) {
+  if ($num && $destination = backup_migrate_get_destination($destination_id)) {
     $message = 'Database restored from %destination file %file. %num SQL commands executed.';
     if ($destination && $destination->op('list files')) {
       $message .= ' (<a href="!restoreurl">Restore again</a>)';

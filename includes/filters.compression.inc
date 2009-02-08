@@ -259,26 +259,25 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
   function _backup_migrate_file_decompress($file) {
     $success = FALSE;
 
-    $type = $file->type();
-    switch ($type['extension']) {
-      case "sql":
-        return $file;
-      break;
-
-      case "gz":
+    switch ($file->type_id()) {
+      case "gzip":
         $from = $file->pop_type();
-        $success = $this->_backup_migrate_gzip_decode($from, $file->filepath());
+        $success = $this->_backup_migrate_gzip_decode($from->filepath(), $file->filepath());
         break;
 
-      case "bz":
+      case "bzip":
         $from = $file->pop_type();
-        $success = $this->_backup_migrate_bzip_decode($from, $file->filepath());
+        $success = $this->_backup_migrate_bzip_decode($from->filepath(), $file->filepath());
         break;
 
       case "zip":
         $from = $file->pop_type();
-        $success = $this->_backup_migrate_zip_decode($from, $file->filepath());
+        $success = $this->_backup_migrate_zip_decode($from->filepath(), $file->filepath());
         break;
+
+      default:
+        return $file;
+      break;
     }
 
     if (!$success) {

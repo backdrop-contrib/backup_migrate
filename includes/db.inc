@@ -14,7 +14,11 @@ function backup_migrate_db_restore($file) {
   $num = 0;
 
   // Open the file (with fopen or gzopen depending on file format).
-  if ($file->open()) {
+  if ($file->type_id() !== 'sql') {
+    drupal_set_message(t("Unable to restore from file %file because it is of an unknown file type.", array("%file" => $file->filepath())), 'error');
+    return FALSE;
+  }
+  else if ($file->open()) {
     // Read one line at a time and run the query.
     while ($line = $file->read()) {
       $line = trim($line);
@@ -29,6 +33,7 @@ function backup_migrate_db_restore($file) {
   }
   else {
     drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $file->filepath())), 'error');
+    return FALSE;
   }
   return $num;
 }
