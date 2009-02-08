@@ -1,7 +1,7 @@
 // $Id$
 
 -------------------------------------------------------------------------------
-Backup and Migrate for Drupal 5.x
+Backup and Migrate 2 for Drupal 6.x
   by Ronan Dowling, Gorton Studios - ronan (at) gortonstudios (dot) com
 -------------------------------------------------------------------------------
 
@@ -22,12 +22,14 @@ such as phpMyAdmin or the command-line mysql client.
 -------------------------------------------------------------------------------
 
 INSTALLATION:
-Put the module in your drupal modules directory and enable it in 
-admin/build/modules. 
-Configure and use the module at admin/content/backup_migrate
+* Put the module in your drupal modules directory and enable it in 
+  admin/build/modules. 
+* Go to admin/user/permissions and grant permission to any roles that need to be 
+  able to backup or restore the databse.
+* Configure and use the module at admin/content/backup_migrate
 
 OPTIONAL:
-Enable token.module to allow token replacement in backup file names.
+* Enable token.module to allow token replacement in backup file names.
 
 -------------------------------------------------------------------------------
 

@@ -55,6 +55,20 @@ function backup_migrate_backup_migrate_destination_types() {
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
       'class' => 'backup_migrate_destination_db_defaults',
     ),
+    'ftp' => array(
+      'description' => t('Save the backup files to any a directory on an FTP server.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
+      'class' => 'backup_migrate_destination_ftp',
+      'type_name' => t('FTP Directory'),
+      'can_create' => TRUE,
+    ),
+    's3' => array(
+      'description' => t('Save the backup files to a bucket on your !link.', array('!link' => l(t('Amazon S3 account'), 'http://aws.amazon.com/s3/'))),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.s3.inc',
+      'class' => 'backup_migrate_destination_s3',
+      'type_name' => t('Amazon S3 Bucket'),
+      'can_create' => TRUE,
+    ),
     'email' => array(
       'type_name' => t('Email'),
       'description' => t('Send the backup as an email attachment to the specified email address.'),
@@ -263,7 +277,7 @@ function backup_migrate_ui_destination_display_files($destination_id) {
     drupal_set_title(t('%title Files', array('%title' => $destination->name())));
     $headers = array(
       array('data' => 'Filename', 'field' => 'filename'),
-      array('data' => 'Last Modified', 'field' => 'filemtime'),
+      array('data' => 'Date', 'field' => 'filetime'),
       array('data' => 'Size', 'field' => 'filesize'),
       t('Operations'),
     );
@@ -287,9 +301,9 @@ function backup_migrate_ui_destination_display_files($destination_id) {
         $sort[] = $info[$sort_key];
         $out[] = array(
           check_plain($info['filename']),
-          format_date($info['filemtime'], 'small'),
+          format_date($info['filetime'], 'small'),
           format_size($info['filesize']),
-          implode(" | ", $destination->get_file_links($info['file_id'])),
+          implode(" | ", $destination->get_file_links($file->file_id())),
         );
       }
     }
@@ -480,9 +494,7 @@ function backup_migrate_ui_destination_restore_file_confirm_submit($form, &$form
  * Menu callback to delete a file from a destination.
  */
 function backup_migrate_ui_destination_delete_file($destination_id, $file_id) {
-  if ($file = backup_migrate_destination_get_file($destination_id, $file_id)) {
-    return drupal_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
-  }
+  return drupal_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
   drupal_goto("admin/content/backup_migrate");
 }
 
@@ -808,8 +820,8 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
     // Assemble the URL.
     $out = "";
     $out .= $parts['scheme'] .'://';
-    $out .= $parts['user'] ? $parts['user'] : '';
-    $out .= ($parts['user'] && $parts['pass']) ? ":". $parts['pass'] : '';
+    $out .= $parts['user'] ? urlencode($parts['user']) : '';
+    $out .= ($parts['user'] && $parts['pass']) ? ":". urlencode($parts['pass']) : '';
     $out .= ($parts['user'] || $parts['pass']) ? "@" : "";
     $out .= $parts['host'];
     $out .= "/". $parts['path'];
@@ -821,6 +833,9 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
    */
   function set_url($url) {
     $parts          = (array)parse_url($url);
+    $parts['user'] = urldecode($parts['user']);
+    $parts['pass'] = urldecode($parts['pass']);
+    $parts['path'] = urldecode($parts['path']);
     $parts['path']  = ltrim($parts['path'], "/");
     $this->dest_url = $parts;
   }
@@ -859,6 +874,7 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
       "#type" => "password",
       "#title" => t("Password"),
       "#default_value" => @$this->dest_url['pass'],
+      '#description' => '',
     );
     if (@$this->dest_url['pass']) {
       $form['old_password'] = array(

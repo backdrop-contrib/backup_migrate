@@ -44,7 +44,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     $filepath = rtrim($this->location(), '/') .'/'. $file_id;
     if (file_exists($filepath)) {
       require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-      return new backup_file($filepath);
+      return new backup_file(array('filepath' => $filepath));
     }
   }
 
@@ -58,7 +58,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
         require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
         while (FALSE !== ($file = readdir($handle))) {
           $filepath = $dir ."/". $file;
-          $files[$file] = new backup_file($filepath);
+          $files[$file] = new backup_file(array('filepath' => $filepath));
         }
       }
     }

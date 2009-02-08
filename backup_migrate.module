@@ -454,7 +454,7 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
       require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
       $message = 'Database backup file %file saved to destination %dest. !links';
       $links = "";
-      if ($links = _backup_migrate_destination_get_file_links($form_state['values']['destination_id'], $file->file_id())) {
+      if ($links = $destination->get_file_links($file->file_id())) {
         $links = ' ('. implode(", ", $links) .')';
       }
       _backup_migrate_message($message, array('%file' => $settings['filename'], '%dest' => $destination->name(), '!links' => $links ? $links : ""));
@@ -535,8 +535,7 @@ function backup_migrate_perform_backup(&$settings) {
     return FALSE;
   }
 
-  $file = new backup_file();
-  $file->filename($settings['filename']);
+  $file = new backup_file(array('filename' => $settings['filename']));
   if (!$file) {
     _backup_migrate_message("Could not run backup because a temporary file could not be created.", array(), 'error');
     _backup_migrate_temp_files_delete();

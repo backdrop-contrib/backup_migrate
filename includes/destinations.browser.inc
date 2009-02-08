@@ -27,7 +27,7 @@ class backup_migrate_destination_browser_upload extends backup_migrate_destinati
   function load_file($file_id) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
     if ($file = file_save_upload('backup_migrate_restore_upload')) {
-      $out = new backup_file($file->filepath);
+      $out = new backup_file(array('filepath' => $file->filepath));
       backup_migrate_temp_files_add($file->filepath);
       return $out;
     }

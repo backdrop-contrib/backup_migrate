@@ -87,41 +87,26 @@ class backup_file {
   var $path = "";
   var $name = "";
   var $handle = NULL;
-  var $file_id = NULL;
-  var $destination = NULL;
 
   /**
    * Construct a file object given a file path, or create a temp file for writing.
    */
-  function backup_file($path = NULL) {
-    if ($path) {
-      $this->set_filepath($path);
+  function backup_file($params = array()) {
+    if (isset($params['filepath']) && file_exists($params['filepath'])) {
+      $this->set_filepath($params['filepath']);
     }
     else {
+      $this->set_file_info($params);
       $this->temporary_file();
     }
-  }
-
-  /**
-   * Get the file destination and id. This is set after a file has been saved to a destination.
-   */
-  function set_destination($destination, $file_id) {
-    $this->destination = $destination;
-    $this->file_id = $file_id;
-  }
-
-  /**
-   * Get the file destination if the file has been saved to a destination.
-   */
-  function destination() {
-    return $this->destination;
   }
 
   /**
    * Get the file_id if the file has been saved to a destination.
    */
   function file_id() {
-    return $this->file_id;
+    // The default file_id is the filename. Destinations can override the file_id if needed.
+    return isset($this->file_info['file_id']) ? $this->file_info['file_id'] : $this->filename();
   }
 
   /**
@@ -146,7 +131,14 @@ class backup_file {
    */
   function set_filepath($path) {
     $this->path = $path;
-    $this->calculate_file_info();
+    $params = array(
+      'filename' => basename($path),
+    );
+    if (file_exists($path)) {
+      $params['filesize'] = filesize($path);
+      $params['filetime'] = filectime($path);
+    }
+    $this->set_file_info($params);
   }
 
   /**
@@ -231,6 +223,20 @@ class backup_file {
       return $size ? fread($this->handle, $size) : fgets($this->handle);
     }
     return NULL;
+  }
+
+  /**
+   * Write data to the file.
+   */
+  function put_contents($data) {
+    file_put_contents($this->filepath(), $data);
+  }
+
+  /**
+   * Read data from the file.
+   */
+  function get_contents() {
+    return file_get_contents($this->filepath());
   }
 
   /**
@@ -324,20 +330,14 @@ class backup_file {
   }
 
   /**
-   * Get the basic info for a backup file on the server.
+   * Set the file info.
    */
-  function calculate_file_info() {
-    $path = $this->filepath();
-    if (file_exists($path)) {
-      $this->file_info['filesize'] = filesize($path);
-      $this->file_info['filename'] = basename($path);
-      $this->file_info['file_id'] = basename($path);
-      $this->file_info['filemtime'] = filemtime($path);
-      $this->file_info['filectime'] = filectime($path);
-      $this->ext = explode('.', $this->file_info['filename']);
-      $this->filename(array_shift($this->ext));
-      $this->detect_filetype_from_extension();
-    }
+  function set_file_info($file_info) {
+    $this->file_info = $file_info;
+
+    $this->ext = explode('.', $this->file_info['filename']);
+    $this->filename(array_shift($this->ext));
+    $this->detect_filetype_from_extension();
   }
 
   /**
@@ -360,7 +360,6 @@ class backup_file {
     $file = file_directory_temp() .'/'. uniqid('backup_migrate_');
     $file .= '.'. $this->extension();
     backup_migrate_temp_files_add($file);
-    $this->set_filepath($file);
+    $this->path = $file;
   }
 }
-
