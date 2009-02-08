@@ -54,7 +54,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function list_files() {
     $files = array();
     if ($dir = $this->location()) {
-      if ($handle = opendir($dir)) {
+      if ($handle = @opendir($dir)) {
         require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
         while (FALSE !== ($file = readdir($handle))) {
           $filepath = $dir ."/". $file;
