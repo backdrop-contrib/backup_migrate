@@ -195,6 +195,13 @@ class backup_file {
   }
 
   /**
+   * Can this file be used to restore to.
+   */
+  function is_recognized_type() {
+    return @$this->type['restore'] || @$this->type['backup'];
+  }
+
+  /**
    * Open a file for reading or writing.
    */
   function open($write = FALSE, $binary = FALSE) {

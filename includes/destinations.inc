@@ -288,16 +288,11 @@ function backup_migrate_ui_destination_display_files($destination_id) {
 
     $files      = $destination->list_files();
 
-    // Don't display the download/delete/restore ops if they are not available for this destination.
-    $ops        = $destination->ops();
-    $can_read   = in_array('restore', $ops);
-    $can_delete = in_array('delete', $ops);
-
     $i          = 0;
     foreach ((array)$files as $file) {
       $info = $file->info();
       // Show only files that can be restored from.
-      if ($file->can_backup() || $file->can_restore()) {
+      if ($file->is_recognized_type()) {
         $sort[] = $info[$sort_key];
         $out[] = array(
           check_plain($info['filename']),
@@ -704,7 +699,7 @@ class backup_migrate_destination {
     if ($can_read && user_access("restore from backup")) {
       $out[] = l(t("restore"), "admin/content/backup_migrate/destination/list/restorefile/". $destination_id .'/'. $file_id);
     }
-    if ($can_read && user_access("delete backup files")) {
+    if ($can_delete && user_access("delete backup files")) {
       $out[] = l(t("delete"), "admin/content/backup_migrate/destination/list/deletefile/". $destination_id .'/'. $file_id);
     }
     return $out;

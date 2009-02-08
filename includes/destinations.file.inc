@@ -20,10 +20,6 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     return t("Server Directory");
   }
 
-  function ops() {
-    return $this->supported_ops;
-  }
-
   /**
    * File save destination callback.
    */

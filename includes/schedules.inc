@@ -335,22 +335,26 @@ function _backup_migrate_schedule_remove_expired_backups($destination_id, $num_t
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
   // If num to keep is not 0 (0 is infinity).
   if ($num_to_keep && $destination = backup_migrate_get_destination($destination_id)) {
-    if ($destination_files = backup_migrate_destination_get_files($destination)) {
+    $i = 0;
+    if ($destination->op('delete') && $destination_files = $destination->list_files()) {
       // Sort the files by modified time.
       foreach ($destination_files as $file) {
-        $files[str_pad($file['filemtime'], 10, "0", STR_PAD_LEFT) ."-". $i++] = $file['filepath'];
+        if ($file->is_recognized_type() && $destination->can_delete_file($file->file_id())) {
+          $files[str_pad($file->info('filetime'), 10, "0", STR_PAD_LEFT) ."-". $i++] = $file;
+        }
       }
 
       // If we are beyond our limit, remove as many as we need.
       $num_files = count($files);
+
       if ($num_files > $num_to_keep) {
         $num_to_delete = $num_files - $num_to_keep;
         // Sort by date.
         ksort($files);
         // Delete from the start of the list (earliest).
         for ($i = 0; $i < $num_to_delete; $i++) {
-          $filepath = array_shift($files);
-          file_delete($filepath);
+          $file = array_shift($files);
+          $destination->delete_file($file->file_id());
         }
       }
     }
