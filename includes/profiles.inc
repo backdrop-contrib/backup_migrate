@@ -116,7 +116,10 @@ function backup_migrate_ui_profile_display_profiles() {
   else {
     $out = t('There are no profiles to display.');
   }
-  return $out .' '. l(t("Create new profile"), 'admin/content/backup_migrate/profile/add');
+  if (user_access('administer backup and migrate')) {
+    $out .= ' '. l(t("Create new profile"), 'admin/content/backup_migrate/profile/add');
+  }
+  return $out;
 }
 
 /**
@@ -131,11 +134,11 @@ function backup_migrate_ui_profile_create() {
 /**
  * Get a form to configure the profile.
  */
-function backup_migrate_ui_profile_configure($profile_id) {
+function backup_migrate_ui_profile_configure($profile_id = NULL) {
   if ($profile = backup_migrate_get_profile($profile_id)) {
     return drupal_get_form('backup_migrate_ui_profile_configure_form', $profile);
   }
-  return NULL;
+  drupal_goto('admin/content/backup_migrate/profile');
 }
 
 /**
@@ -174,8 +177,11 @@ function backup_migrate_ui_profile_configure_form_submit($form, &$form_state) {
 /**
  * Delete a profile.
  */
-function backup_migrate_ui_profile_delete($profile_id) {
-  return drupal_get_form('backup_migrate_ui_profile_delete_confirm', $profile_id);
+function backup_migrate_ui_profile_delete($profile_id = NULL) {
+  if ($profile = backup_migrate_get_profile($profile_id)) {
+    return drupal_get_form('backup_migrate_ui_profile_delete_confirm', $profile_id);
+  }
+  drupal_goto('admin/content/backup_migrate/profile');
 }
 
 /**

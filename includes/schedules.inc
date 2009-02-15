@@ -157,11 +157,11 @@ function backup_migrate_ui_schedule_create() {
 /**
  * Get a form to configure the schedule.
  */
-function backup_migrate_ui_schedule_configure($schedule_id) {
+function backup_migrate_ui_schedule_configure($schedule_id = NULL) {
   if ($schedule = backup_migrate_get_schedule($schedule_id)) {
     return drupal_get_form('backup_migrate_ui_schedule_configure_form', $schedule);
   }
-  return NULL;
+  drupal_goto('admin/content/backup_migrate/schedule');
 }
 
 /**
@@ -272,8 +272,11 @@ function backup_migrate_ui_schedule_configure_form_submit($form, &$form_state) {
 /**
  * Delete a schedule.
  */
-function backup_migrate_ui_schedule_delete($schedule_id) {
-  return drupal_get_form('backup_migrate_ui_schedule_delete_confirm', $schedule_id);
+function backup_migrate_ui_schedule_delete($schedule_id = NULL) {
+  if ($schedule = backup_migrate_get_schedule($schedule_id)) {
+    return drupal_get_form('backup_migrate_ui_schedule_delete_confirm', $schedule_id);
+  }
+  drupal_goto('admin/content/backup_migrate/schedule');
 }
 
 /**

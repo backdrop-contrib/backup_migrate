@@ -265,13 +265,17 @@ function backup_migrate_ui_destination_display_destinations() {
     t('Location'),
     t('Operations'),
   );
-  return theme("table", $headers, $out) . l(t("Create new destination"), 'admin/content/backup_migrate/destination/add');
+  $out = theme("table", $headers, $out);
+  if (user_access('administer backup and migrate')) {
+    $out .= l(t("Create new destination"), 'admin/content/backup_migrate/destination/add');
+  }
+  return $out;
 }
 
 /**
  * List the backup files in the given destination.
  */
-function backup_migrate_ui_destination_display_files($destination_id) {
+function backup_migrate_ui_destination_display_files($destination_id = NULL) {
   $out = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
     drupal_set_title(t('%title Files', array('%title' => $destination->name())));
@@ -350,7 +354,7 @@ function backup_migrate_ui_destination_create($type = NULL) {
 /**
  * Get a form to configure the destination.
  */
-function backup_migrate_ui_destination_configure($destination_id) {
+function backup_migrate_ui_destination_configure($destination_id = NULL) {
   if ($destination = backup_migrate_get_destination($destination_id)) {
     return drupal_get_form('backup_migrate_ui_destination_configure_form', $destination);
   }
@@ -419,7 +423,7 @@ function backup_migrate_ui_destination_configure_form_submit($form, &$form_state
 /**
  * Delete a destination.
  */
-function backup_migrate_ui_destination_delete_destination($destination_id) {
+function backup_migrate_ui_destination_delete_destination($destination_id  = NULL) {
   return drupal_get_form('backup_migrate_ui_destination_delete_destination_confirm', $destination_id);
 }
 
@@ -446,17 +450,18 @@ function backup_migrate_ui_destination_delete_destination_confirm_submit($form, 
 /**
  * Download a file to the browser.
  */
-function backup_migrate_ui_destination_download_file($destination_id, $file_id) {
+function backup_migrate_ui_destination_download_file($destination_id = NULL, $file_id = NULL) {
   if ($file = backup_migrate_destination_get_file($destination_id, $file_id)) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
     $file->transfer();
   }
+  drupal_goto('admin/content/backup_migrate');
 }
 
 /**
  * Restore a backup file from a destination.
  */
-function backup_migrate_ui_destination_restore_file($destination_id, $file_id) {
+function backup_migrate_ui_destination_restore_file($destination_id = NULL, $file_id = NULL) {
   if ($file = backup_migrate_destination_get_file($destination_id, $file_id)) {
     return drupal_get_form('backup_migrate_ui_destination_restore_file_confirm', $destination_id, $file_id);
   }
@@ -488,8 +493,10 @@ function backup_migrate_ui_destination_restore_file_confirm_submit($form, &$form
 /**
  * Menu callback to delete a file from a destination.
  */
-function backup_migrate_ui_destination_delete_file($destination_id, $file_id) {
-  return drupal_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
+function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file_id = NULL) {
+  if ($file = backup_migrate_destination_get_file($destination_id, $file_id)) {
+    return drupal_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
+  }
   drupal_goto("admin/content/backup_migrate");
 }
 
@@ -667,7 +674,7 @@ class backup_migrate_destination {
     $out = array();
     // Don't display the download/delete/restore ops if they are not available for this destination.
     $can_list       = $this->op('list files');
-    $can_conf       = $this->op('configure');
+    $can_conf       = $this->op('configure') && user_access('administer backup and migrate');
 
     $destination_id = $this->id();
     if ($can_list && user_access("access backup files")) {
