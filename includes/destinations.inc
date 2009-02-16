@@ -20,22 +20,27 @@ function backup_migrate_get_destination_types() {
  * Get the built in Backup and Migrate destination types.
  */
 function backup_migrate_backup_migrate_destination_types() {
-  return array(
-    'file' => array(
-      'description' => t('Save the backup files to any directory on the server which the web-server can write to.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
-      'class' => 'backup_migrate_destination_files',
-      'type_name' => t('Server Directory'),
-      'can_create' => TRUE,
-    ),
-    'file_manual' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
-      'class' => 'backup_migrate_destination_files_manual',
-    ),
-    'file_scheduled' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
-      'class' => 'backup_migrate_destination_files_scheduled',
-    ),
+  $out = array();
+  if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
+    $out += array(
+      'file' => array(
+        'description' => t('Save the backup files to any directory on the server which the web-server can write to.'),
+        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
+        'class' => 'backup_migrate_destination_files',
+        'type_name' => t('Server Directory'),
+        'can_create' => TRUE,
+      ),
+      'file_manual' => array(
+        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
+        'class' => 'backup_migrate_destination_files_manual',
+      ),
+      'file_scheduled' => array(
+        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
+        'class' => 'backup_migrate_destination_files_scheduled',
+      ),
+    );
+  }  
+  $out += array(
     'browser_download' => array(
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
       'class' => 'backup_migrate_destination_browser_download',
@@ -77,6 +82,8 @@ function backup_migrate_backup_migrate_destination_types() {
       'can_create' => TRUE,
     ),
   );
+
+  return $out;
 }
 
 /**
@@ -130,10 +137,14 @@ function backup_migrate_get_destinations($op = 'all') {
 function backup_migrate_backup_migrate_destinations() {
   $out              = array();
 
-  $out['manual']    = backup_migrate_create_destination('file_manual');
-  $out['scheduled'] = backup_migrate_create_destination('file_scheduled');
+  if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
+    $out['manual']    = backup_migrate_create_destination('file_manual');
+    $out['scheduled'] = backup_migrate_create_destination('file_scheduled');
+  }
+  if (variable_get('backup_migrate_allow_backup_to_download', TRUE)) {
+    $out['download']  = backup_migrate_create_destination('browser_download');
+  }
   $out['upload']    = backup_migrate_create_destination('browser_upload');
-  $out['download']  = backup_migrate_create_destination('browser_download');
 
   // Expose the configured databases as sources.
   global $db_url;
