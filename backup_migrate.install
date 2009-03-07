@@ -6,6 +6,11 @@
  * @file
  * Install hooks for Backup and Migrate.
  */
+
+
+/**
+ * Implementation of hook_requirements().
+ */
 function backup_migrate_requirements($phase) {
   $requirements = array();
   if ($GLOBALS['db_type'] !== 'mysqli' && $GLOBALS['db_type'] !== 'mysql') {
@@ -193,6 +198,9 @@ function backup_migrate_schema() {
   return $schema;
 }
 
+/**
+ * Implementation of hook_install().
+ */
 function backup_migrate_install() {
   drupal_install_schema('backup_migrate');
   _backup_migrate_setup_databaase_defaults();

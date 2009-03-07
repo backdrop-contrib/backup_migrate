@@ -28,9 +28,28 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       if ($this->check_dir($dir)) {
         $filepath = rtrim($dir, "/") ."/". $file->filename();
         rename($file->filepath(), $filepath);
+
+        // chmod, chown and chgrp the file if needed.
+        if ($chmod = $this->settings('chmod')) {
+          if (!@chmod($filepath, octdec($chmod))) {
+            _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
+          }
+        }
+        if ($chgrp = $this->settings('chgrp')) {
+          if (!@chgrp($filepath, $chgrp)) {
+            _backup_migrate_message('Unable to set the file group for: @file', array('@file' => $filepath), 'error');
+          }
+        }
         return $file;
       }
     }
+  }
+
+  /**
+   * Determine if we can read the given file.
+   */
+  function can_read_file($file_id) {
+    return $this->op('restore') && is_readable($file_id);
   }
 
   /**
@@ -70,7 +89,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   }
 
   /**
-   * Get the form for the settings for this filter.
+   * Get the form for the settings for the files destination.
    */
   function settings_form($form) {
     $form['location'] = array(
@@ -80,7 +99,52 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       "#required" => TRUE,
       "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Drupal root directory. The web server must be able to write to this path.'),
     );
+    $form['settings'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Advanced Settings'),
+      '#tree' => TRUE,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    if (function_exists('chmod')) {
+      $form['settings']['chmod'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Change file mode (chmod)'),
+        '#size' => 5,
+        '#default_value' => $this->settings('chmod'),
+        '#description' => t('If you enter a value here, backup files will be chmoded with the mode you specify. Specify the mode in octal form (e.g. 644 or 0644) or leave blank to disable this feature.'),
+      );
+    }
+    if (function_exists('chgrp')) {
+      $form['settings']['chgrp'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Change file group (chgrp)'),
+        '#size' => 5,
+        '#default_value' => $this->settings('chgrp'),
+        '#description' => t('If you enter a value here, backup files will be chgrped to the group you specify. Leave blank to disable this feature.'),
+      );
+    }
     return $form;
+  }
+
+  /**
+   * Validate the form for the settings for the files destination.
+   */
+  function settings_form_validate($values) {
+    if (isset($values['settings']['chmod']) && !empty($values['settings']['chmod']) && !preg_match('/0?[0-7]{3}/', $values['settings']['chmod'])) {
+      form_set_error('chmod', t('You must enter a valid chmod octal value (e.g. 644 or 0644) in the change mode field, or leave it blank.'));
+    }
+  }
+
+  /**
+   * Submit the form for the settings for the files destination.
+   */
+  function settings_form_submit($values) {
+    // Add a 0 to the start of a 3 digit file mode to make it proper PHP encoded octal.
+    if (strlen($values['settings']['chmod']) == 3) {
+      $values['settings']['chmod'] = '0' . $values['settings']['chmod'];
+    }
+    return $values;
   }
 
   /**

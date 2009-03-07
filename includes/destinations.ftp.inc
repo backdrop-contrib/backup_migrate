@@ -40,7 +40,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
     return FALSE;
   }
 
-/**
+  /**
    * Delete from the ftp destination.
    */
   function delete_file($file_id) {
@@ -145,7 +145,6 @@ function drupal_ftp_connect(&$ftp) {
  * This function queries the FTP server with the ftp_systype command to check if the connection is still alive.
  * It returns TRUE on success or FALSE on disconnection.
  */
-
 function drupal_ftp_connected(&$ftp) {
   // Attempt to call the ftp_systype to see if the connect
   // to the FTP server is still alive and kicking
@@ -200,6 +199,9 @@ function drupal_ftp_ftp_to_file($file, $filename, $directory, &$ftp) {
   }
 }
 
+/**
+ * Send a file to an FTP server.
+ */
 function drupal_ftp_file_to_ftp($file, $ftp_filename, $ftp_directory, &$ftp) {
   if (!@drupal_ftp_connect($ftp)) {
     return FALSE;

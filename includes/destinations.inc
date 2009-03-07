@@ -158,6 +158,7 @@ function backup_migrate_backup_migrate_destinations() {
   // Get the saved destinations.
   $result = db_query('SELECT * FROM {backup_migrate_destinations}');
   while ($destination = db_fetch_array($result)) {
+    $destination['settings'] = unserialize($destination['settings']);
     if ($destination = backup_migrate_create_destination($destination['type'], $destination)) {
       $out[$destination->id()] = $destination;
     }
@@ -226,6 +227,7 @@ function backup_migrate_destination_delete_file($destination_id, $file_id) {
  */
 function backup_migrate_destination_save_destination($destination) {
   $info = $destination->to_array();
+  $info['settings'] = serialize($info['settings']);
   drupal_write_record('backup_migrate_destinations', $info, $info['destination_id'] ? array('destination_id') : array());
   _backup_migrate_message('Backup destination saved: %dest', array('%dest' => $destination->name()));
 }
@@ -404,7 +406,7 @@ function backup_migrate_ui_destination_configure_form(&$form_state, $destination
 }
 
 /**
- * Submit the destination configuration form.
+ * Validate the destination configuration form.
  */
 function backup_migrate_ui_destination_configure_form_validate($form, &$form_state) {
   $values = $form_state['values'];
@@ -630,8 +632,12 @@ class backup_migrate_destination {
     $this->dest_password = $password;
   }
 
-  function settings() {
-    return $this->dest_settings;
+  function settings($key = NULL) {
+    $out = $this->dest_settings;
+    if ($key) {
+      $out = isset($out[$key]) ? $out[$key] : NULL;
+    }
+    return $out;
   }
 
   function set_settings($settings) {
@@ -785,7 +791,7 @@ class backup_migrate_destination {
       'destination_id' => $this->id(),
       'name' => $this->name(),
       'location' => $this->location(),
-      'settings' => serialize($this->settings()),
+      'settings' => $this->settings(),
     );
     return $info;
   }
