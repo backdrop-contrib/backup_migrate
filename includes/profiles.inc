@@ -40,6 +40,10 @@ function backup_migrate_get_profile($profile_id) {
  */
 function backup_migrate_backup_migrate_profiles() {
   $out = array();
+
+  // Get the default profiles from settings.php
+  $out += (array)variable_get('backup_migrate_profiles_defaults', array());
+
   // Get the saved profiless
   $result = db_query('SELECT * FROM {backup_migrate_profiles}');
   while ($profile = db_fetch_array($result)) {
@@ -202,6 +206,21 @@ function backup_migrate_ui_profile_delete_confirm_submit($form, &$form_state) {
   $form_state['redirect'] = "admin/content/backup_migrate/profile";
 }
 
+/**
+ * Export a profile to a renedered PHP variable.
+ */
+function backup_migrate_ui_profile_export($profile_id = NULL) {
+  if (function_exists('ctools_include') && $profile = backup_migrate_get_profile($profile_id)) {
+    ctools_include('export');
+    unset($profile['db']);
+    if (is_numeric($destination['profile_id'])) {
+      $profile['profile_id'] = uniqid('default_');
+    }
+    return drupal_get_form('backup_migrate_ui_export_form', $profile);
+  }
+  drupal_goto('admin/content/backup_migrate/profile');
+}
+
 /* Utilities */
 
 /**
@@ -338,9 +357,12 @@ function _backup_migrate_ui_backup_settings_form($profile) {
 function _backup_migrate_profile_get_links($profile_id) {
   $out = array();
   if ($profile = backup_migrate_get_profile($profile_id)) {
-    if ($profile['db']) {
+    if (!empty($profile['db'])) {
       $out[] = l(t("configure"), "admin/content/backup_migrate/profile/list/configure/". $profile_id);
       $out[] = l(t("delete"), "admin/content/backup_migrate/profile/list/delete/". $profile_id);
+    }
+    if (module_exists('ctools')) {
+      $out[] = l(t("export"), "admin/content/backup_migrate/profile/list/export/". $profile_id);
     }
   }
   return $out;

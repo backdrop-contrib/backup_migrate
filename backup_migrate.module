@@ -136,6 +136,13 @@ function backup_migrate_menu() {
     'access arguments' => array('administer backup and migrate'),
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/content/backup_migrate/destination/list/export'] = array(
+    'title' => 'Export Destination',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('destinations', 'backup_migrate_ui_destination_export', TRUE),
+    'access arguments' => array('administer backup and migrate'),
+    'type' => MENU_LOCAL_TASK,
+  );
   $items['admin/content/backup_migrate/destination/list/deletefile'] = array(
     'title' => 'Delete File',
     'description' => 'Delete a backup file',
@@ -199,6 +206,13 @@ function backup_migrate_menu() {
     'access arguments' => array('administer backup and migrate'),
     'type' => MENU_LOCAL_TASK,
   );
+  $items['admin/content/backup_migrate/schedule/list/export'] = array(
+    'title' => 'Export Schedule',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('schedules', 'backup_migrate_ui_schedule_export', TRUE),
+    'access arguments' => array('administer backup and migrate'),
+    'type' => MENU_LOCAL_TASK,
+  );
   $items['admin/content/backup_migrate/profile'] = array(
     'title' => 'Profiles',
     'description' => 'View existing profiles',
@@ -215,7 +229,7 @@ function backup_migrate_menu() {
   );
   $items['admin/content/backup_migrate/profile/add'] = array(
     'title' => 'Create Profile',
-    'description' => 'View existing profiles',
+    'description' => 'Add a new profile',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('profiles', 'backup_migrate_ui_profile_create', TRUE),
     'access arguments' => array('administer backup and migrate'),
@@ -224,7 +238,7 @@ function backup_migrate_menu() {
   );
   $items['admin/content/backup_migrate/profile/list/delete'] = array(
     'title' => 'Delete Profile',
-    'description' => 'View existing profiles',
+    'description' => 'Delete an existing profile',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('profiles', 'backup_migrate_ui_profile_delete', TRUE),
     'access arguments' => array('administer backup and migrate'),
@@ -232,9 +246,17 @@ function backup_migrate_menu() {
   );
   $items['admin/content/backup_migrate/profile/list/configure'] = array(
     'title' => 'Edit Profile',
-    'description' => 'View existing profiles',
+    'description' => 'Configure an existing profile',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('profiles', 'backup_migrate_ui_profile_configure', TRUE),
+    'access arguments' => array('administer backup and migrate'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/content/backup_migrate/profile/list/export'] = array(
+    'title' => 'Edit Profile',
+    'description' => 'Export an existing profile',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('profiles', 'backup_migrate_ui_profile_export', TRUE),
     'access arguments' => array('administer backup and migrate'),
     'type' => MENU_LOCAL_TASK,
   );
@@ -520,6 +542,18 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
     backup_migrate_perform_restore('upload', $file->filepath);
   }
   $form_state['redirect'] = 'admin/content/backup_migrate/restore';
+}
+
+/**
+ * Convert an item to an 'exportable'.
+ */
+function backup_migrate_ui_export_form(&$form_state, $item) {
+  if ($item && function_exists('ctools_var_export')) {
+    $code = ctools_var_export($item);
+    $form = ctools_export_form(&$form_state, $code);
+    return $form;
+  }
+  return array();
 }
 
 /**

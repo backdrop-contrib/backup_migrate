@@ -155,11 +155,20 @@ function backup_migrate_backup_migrate_destinations() {
     }
   }
 
+  // Get the default items from settings.php
+  $defaults = (array)variable_get('backup_migrate_destinations_defaults', array());
+  foreach ($defaults as $destination) {
+    if (is_array($destination) && $destination = backup_migrate_create_destination($destination['type'], $destination)) {
+      $out[$destination->id()] = $destination;
+    }
+  }
+
   // Get the saved destinations.
   $result = db_query('SELECT * FROM {backup_migrate_destinations}');
   while ($destination = db_fetch_array($result)) {
     $destination['settings'] = unserialize($destination['settings']);
     if ($destination = backup_migrate_create_destination($destination['type'], $destination)) {
+      $destination->db = TRUE;
       $out[$destination->id()] = $destination;
     }
   }
@@ -535,6 +544,22 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
   $form_state['redirect'] = user_access('access backup files') ? "admin/content/backup_migrate/destination/list/files/". $destination_id : "admin/content/backup_migrate";
 }
 
+/**
+ * Export a destination to a renedered PHP variable.
+ */
+function backup_migrate_ui_destination_export($destination_id = NULL) {
+  if (function_exists('ctools_include') && $destination = backup_migrate_get_destination($destination_id)) {
+    ctools_include('export');
+    $destination = $destination->to_array();
+    unset($destination['db']);
+    if (is_numeric($destination['destination_id'])) {
+      $destination['destination_id'] = uniqid('default_');
+    }
+    return drupal_get_form('backup_migrate_ui_export_form', $destination);
+  }
+  drupal_goto('admin/content/backup_migrate/destination');
+}
+
 /* Utilities */
 
 /**
@@ -561,6 +586,7 @@ class backup_migrate_destination {
   var $dest_id = NULL;
   var $dest_url = array();
   var $supported_ops = array();
+  var $db = FALSE;
 
   /**
    * Constructor, set the basic info pulled from the db.
@@ -691,7 +717,7 @@ class backup_migrate_destination {
     $out = array();
     // Don't display the download/delete/restore ops if they are not available for this destination.
     $can_list       = $this->op('list files');
-    $can_conf       = $this->op('configure') && user_access('administer backup and migrate');
+    $can_conf       = $this->op('configure') && user_access('administer backup and migrate') && $this->db;
 
     $destination_id = $this->id();
     if ($can_list && user_access("access backup files")) {
@@ -702,6 +728,9 @@ class backup_migrate_destination {
     }
     if (is_numeric($this->id())) {
       $out[] = l(t("delete"), "admin/content/backup_migrate/destination/list/delete/". $destination_id);
+    }
+    if (module_exists('ctools')) {
+      $out[] = l(t("export"), "admin/content/backup_migrate/destination/list/export/". $destination_id);
     }
     return $out;
   }

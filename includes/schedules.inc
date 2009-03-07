@@ -61,6 +61,10 @@ function backup_migrate_get_schedule($schedule_id) {
  */
 function backup_migrate_backup_migrate_schedules() {
   $out = array();
+
+  // Get the default schedules from settings.php
+  $out += (array)variable_get('backup_migrate_schedules_defaults', array());
+
   // Get the saved scheduless
   $result = db_query('SELECT * FROM {backup_migrate_schedules}');
   while ($schedule = db_fetch_array($result)) {
@@ -297,6 +301,20 @@ function backup_migrate_ui_schedule_delete_confirm_submit($form, &$form_state) {
   $form_state['redirect'] = "admin/content/backup_migrate/schedule";
 }
 
+/**
+ * Export a profile to a renedered PHP variable.
+ */
+function backup_migrate_ui_schedule_export($schedule_id = NULL) {
+  if (function_exists('ctools_include') && $schedule = backup_migrate_get_schedule($schedule_id)) {
+    ctools_include('export');
+    unset($schedule['db']);
+    if (is_numeric($schedule['schedule_id'])) {
+      $schedule['schedule_id'] = uniqid('default_');
+    }
+    return drupal_get_form('backup_migrate_ui_export_form', $schedule);
+  }
+  drupal_goto('admin/content/backup_migrate/schedule');
+}
 
 /* Utilities */
 
@@ -306,9 +324,12 @@ function backup_migrate_ui_schedule_delete_confirm_submit($form, &$form_state) {
 function _backup_migrate_schedule_get_links($schedule_id) {
   $out = array();
   if ($schedule = backup_migrate_get_schedule($schedule_id)) {
-    if ($schedule['db']) {
+    if (@$schedule['db']) {
       $out[] = l(t("configure"), "admin/content/backup_migrate/schedule/list/configure/". $schedule_id);
       $out[] = l(t("delete"), "admin/content/backup_migrate/schedule/list/delete/". $schedule_id);
+    }
+    if (module_exists('ctools')) {
+      $out[] = l(t("export"), "admin/content/backup_migrate/schedule/list/export/". $schedule_id);
     }
   }
   return $out;
