@@ -550,7 +550,7 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
 function backup_migrate_ui_export_form(&$form_state, $item) {
   if ($item && function_exists('ctools_var_export')) {
     $code = ctools_var_export($item);
-    $form = ctools_export_form(&$form_state, $code);
+    $form = ctools_export_form($form_state, $code);
     return $form;
   }
   return array();

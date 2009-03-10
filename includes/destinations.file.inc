@@ -49,14 +49,14 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Determine if we can read the given file.
    */
   function can_read_file($file_id) {
-    return $this->op('restore') && is_readable($file_id);
+    return $this->op('restore') && is_readable($this->get_filepath($file_id));
   }
 
   /**
    * File load destination callback.
    */
   function load_file($file_id) {
-    $filepath = rtrim($this->location(), '/') .'/'. $file_id;
+    $filepath = $this->get_filepath($file_id);
     if (file_exists($filepath)) {
       require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
       return new backup_file(array('filepath' => $filepath));
@@ -84,8 +84,16 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * File delete destination callback.
    */
   function delete_file($file_id) {
-    $filepath = rtrim($this->location(), '/') .'/'. $file_id;
+    $filepath = $this->get_filepath($file_id);
     file_delete($filepath);
+  }
+
+  /**
+   * Get the filepath from the given file id.
+   */
+  function get_filepath($file_id) {
+    $filepath = rtrim($this->location(), '/') .'/'. $file_id;
+    return $filepath;
   }
 
   /**
