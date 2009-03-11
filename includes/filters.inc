@@ -50,6 +50,10 @@ function backup_migrate_backup_migrate_filters() {
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.statusnotify.inc',
       'class' => 'backup_migrate_filter_statusnotify',
     ),
+    'utils' => array(
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.utils.inc',
+      'class' => 'backup_migrate_filter_utils',
+    ),
   );
 }
 
@@ -223,6 +227,20 @@ class backup_migrate_filter {
    */
   function restore_file($file, $settings) {
     return $file;
+  }
+
+  /**
+   * This function is called immediately prior to backup.
+   */
+  function pre_backup($source, $file, $settings) {
+
+  }
+
+  /**
+   * This function is called immediately post backup.
+   */
+  function post_backup($source, $file, $settings) {
+
   }
 }
 

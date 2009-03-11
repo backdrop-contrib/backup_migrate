@@ -11,6 +11,7 @@
  * Get all the available backup profiles.
  */
 function backup_migrate_get_profiles() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
   static $profiles = NULL;
 
   // Get the list of profiles and cache them locally.
@@ -19,6 +20,8 @@ function backup_migrate_get_profiles() {
     $all_profiles = module_invoke_all('backup_migrate_profiles');
     // Reindex since module_invoke_all stomps on numerical indices (thanks to array_merge).
     foreach ($all_profiles as $profile) {
+      // Set the default values for filter setting which don't exist in the profile.
+      $profile['filters'] = $profile['filters'] + backup_migrate_filters_settings_default('backup');
       $profiles[$profile['profile_id']] = $profile;
     }
   }
@@ -62,7 +65,7 @@ function backup_migrate_backup_migrate_profiles() {
 function backup_migrate_profile_save_profile($profile) {
   $profile['nodata_tables'] = serialize(array_filter((array)$profile['nodata_tables']));
   $profile['exclude_tables'] = serialize(array_filter((array)$profile['exclude_tables']));
-  $profile['filters'] = serialize(array_filter((array)$profile['filters']));
+  $profile['filters'] = serialize((array)$profile['filters']);
 
   drupal_write_record('backup_migrate_profiles', $profile, @$profile['profile_id'] ? array('profile_id') : array());
   _backup_migrate_message('Profile setting saved: %profile', array('%profile' => $profile['name']));

@@ -429,7 +429,8 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
       '#type' => 'textfield',
       '#title' => t('Save the settings as'),
     );
-    if (@$profile['profile_id']) {
+
+    if (@$profile['profile_id'] && @$profile['db']) {
       $form['save_options']['create_new'] = array(
         '#default_value' => $profile['name'],
         '#type' => 'radios',
@@ -509,6 +510,8 @@ function backup_migrate_ui_manual_restore() {
  * The restore/import upload form.
  */
 function backup_migrate_ui_manual_restore_form() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+
   $form = array();
   $form['backup_migrate_restore_upload'] = array(
     '#title' => t('Upload a Backup File'),
@@ -519,6 +522,16 @@ function backup_migrate_ui_manual_restore_form() {
     '#type' => 'markup',
     '#value' => t('<p>This will delete some or all of your data and cannot be undone. If there is a sessions table in the backup file, you and all other currently logged in users will be logged out. <strong>Always test your backups on a non-production server!</strong><p>'),
   );
+
+  $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
+  // Add the advanced fieldset if there are any fields in it.
+  if (@$form['advanced']) {
+    $form['advanced']['#type'] = 'fieldset';
+    $form['advanced']['#title'] = t('Advanced Options');
+    $form['advanced']['#collapsed'] = true;
+    $form['advanced']['#collapsible'] = true;
+  }
+
   $form[] = array(
     '#type' => 'submit',
     '#value' => t('Restore Database'),
@@ -539,7 +552,7 @@ function backup_migrate_ui_manual_restore_form() {
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
   if ($file = file_save_upload('backup_migrate_restore_upload')) {
     require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
-    backup_migrate_perform_restore('upload', $file->filepath);
+    backup_migrate_perform_restore('upload', $file->filepath, $form_state['values']);
   }
   $form_state['redirect'] = 'admin/content/backup_migrate/restore';
 }
@@ -639,7 +652,7 @@ function backup_migrate_backup_succeed($message, $params, $settings) {
 /**
  * Restore from a file in the given destination.
  */
-function backup_migrate_perform_restore($destination_id, $file_id) {
+function backup_migrate_perform_restore($destination_id, $file_id, $settings = array()) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
 
@@ -656,26 +669,30 @@ function backup_migrate_perform_restore($destination_id, $file_id) {
     return FALSE;
   }
 
-  // Load the file from the destination.
+  // Filter the file before restoring.
   $file = backup_migrate_filters_restore($file);
   if (!$file) {
+    // No error as filters should take care of that themselves.
     _backup_migrate_temp_files_delete();
     return FALSE;
   }
 
-  $file = backup_migrate_perform_restore_file($file, $destination_id);
+  // Perform the actual restore.
+  $file = backup_migrate_perform_restore_file($file, $destination_id, $settings);
   if (!$file) {
     _backup_migrate_message("Could not restore the database.", array(), 'error');
     _backup_migrate_temp_files_delete();
     return FALSE;
   }
+
+  // No errors. Return the file.
   return $file;
 }
 
 /**
  * Restore from a file in the given destination.
  */
-function backup_migrate_perform_restore_file($file, $destination_id) {
+function backup_migrate_perform_restore_file($file, $destination_id, $settings = array()) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
 
@@ -684,14 +701,14 @@ function backup_migrate_perform_restore_file($file, $destination_id) {
     set_time_limit(600);
   }
 
-  $num = backup_migrate_db_restore($file);
+  $num = backup_migrate_db_restore($file, $settings);
 
   if ($num && $destination = backup_migrate_get_destination($destination_id)) {
     $message = 'Database restored from %destination file %file. %num SQL commands executed.';
     if ($destination && $destination->op('list files')) {
       $message .= ' (<a href="!restoreurl">Restore again</a>)';
     }
-    _backup_migrate_message($message, array("%destination" => $destination->name(), "%num" => $num, '%file' => $file->filename(), '!restoreurl' => url('admin/content/backup_migrate/destination/restorefile/'. $destination_id ."/". $file->filename())));
+    _backup_migrate_message($message, array("%destination" => $destination->name(), "%num" => $num, '%file' => $file->filename(), '!restoreurl' => url('admin/content/backup_migrate/destination/list/restorefile/'. $destination_id ."/". $file->filename())));
   }
 
   // Delete any temp files we've created.

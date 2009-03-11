@@ -496,7 +496,19 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
 function backup_migrate_ui_destination_restore_file_confirm(&$form_state, $destination_id, $file_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
-  return confirm_form($form, t('Are you sure you want to restore the database?'), "admin/content/backup_migrate/destination/list/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));
+  $form = confirm_form($form, t('Are you sure you want to restore the database?'), "admin/content/backup_migrate/destination/list/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));
+  $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
+  $form['actions']['#weight'] = 100;
+
+  // Add the advanced fieldset if there are any fields in it.
+  if (@$form['advanced']) {
+    $form['advanced']['#type'] = 'fieldset';
+    $form['advanced']['#title'] = t('Advanced Options');
+    $form['advanced']['#collapsed'] = true;
+    $form['advanced']['#collapsible'] = true;
+  }
+
+  return $form;
 }
 
 /**
@@ -506,7 +518,7 @@ function backup_migrate_ui_destination_restore_file_confirm_submit($form, &$form
   $destination_id = $form_state['values']['destination_id'];
   $file_id = $form_state['values']['file_id'];
   if ($destination_id && $file_id) {
-    backup_migrate_perform_restore($destination_id, $file_id);
+    backup_migrate_perform_restore($destination_id, $file_id, $form_state['values']);
   }
   $redir = user_access('access backup files') ? "admin/content/backup_migrate/destination/list/files/". $destination_id : "admin/content/backup_migrate";
   $form_state['redirect'] = $redir;

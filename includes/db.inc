@@ -10,10 +10,12 @@
 /**
  * Restore from a previously backed up files. File must be a decompressed SQL file.
  */
-function backup_migrate_db_restore($file) {
+function backup_migrate_db_restore($file, $settings) {
   $num = 0;
 
-  // Open the file (with fopen or gzopen depending on file format).
+  backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
+
+  // Open the file using the file wrapper.
   if ($file->type_id() !== 'sql') {
     drupal_set_message(t("Unable to restore from file %file because it is of an unknown file type.", array("%file" => $file->filepath())), 'error');
     return FALSE;
@@ -47,8 +49,12 @@ function backup_migrate_db_backup($source, $file, $settings) {
   // Switch to a different db if specified.
   _backup_migrate_db_switch_db($source->location());
 
+  backup_migrate_filters_invoke_all('pre_backup', $source, $file, $settings);
+
   // Dump the database.
   $success = _backup_migrate_get_dump_sql($file, $settings['exclude_tables'], $settings['nodata_tables']);
+
+  backup_migrate_filters_invoke_all('post_backup', $source, $file, $settings);
 
   // Switch back to the previous db.
   _backup_migrate_db_switch_db();

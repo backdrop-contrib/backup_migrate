@@ -40,8 +40,8 @@ very serious security vulnerability. Backup and Migrate attempts to protect
 backup files using a .htaccess file, but this is not guaranteed to work on all
 environments (and is guaranteed to fail on web servers that are not apache). You
 should test to see if your backup files are publicly accessible, and if in doubt
-do not save backups to the server, or use the new destinations feature to save 
-to a folder outside of your webroot.
+do not save backups to the server, or use the destinations feature to save to a 
+folder outside of your webroot.
 
 OTHER WARNINGS:
 A failed restore can destroy your database and therefore your entire Drupal
@@ -58,10 +58,10 @@ operation. Larger databases require more time. Also, while the module attempts
 to keep memory needs to a minimum, a backup or restore will require
 significantly more memory then most Drupal operations.
 
-If your backup file contains the 'sessions' table you will likely be logged out
-after you run a restore. To avoid this, exclude the sessions table when creating
-your backups. Be aware though that you will need to recreate the sessions table
-if you use this backup on an empty database.
+If your backup file contains the 'sessions' table all other users will be logged
+out after you run a restore. To avoid this, exclude the sessions table when 
+creating your backups. Be aware though that you will need to recreate the 
+sessions table if you use this backup on an empty database.
 
 Do not change the file extension of backup files or the restore function will be
 unable to determine the compression type the file and will not function
@@ -71,10 +71,6 @@ IF A RESTORE FAILS:
 Don't panic, the restore file should work with phpMyAdmin's import function, or
 with the mysql command line tool. If it does not, then it is likely corrupt; you
 may panic now. MAKE SURE THAT THIS MODULE IS NOT YOUR ONLY FORM OF BACKUP.
-
-NOTE TO DEVEL USERS:
-If you experience memory limit errors while restoring, try disabling the
-'Collect query info' setting in devel.
 
 -------------------------------------------------------------------------------
 
