@@ -21,7 +21,7 @@ function backup_migrate_get_profiles() {
     // Reindex since module_invoke_all stomps on numerical indices (thanks to array_merge).
     foreach ($all_profiles as $profile) {
       // Set the default values for filter setting which don't exist in the profile.
-      $profile['filters'] = $profile['filters'] + backup_migrate_filters_settings_default('backup');
+      $profile['filters'] = (array)$profile['filters'] + (array)backup_migrate_filters_settings_default('backup');
       $profiles[$profile['profile_id']] = $profile;
     }
   }
