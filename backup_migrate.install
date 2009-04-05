@@ -13,10 +13,7 @@
  */
 function backup_migrate_requirements($phase) {
   $requirements = array();
-  if ($GLOBALS['db_type'] !== 'mysqli' && $GLOBALS['db_type'] !== 'mysql') {
-    $requirements['db_type']['description'] = $t('This module is only compatible with MySQL databases.');
-    $requirements['db_type']['severity'] = REQUIREMENT_ERROR;
-  }
+  return $requirements;
 }
 
 /**

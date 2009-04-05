@@ -537,7 +537,7 @@ function backup_migrate_ui_manual_restore_form() {
     '#type' => 'file',
     '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array("%size" => format_size(file_upload_max_size()))),
   );
-  $form[] = array(
+  $form['disclaimer'] = array(
     '#type' => 'markup',
     '#value' => t('<p>This will delete some or all of your data and cannot be undone. If there is a sessions table in the backup file, you and all other currently logged in users will be logged out. <strong>Always test your backups on a non-production server!</strong><p>'),
   );
@@ -551,7 +551,7 @@ function backup_migrate_ui_manual_restore_form() {
     $form['advanced']['#collapsible'] = true;
   }
 
-  $form[] = array(
+  $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Restore Database'),
   );
