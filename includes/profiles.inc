@@ -251,7 +251,8 @@ function _backup_migrate_ui_backup_settings_form($profile) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
 
   $form    = array();
-  $tables  = _backup_migrate_get_table_names();
+  $source = backup_migrate_get_destination($profile['source_id']);
+  $tables  = _backup_migrate_get_table_names($source);
 
   $sources = _backup_migrate_get_destination_form_item_options('source');
   if (count($sources) > 1) {

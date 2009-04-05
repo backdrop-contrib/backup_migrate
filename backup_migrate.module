@@ -511,8 +511,27 @@ function backup_migrate_ui_manual_restore() {
  */
 function backup_migrate_ui_manual_restore_form() {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
 
   $form = array();
+
+  $sources = _backup_migrate_get_destination_form_item_options('source');
+  if (count($sources) > 1) {
+    $form['source_id'] = array(
+      "#type" => "select",
+      "#title" => t("Database"),
+      "#options" => _backup_migrate_get_destination_form_item_options('source'),
+      "#description" => t("Choose the database to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to."),
+      "#default_value" => 'db_url:default',
+    );
+  }
+  else {
+    $form['source_id'] = array(
+      "#type" => "value",
+      "#value" => 'db_url:default',
+    );
+  }
+
   $form['backup_migrate_restore_upload'] = array(
     '#title' => t('Upload a Backup File'),
     '#type' => 'file',
@@ -701,7 +720,9 @@ function backup_migrate_perform_restore_file($file, $destination_id, $settings =
     set_time_limit(600);
   }
 
-  $num = backup_migrate_db_restore($file, $settings);
+  $source = backup_migrate_get_destination($settings['source_id']);
+
+  $num = backup_migrate_db_restore($source, $file, $settings);
 
   if ($num && $destination = backup_migrate_get_destination($destination_id)) {
     $message = 'Database restored from %destination file %file. %num SQL commands executed.';

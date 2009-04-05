@@ -72,11 +72,11 @@ class backup_migrate_destination_db_defaults extends backup_migrate_destination_
   var $supported_ops = array('scheduled backup', 'manual backup', 'source');
   var $db_key = "";
 
-  function __construct($key) {
+  function __construct($params) {
     global $db_url;
-    $this->db_key = $key;
+    $this->db_key = $params['db_key'];
     $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
-    $this->set_url($urls[$key]);
+    $this->set_url($urls[$this->db_key]);
   }
 
   function op($op) {

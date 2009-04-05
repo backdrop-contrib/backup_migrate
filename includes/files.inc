@@ -43,6 +43,12 @@ function _backup_migrate_filetypes() {
       "backup" => TRUE,
       "restore" => TRUE,
     ),
+    "mysql" => array(
+      "extension" => "mysql",
+      "filemime" => "text/x-sql",
+      "backup" => TRUE,
+      "restore" => TRUE,
+    ),
   );
   $out += backup_migrate_filters_file_types();
   return $out;

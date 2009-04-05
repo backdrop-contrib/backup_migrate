@@ -150,7 +150,7 @@ function backup_migrate_backup_migrate_destinations() {
   global $db_url;
   $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
   foreach ((array)$urls as $key => $url) {
-    if ($destination = backup_migrate_create_destination('db_default', $key)) {
+    if ($destination = backup_migrate_create_destination('db_default', array('db_key' => $key))) {
       $out[$destination->id()] = $destination;
     }
   }
@@ -494,6 +494,23 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
  * Ask confirmation for file restore.
  */
 function backup_migrate_ui_destination_restore_file_confirm(&$form_state, $destination_id, $file_id) {
+  $sources = _backup_migrate_get_destination_form_item_options('source');
+  if (count($sources) > 1) {
+    $form['source_id'] = array(
+      "#type" => "select",
+      "#title" => t("Database"),
+      "#options" => _backup_migrate_get_destination_form_item_options('source'),
+      "#description" => t("Choose the database to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to."),
+      "#default_value" => 'db_url:default',
+    );
+  }
+  else {
+    $form['source_id'] = array(
+      "#type" => "value",
+      "#value" => 'db_url:default',
+    );
+  }
+
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
   $form = confirm_form($form, t('Are you sure you want to restore the database?'), "admin/content/backup_migrate/destination/list/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));

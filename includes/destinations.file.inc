@@ -265,11 +265,10 @@ class backup_migrate_destination_files extends backup_migrate_destination {
  * But they serve a purpose as a meaningful default.
  */
 class backup_migrate_destination_files_builtin extends backup_migrate_destination_files {
-  function __construct($mode, $name) {
-    $params = array();
-    $params['location'] = $this->check_destination_dir($mode);
-    $params['name'] = $name;
-    $params['destination_id'] = $mode;
+  function __construct($params = array()) {
+    $params['location'] = $this->check_destination_dir($params['mode']);
+    $params['name'] = $params['name'];
+    $params['destination_id'] = $params['mode'];
     parent::__construct($params);
   }
 
@@ -297,9 +296,8 @@ class backup_migrate_destination_files_builtin extends backup_migrate_destinatio
  */
 class backup_migrate_destination_files_manual extends backup_migrate_destination_files_builtin {
   var $supported_ops = array('manual backup', 'restore', 'list files', 'delete');
-  function __construct($mode) {
-    $params = array();
-    parent::__construct('manual', t("Manual Backups Directory"));
+  function __construct($params = array()) {
+    parent::__construct(array('mode' => 'manual', 'name' => t('Manual Backups Directory')));
   }
 }
 
@@ -310,7 +308,7 @@ class backup_migrate_destination_files_scheduled extends backup_migrate_destinat
   var $supported_ops = array('scheduled backup', 'restore', 'list files', 'delete');
   function __construct($mode) {
     $params = array();
-    parent::__construct('scheduled', t("Scheduled Backups Directory"));
+    parent::__construct(array('mode' => 'scheduled', 'name' => t('Scheduled Backups Directory')));
   }
 }
 

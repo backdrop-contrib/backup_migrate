@@ -10,32 +10,31 @@
 /**
  * Restore from a previously backed up files. File must be a decompressed SQL file.
  */
-function backup_migrate_db_restore($file, $settings) {
+function backup_migrate_db_restore($source, $file, $settings) {
   $num = 0;
 
-  backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
+  if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
+    // Switch to a different db if specified.
+    _backup_migrate_db_switch_db($source->location());
 
-  // Open the file using the file wrapper.
-  if ($file->type_id() !== 'sql') {
-    drupal_set_message(t("Unable to restore from file %file because it is of an unknown file type.", array("%file" => $file->filepath())), 'error');
-    return FALSE;
-  }
-  else if ($file->open()) {
-    // Read one line at a time and run the query.
-    while ($line = $file->read()) {
-      $line = trim($line);
-      if ($line) {
-        // Use the helper instead of the api function to avoid substitution of '{' etc.
-        _db_query($line);
-        $num++;
+    backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
+
+    // Open the file using the file wrapper. Check that the dump is of the right type (allow .sql for legacy reasons).
+    if ($file->type_id() !== $type && $file->type_id() !== 'sql') {
+      _backup_migrate_message("Unable to restore from file %file because it is of an unknown file type.", array("%file" => $file->filepath()), 'error');
+    }
+    else {
+      // Dump the database.
+      $function = 'backup_migrate_restore_db_from_file_'. $type;
+      if (function_exists($function)) {
+        $num = $function($file, $settings);
       }
     }
-    // Close the file with fclose/gzclose.
-    $file->close();
-  }
-  else {
-    drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $file->filepath())), 'error');
-    return FALSE;
+
+    backup_migrate_filters_invoke_all('post_restore', $file, $settings, $num);
+
+    // Switch back to the previous db.
+    _backup_migrate_db_switch_db();
   }
   return $num;
 }
@@ -44,137 +43,40 @@ function backup_migrate_db_restore($file, $settings) {
  * Build the database dump file. Takes a list of tables to exclude and some formatting options.
  */
 function backup_migrate_db_backup($source, $file, $settings) {
-  $file->push_type('sql');
+  $success = FALSE;
 
-  // Switch to a different db if specified.
-  _backup_migrate_db_switch_db($source->location());
+  if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
+    $file->push_type($type);
 
-  backup_migrate_filters_invoke_all('pre_backup', $source, $file, $settings);
+    // Switch to a different db if specified.
+    _backup_migrate_db_switch_db($source->location());
 
-  // Dump the database.
-  $success = _backup_migrate_get_dump_sql($file, $settings['exclude_tables'], $settings['nodata_tables']);
+    backup_migrate_filters_invoke_all('pre_backup', $source, $file, $settings);
 
-  backup_migrate_filters_invoke_all('post_backup', $source, $file, $settings);
+    // Dump the database.
+    $function = 'backup_migrate_backup_db_to_file_'. $type;
+    if (function_exists($function)) {
+      $success = $function($file, $settings);
+    }
 
-  // Switch back to the previous db.
-  _backup_migrate_db_switch_db();
+    backup_migrate_filters_invoke_all('post_backup', $source, $file, $settings, $success);
 
+    // Switch back to the previous db.
+    _backup_migrate_db_switch_db();
+  }
   return $success ? $file : FALSE;
-}
-
-/**
- * Get the sql dump file. Returns a list of sql commands, one command per line.
- *  That makes it easier to import without loading the whole file into memory.
- *  The files are a little harder to read, but human-readability is not a priority
- */
-function _backup_migrate_get_dump_sql($file, $exclude, $nodata) {
-  if ($file->open(TRUE)) {
-    $file->write(_backup_migrate_get_sql_file_header());
-    $alltables = _backup_migrate_get_tables();
-    foreach ($alltables as $table) {
-      if ($table['Name'] && !isset($exclude[$table['Name']])) {
-        $file->write(_backup_migrate_get_table_structure_sql($table));
-        if (!in_array($table['Name'], $nodata)) {
-          _backup_migrate_dump_table_data_sql_to_file($file, $table);
-        }
-      }
-    }
-    $file->write(_backup_migrate_get_sql_file_footer());
-    $file->close();
-    return TRUE;
-  }
-  else {
-    return FALSE;
-  }
-}
-
-/**
- * Get the sql for the structure of the given table.
- */
-function _backup_migrate_get_table_structure_sql($table) {
-  $out = "";
-  $result = db_query("SHOW CREATE TABLE `". $table['Name'] ."`");
-  if ($create = db_fetch_array($result)) {
-    $out .= "DROP TABLE IF EXISTS `". $table['Name'] ."`;\n";
-    $out .= strtr($create['Create Table'], "\n", " ");
-    if ($table['Auto_increment']) {
-      $out .= " AUTO_INCREMENT=". $table['Auto_increment'];
-    }
-    $out .= ";\n";
-  }
-  return $out;
-}
-
-/**
- *  Get the sql to insert the data for a given table
- */
-function _backup_migrate_dump_table_data_sql_to_file($file, $table) {
-  $data = db_query("SELECT * FROM `". $table['Name'] ."`");
-  while ($row = db_fetch_array($data)) {
-    $items = array();
-    foreach ($row as $key => $value) {
-      $items[] = is_null($value) ? "null" : "'". db_escape_string($value) ."'";
-    }
-    if ($items) {
-      $file->write("INSERT INTO `". $table['Name'] ."` VALUES (". implode(",", $items) .");\n");
-    }
-  }
-}
-
-/**
- * The header for the top of the sql dump file. These commands set the connection
- *  character encoding to help prevent encoding conversion issues.
- */
-function _backup_migrate_get_sql_file_header() {
-  return "
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
-
-SET NAMES utf8;
-";
-}
-
-/**
- * The footer of the sql dump file.
- */
-function _backup_migrate_get_sql_file_footer() {
-  return "
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-";
-}
-
-/**
- * Get a list of tables in the db. Works with MySQL, Postgres not tested.
- */
-function _backup_migrate_get_tables() {
-  $out = array();
-  // get auto_increment values and names of all tables
-  $tables = db_query("show table status");
-  while ($table = db_fetch_array($tables)) {
-    $out[$table['Name']] = $table;
-  }
-  return $out;
 }
 
 /**
  * Get the list of table names.
  */
-function _backup_migrate_get_table_names() {
+function _backup_migrate_get_table_names($source) {
   $out = array();
-  // Get auto_increment values and names of all tables.
-  $tables = db_query("show table status");
-  while ($table = db_fetch_array($tables)) {
-    $out[$table['Name']] = $table['Name'];
+  if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
+    $function = '_backup_migrate_get_table_names_'. $type;
+    if (function_exists($function)) {
+      $out = $function();
+    }
   }
   return $out;
 }
@@ -242,3 +144,30 @@ function _backup_migrate_db_switch_db($in_url = NULL) {
   }
 }
 
+/**
+ * Get the appropriate db type for file inclusion and calling the right function.
+ */
+function _backup_migrate_db_get_db_type($scheme) {
+  static $type = NULL;
+  if ($type === NULL) {
+    switch ($scheme) {
+      case 'mysql':
+      case 'mysqli':
+        $type = 'mysql';
+        require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.mysql.inc';
+      break;
+      default: 
+        $type = false;
+      break;
+    }
+    if (!$type) {
+      if ($scheme) {
+        _backup_migrate_message("Backup and migrate does not support @type databases.", array("@type" => $scheme), 'error');
+      }
+      else {
+        _backup_migrate_message("Backup and migrate does not support this database type.", array(), 'error');
+      }
+    }
+  }
+  return $type;
+}
