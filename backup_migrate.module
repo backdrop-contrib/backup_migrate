@@ -269,15 +269,14 @@ function backup_migrate_menu() {
  * Takes care of scheduled backups and deletes abandoned temp files.
  */
 function backup_migrate_cron() {
+  // Backing up requires a full bootstrap as it uses the file functionality in 
+  // files.inc. Running poormanscron with caching on can cause cron to run without
+  // a full bootstrap so we manually finish bootstrapping here.
+  require_once './includes/common.inc';
+  _drupal_bootstrap_full();
+
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/schedules.inc';
   backup_migrate_schedules_run();
-
-  // Delete temp files abandoned for 6 or more hours.
-  foreach (file_scan_directory(file_directory_temp(), 'backup_migrate_*', array('.', '..'), 0, FALSE) as $file) {
-    if (filectime($file->filename) < time() - 21600) {
-      unlink($file->filename);
-    }
-  }
 }
 
 /**
@@ -598,9 +597,12 @@ function backup_migrate_perform_backup(&$settings) {
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
-    set_time_limit(600);
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 1200) {
+    set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
+
+  // Register shutdown callback
+  register_shutdown_function('backup_migrate_cleanup');
 
   if ($settings['append_timestamp'] && $settings['timestamp_format']) {
     $settings['filename'] .= "-". date($settings['timestamp_format']);
@@ -621,7 +623,12 @@ function backup_migrate_perform_backup(&$settings) {
 
   $file = backup_migrate_db_backup($source, $file, $settings);
   if (!$file) {
-    backup_migrate_backup_fail("Could not backup the database.", array(), $settings);
+    if (_backup_migrate_check_timeout()) {
+      backup_migrate_backup_fail('Could not restore the database because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), $settings);
+    }
+    else {
+      backup_migrate_backup_fail("Could not backup the database.", array(), $settings);
+    }
     return FALSE;
   }
 
@@ -644,31 +651,6 @@ function backup_migrate_perform_backup(&$settings) {
 }
 
 /**
- * Clean up when a backup operation fails.
- */
-function backup_migrate_backup_fail($message, $params, $settings) {
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
-  _backup_migrate_message($message, $params, 'error');
-  _backup_migrate_temp_files_delete();
-  backup_migrate_filters_invoke_all('backup_fail', $settings, $message, $params);
-  return FALSE;
-}
-
-/**
- * Clean up when a backup operation suceeds.
- */
-function backup_migrate_backup_succeed($message, $params, $settings) {
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
-  _backup_migrate_message($message, $params);
-  _backup_migrate_temp_files_delete();
-  backup_migrate_filters_invoke_all('backup_succeed', $settings, $message, $params);
-  return FALSE;
-}
-
-
-/**
  * Restore from a file in the given destination.
  */
 function backup_migrate_perform_restore($destination_id, $file_id, $settings = array()) {
@@ -676,9 +658,12 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
-    set_time_limit(600);
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < variable_get('backup_migrate_backup_max_time', 1200)) {
+    set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
+
+  // Register shutdown callback
+  register_shutdown_function('backup_migrate_cleanup');
 
   // Load the file from the destination.
   $file = backup_migrate_destination_get_file($destination_id, $file_id);
@@ -699,7 +684,12 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
   // Perform the actual restore.
   $file = backup_migrate_perform_restore_file($file, $destination_id, $settings);
   if (!$file) {
-    _backup_migrate_message("Could not restore the database.", array(), 'error');
+    if (_backup_migrate_check_timeout()) {
+      _backup_migrate_message('Could not restore the database because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), 'error');
+    }
+    else {
+      _backup_migrate_message("Could not restore the database.", array(), 'error');
+    }
     _backup_migrate_temp_files_delete();
     return FALSE;
   }
@@ -716,8 +706,8 @@ function backup_migrate_perform_restore_file($file, $destination_id, $settings =
   require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 600) {
-    set_time_limit(600);
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < variable_get('backup_migrate_restore_max_time', 1200)) {
+    set_time_limit(variable_get('backup_migrate_restore_max_time', 1200));
   }
 
   $source = backup_migrate_get_destination($settings['source_id']);
@@ -736,6 +726,39 @@ function backup_migrate_perform_restore_file($file, $destination_id, $settings =
   _backup_migrate_temp_files_delete();
   return $num;
 }
+
+/**
+ * Clean up when a backup operation fails.
+ */
+function backup_migrate_backup_fail($message, $params, $settings) {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+  _backup_migrate_message($message, $params, 'error');
+  backup_migrate_cleanup();
+  backup_migrate_filters_invoke_all('backup_fail', $settings, $message, $params);
+  return FALSE;
+}
+
+/**
+ * Clean up when a backup operation suceeds.
+ */
+function backup_migrate_backup_succeed($message, $params, $settings) {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+  _backup_migrate_message($message, $params);
+  backup_migrate_cleanup();
+  backup_migrate_filters_invoke_all('backup_succeed', $settings, $message, $params);
+  return FALSE;
+}
+
+
+/**
+ * Cleanup after a success or failure.
+ */
+function backup_migrate_cleanup() {
+  _backup_migrate_temp_files_delete();
+}
+
 
 /* Actions/Workflow integration */
 
@@ -845,3 +868,11 @@ function _backup_migrate_interactive($interactive = NULL) {
   return $is_interactive;
 }
 
+function _backup_migrate_check_timeout() {
+  static $timeout;
+  // Figure out when we should stop execution.
+  if (!$timeout) {
+    $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - variable_get('backup_migrate_timeout_buffer', 5);
+  }
+  return (time() > $timeout);
+}

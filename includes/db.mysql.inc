@@ -17,6 +17,9 @@ function backup_migrate_backup_db_to_file_mysql($file, $settings) {
     $file->write(_backup_migrate_get_sql_file_header_mysql());
     $alltables = _backup_migrate_get_tables_mysql();
     foreach ($alltables as $table) {
+      if (_backup_migrate_check_timeout()) {
+        return FALSE;
+      }
       if ($table['Name'] && !isset($exclude[$table['Name']])) {
         $file->write(_backup_migrate_get_table_structure_sql_mysql($table));
         $lines++;
@@ -42,6 +45,10 @@ function backup_migrate_restore_db_from_file_mysql($file, $settings) {
   if ($file->open()) {
     // Read one line at a time and run the query.
     while ($line = $file->read()) {
+      if (_backup_migrate_check_timeout()) {
+        return FALSE;
+      }
+
       $line = trim($line);
       if ($line) {
         // Use the helper instead of the api function to avoid substitution of '{' etc.

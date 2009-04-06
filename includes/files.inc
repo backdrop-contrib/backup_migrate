@@ -24,9 +24,17 @@ function backup_migrate_temp_files_add($filepath = NULL) {
  * Delete all temporary files.
  */
 function _backup_migrate_temp_files_delete() {
+  // Delete the temp files created during this run.
   foreach (backup_migrate_temp_files_add() as $file) {
     if (file_exists($file)) {
       @unlink($file);
+    }
+  }
+
+  // Delete temp files abandoned for 6 or more hours.
+  foreach (file_scan_directory(file_directory_temp(), 'backup_migrate_*', array('.', '..'), 0, FALSE) as $file) {
+    if (filectime($file->filename) < time() - variable_get('backup_migrate_cleanup_time', 21600)) {
+      unlink($file->filename);
     }
   }
 }
@@ -386,7 +394,8 @@ class backup_file {
    * Get a temporary file name with path.
    */
   function temporary_file() {
-    $file = file_directory_temp() .'/'. uniqid('backup_migrate_');
+    // Use a full path so that the files can be deleted during the shutdown function if needed.
+    $file = realpath(file_directory_temp()) .'/'. uniqid('backup_migrate_');
     $file .= '.'. $this->extension();
     backup_migrate_temp_files_add($file);
     $this->path = $file;
