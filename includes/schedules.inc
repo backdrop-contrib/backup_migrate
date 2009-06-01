@@ -113,8 +113,8 @@ function backup_migrate_ui_schedule_display_schedules() {
     $profile     = backup_migrate_get_profile($schedule['profile_id']);
     $row         = array(
       check_plain($schedule['name']),
-      $destination ? l($destination->name(), 'admin/content/backup_migrate/destination/files/'. $destination->id()) : t("Missing"),
-      $profile ? $profile['name'] : t("Missing"),
+      $destination ? l($destination->name(), 'admin/content/backup_migrate/destination/files/'. $destination->id()) : '<div class="row-error">'. t("Missing") .'</div>',
+      $profile ? $profile['name'] : '<div class="row-error">'. t("Missing") .'</div>',
       _backup_migrate_schedule_format_frequency($schedule['period']),
       $schedule['keep'] ? $schedule['keep'] : t('All'),
       $schedule['enabled'] ? t('Enabled') : t('Disabled'),

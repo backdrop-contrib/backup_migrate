@@ -21,3 +21,8 @@ div.backup-migrate-tables-checkboxes {
   overflow: auto;
 }
 
+div.row-error {
+  color: #FF0000;
+  font-weight: bold;
+}
+
