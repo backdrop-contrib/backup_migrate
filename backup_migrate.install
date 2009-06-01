@@ -231,8 +231,9 @@ function _backup_migrate_setup_databaase_defaults() {
       'timestamp_format' => variable_get("backup_migrate_timestamp_format", 'Y-m-d\TH-i-s'),
       'filters' => array('compression' => variable_get("backup_migrate_compression", "none")),
     );
-    $settings['name'] = t('Default Profile');
-    backup_migrate_profile_save_profile($settings);
+    $settings['name'] = t('Saved Settings');
+    $profile = backup_migrate_profile_save_profile($settings);
+    variable_set("backup_migrate_profile_id", $profile['profile_id']);
   }
 }
 
@@ -261,12 +262,27 @@ function backup_migrate_update_2000() {
  */
 function backup_migrate_update_2001() {
   $ret = array();
+  $schema = drupal_get_schema_unprocessed('backup_migrate', 'backup_migrate_profiles');
+
   // Add the filters field to the db.
-  db_add_field($ret, 'backup_migrate_profiles', 'filters', array('description' => t('The filter settings for the profile.'),'type' => 'text', 'not null' => TRUE));
+  if (!isset($schema['fields']['filters'])) {
+    db_add_field($ret, 'backup_migrate_profiles', 'filters', array('description' => t('The filter settings for the profile.'),'type' => 'text', 'not null' => TRUE));
+  }
   // Add the source field
-  db_add_field($ret, 'backup_migrate_profiles', 'source_id', array('description' => t('The db source to backup from.'), 'type' => 'varchar', 'length' => 32, 'default' => 'db_url:default', 'not null' => TRUE));
+  if (!isset($schema['fields']['source_id'])) {
+    db_add_field($ret, 'backup_migrate_profiles', 'source_id', array('description' => t('The db source to backup from.'), 'type' => 'varchar', 'length' => 32, 'default' => 'db_url:default', 'not null' => TRUE));
+  }
   // Remove the compression field.
-  db_drop_field($ret, 'backup_migrate_profiles', 'compression');
+  if (isset($schema['fields']['compression'])) {
+    db_drop_field($ret, 'backup_migrate_profiles', 'compression');
+  }
   return $ret;
 }
 
+/**
+ * Clearing the cache because there was a menu structure change in the dev of 2009-05-31
+ */
+function backup_migrate_update_2002() {
+  // Cache should clear automatically. Nothing to do here.
+  return array();
+}

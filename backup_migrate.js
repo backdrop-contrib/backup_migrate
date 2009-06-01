@@ -5,7 +5,8 @@ Drupal.backup_migrate = {
   autoAttach  : function() {
     if ($("#edit-save-settings").length && !$("#edit-save-settings").attr("checked")) {
       // Disable input and hide its description.
-      $("div.backup-migrate-save-options").hide();
+      // Set display none instead of using hide(), because hide() doesn't work when parent is hidden.
+      $('div.backup-migrate-save-options').css('display', 'none');
     }
 
     $("#edit-save-settings").bind("click", function() {

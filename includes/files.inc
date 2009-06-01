@@ -27,15 +27,20 @@ function _backup_migrate_temp_files_delete() {
   // Delete the temp files created during this run.
   foreach (backup_migrate_temp_files_add() as $file) {
     if (file_exists($file)) {
-      @unlink($file);
+      unlink($file);
     }
   }
 
   // Delete temp files abandoned for 6 or more hours.
-  foreach (file_scan_directory(file_directory_temp(), 'backup_migrate_*', array('.', '..'), 0, FALSE) as $file) {
-    if (filectime($file->filename) < time() - variable_get('backup_migrate_cleanup_time', 21600)) {
-      unlink($file->filename);
+  $dir = file_directory_temp();
+  $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
+  if (is_dir($dir) && $handle = opendir($dir)) {
+    while (FALSE !== ($file = readdir($handle))) {
+      if (strpos($file, 'backup_migrate_') === 0 && filectime($file->filename) < $expire) {
+        unlink("$dir/$file");
+      }
     }
+    closedir($handle);
   }
 }
 

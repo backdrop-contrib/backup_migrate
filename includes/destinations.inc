@@ -51,7 +51,7 @@ function backup_migrate_backup_migrate_destination_types() {
     ),
     'db' => array(
       'type_name' => t('Database'),
-      'description' => t('Import the dump directly into another MySQL database.'),
+      'description' => t('Import the backup directly into another MySQL database. Database destinations can also be used as a source to backup from.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
       'class' => 'backup_migrate_destination_db',
       'can_create' => TRUE,
@@ -304,6 +304,7 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
     $headers = array(
       array('data' => 'Filename', 'field' => 'filename'),
       array('data' => 'Date', 'field' => 'filetime'),
+      array('data' => 'Age',  'field' => 'filetime'),
       array('data' => 'Size', 'field' => 'filesize'),
       t('Operations'),
     );
@@ -323,6 +324,7 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
         $out[] = array(
           check_plain($info['filename']),
           format_date($info['filetime'], 'small'),
+          format_interval(time() - $info['filetime'], 1),
           format_size($info['filesize']),
           implode(" | ", $destination->get_file_links($file->file_id())),
         );

@@ -26,6 +26,7 @@ function backup_migrate_schedules_run() {
       }
     }
   }
+  backup_migrate_cleanup();
 }
 
 /**

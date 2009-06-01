@@ -44,10 +44,13 @@ function backup_migrate_get_profile($profile_id) {
 function backup_migrate_backup_migrate_profiles() {
   $out = array();
 
+  // Get the module defaults.
+  $out['default'] = _backup_migrate_profile_default_profile() + array('name' => t("Default Settings"), 'profile_id' => 'default');
+
   // Get the default profiles from settings.php
   $out += (array)variable_get('backup_migrate_profiles_defaults', array());
 
-  // Get the saved profiless
+  // Get the saved profiles
   $result = db_query('SELECT * FROM {backup_migrate_profiles}');
   while ($profile = db_fetch_array($result)) {
     $profile['db'] = TRUE;
@@ -56,6 +59,7 @@ function backup_migrate_backup_migrate_profiles() {
     $profile['filters'] = unserialize($profile['filters']);
     $out[$profile['profile_id']] = $profile;
   }
+  
   return $out;
 }
 
@@ -254,29 +258,7 @@ function _backup_migrate_ui_backup_settings_form($profile) {
   $source = backup_migrate_get_destination($profile['source_id']);
   $tables  = _backup_migrate_get_table_names($source);
 
-  $sources = _backup_migrate_get_destination_form_item_options('source');
-  if (count($sources) > 1) {
-    $form['source'] = array(
-      "#type" => "fieldset",
-      "#title" => t("Backup Source"),
-      "#collapsible" => TRUE,
-      "#collapsed" => FALSE,
-      "#tree" => FALSE,
-      "#description" => t("Choose the database to backup. Any database destinations you have created and any databases specified in your settings.php can be backed up."),
-    );
-    $form['source']['source_id'] = array(
-      "#type" => "select",
-      "#title" => t("Source"),
-      "#options" => _backup_migrate_get_destination_form_item_options('source'),
-      "#default_value" => $profile['source_id'],
-    );
-  }
-  else {
-    $form['source_id'] = array(
-      "#type" => "value",
-      "#value" => $profile['source_id'],
-    );
-  }
+  $form['source'] = _backup_migrate_get_source_form($profile);
 
   $form['file'] = array(
     "#type" => "fieldset",
@@ -296,15 +278,14 @@ function _backup_migrate_ui_backup_settings_form($profile) {
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
-      '#description' => t('Prefer raw-text replacements for text to avoid problems with HTML entities!'),
     );
     $form['file']['token_help']['help'] = array(
       '#value' => theme('token_help', ''),
     );
-    $form['file']['filename']['#description'] = t('You can use tokens to in the file name.', array('!tokenurl' => 'http://drupal.org/project/token'));
+    $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
   }
   else {
-    $form['file']['filename']['#description'] = t('If you install the <a href="!tokenurl">Token Module</a> you can use tokens to in the file name.', array('!tokenurl' => 'http://drupal.org/project/token'));
+    $form['file']['filename']['#description'] = t('If you install the <a href="!tokenurl">Token Module</a> you can use tokens in the file name.', array('!tokenurl' => 'http://drupal.org/project/token'));
   }
   $form['file']['append_timestamp'] = array(
     "#type" => "checkbox",
@@ -352,6 +333,55 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     $form['advanced']['#collapsible'] = true;
   }
 
+  return $form;
+}
+
+/**
+ * Get the source options as a form element.
+ */
+function _backup_migrate_get_source_form($profile) {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
+
+  $form = array();
+  $sources = _backup_migrate_get_source_pulldown($source_id = NULL);
+  if (count($sources['#options']) > 1) {
+    $form = array(
+      "#type" => "fieldset",
+      "#title" => t("Backup Source"),
+      "#collapsible" => TRUE,
+      "#collapsed" => FALSE,
+      "#tree" => FALSE,
+    );
+    $sources['#description'] = t("Choose the database to backup. Any database destinations you have created and any databases specified in your settings.php can be backed up.");
+
+    $form['source_id'] = $sources;
+  }
+  else {
+    $form = array();
+    $form['source_id'] = array(
+      "#type" => "value",
+      "#value" => $profile['source_id'],
+    );
+    $form['source_name'] = array(
+      "#type" => "value",
+      "#value" => @$sources[$profile['source_id']],
+    );
+  }
+  return $form;
+}
+
+/**
+ * Get pulldown to select existing source options.
+ */
+function _backup_migrate_get_source_pulldown($source_id = NULL) {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/destinations.inc';
+  $sources = _backup_migrate_get_destination_form_item_options('source');
+  $form = array(
+    "#type" => "select",
+    "#title" => t("Backup Source"),
+    "#options" => _backup_migrate_get_destination_form_item_options('source'),
+    "#default_value" => $source_id,
+  );
   return $form;
 }
 
