@@ -147,7 +147,8 @@ function backup_migrate_schema() {
         'description' => t('The primary identifier for a destination.'),
       ),
       'profile_id' => array(
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 32,
         'not null' => TRUE,
         'default' => 0,
         'description' => t('The primary identifier for a profile.'),
@@ -285,4 +286,21 @@ function backup_migrate_update_2001() {
 function backup_migrate_update_2002() {
   // Cache should clear automatically. Nothing to do here.
   return array();
+}
+
+/**
+ * Allowing non-int profile ids in schedules 2009-05-31
+ */
+function backup_migrate_update_2003() {
+  $ret = array();
+  $spec = array(
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => TRUE,
+    'default' => 0,
+    'description' => t('The primary identifier for a profile.'),
+  );
+
+  db_change_field($ret, 'backup_migrate_schedules', 'profile_id', 'profile_id', $spec);
+  return $ret;
 }
