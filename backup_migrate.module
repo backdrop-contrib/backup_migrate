@@ -918,6 +918,7 @@ function backup_migrate_backup_succeed($message, $params, $settings) {
  * Cleanup after a success or failure.
  */
 function backup_migrate_cleanup() {
+  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
   _backup_migrate_temp_files_delete();
 }
 
