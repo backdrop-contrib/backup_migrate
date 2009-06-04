@@ -61,7 +61,6 @@ function backup_migrate_schema() {
         'description' => t('Append a timestamp to the filename.'),
         'type' => 'int',
         'size' => 'tiny',
-        'length' => 1,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0
@@ -143,14 +142,14 @@ function backup_migrate_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => 0,
+        'default' => '0',
         'description' => t('The primary identifier for a destination.'),
       ),
       'profile_id' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => 0,
+        'default' => '0',
         'description' => t('The primary identifier for a profile.'),
       ),
       'keep' => array(
@@ -175,7 +174,6 @@ function backup_migrate_schema() {
         'description' => t('Whether the schedule is enabled.'),
         'type' => 'int',
         'size' => 'tiny',
-        'length' => 1,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0
@@ -184,7 +182,6 @@ function backup_migrate_schema() {
         'description' => t('Whether the schedule should be run during cron.'),
         'type' => 'int',
         'size' => 'tiny',
-        'length' => 1,
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0
@@ -299,7 +296,7 @@ function backup_migrate_update_2003() {
     'type' => 'varchar',
     'length' => 32,
     'not null' => TRUE,
-    'default' => 0,
+    'default' => '0',
     'description' => t('The primary identifier for a profile.'),
   );
 
