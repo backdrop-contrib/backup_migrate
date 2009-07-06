@@ -26,7 +26,7 @@ function backup_migrate_temp_files_add($filepath = NULL) {
 function _backup_migrate_temp_files_delete() {
   // Delete the temp files created during this run.
   foreach (backup_migrate_temp_files_add() as $file) {
-    if (file_exists($file)) {
+    if (file_exists($file) && is_writable($file)) {
       unlink($file);
     }
   }
@@ -34,9 +34,12 @@ function _backup_migrate_temp_files_delete() {
   // Delete temp files abandoned for 6 or more hours.
   $dir = file_directory_temp();
   $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
-  if (is_dir($dir) && $handle = opendir($dir)) {
-    while (FALSE !== ($file = readdir($handle))) {
-      if (strpos($file, 'backup_migrate_') === 0 && filectime($file->filename) < $expire) {
+  if (file_exists($dir) && is_dir($dir) && is_readable($dir) && $handle = opendir($dir)) {
+    while (FALSE !== ($file = @readdir($handle))) {
+      // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
+      // We should only attempt to delete writable files to prevent errors in shared environments.
+      // This could still cause issues in shared environments with poorly configured file permissions.
+      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file->filename) && @filectime($file->filename) < $expire) {
         unlink("$dir/$file");
       }
     }
@@ -48,7 +51,7 @@ function _backup_migrate_temp_files_delete() {
  * Return a list of backup filetypes.
  */
 function _backup_migrate_filetypes() {
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/filters.inc';
+  backup_migrate_include('filters');
   $out = array(
     "sql" => array(
       "extension" => "sql",
@@ -95,6 +98,14 @@ function _backup_migrate_default_filename() {
     return _backup_migrate_clean_filename(variable_get(site_name, "backup_migrate"));
   }
 }
+
+/**
+ * An output buffer callback which simply throws away the buffer instead of sending it to the browser.
+ */
+function _backup_migrate_file_dispose_buffer($buffer) {
+  return "";
+}
+
 
 /**
  * A backup file which allows for saving to and reading from the server.
@@ -225,8 +236,21 @@ class backup_file {
    */
   function open($write = FALSE, $binary = FALSE) {
     if (!$this->handle) {
+      $path = $this->filepath();
+
+      // Check if the file can be read/written.
+      if ($write && ((file_exists($path) && !is_writable($path)) || !is_writable(dirname($path)))) {
+        _backup_migrate_message('The file %path cannot be written to.', array('%path' => $path), 'error');
+        return FALSE;
+      }
+      if (!$write && !is_readable($path)) {
+        _backup_migrate_message('The file %path cannot be read.', array('%path' => $path), 'error');
+        return FALSE;
+      }
+
+      // Open the file.
       $mode = ($write ? "w" : "r") . ($binary ? "b" : "");
-      $this->handle = fopen($this->filepath(), $mode);
+      $this->handle = fopen($path, $mode);
       return $this->handle;
     }
     return NULL;
@@ -316,7 +340,8 @@ class backup_file {
       drupal_not_found();
     }
 
-    ob_start();
+    // Start buffering and throw away the results so that errors don't get appended to the file.
+    ob_start('_backup_migrate_file_dispose_buffer');
     module_invoke_all('exit');
     exit();
   }
@@ -376,6 +401,10 @@ class backup_file {
     $this->file_info = $file_info;
 
     $this->ext = explode('.', @$this->file_info['filename']);
+    // Remove the underscores added to file extensions by Drupal's upload security.
+    foreach ($this->ext as $key => $val) {
+      $this->ext[$key] = trim($val, '_');
+    }
     $this->filename(array_shift($this->ext));
     $this->detect_filetype_from_extension();
   }
@@ -399,10 +428,17 @@ class backup_file {
    * Get a temporary file name with path.
    */
   function temporary_file() {
+    $tmp = realpath(file_directory_temp());
+    // Check the writability of the temp directory.
+    if (!is_writable(realpath(file_directory_temp()))) {
+      _backup_migrate_message('Your temporary directory %tmp is not writable. Backup and migrate needs to be able to create temporary files.', array('%tmp' => $tmp), 'error');
+    }
+
     // Use a full path so that the files can be deleted during the shutdown function if needed.
-    $file = realpath(file_directory_temp()) .'/'. uniqid('backup_migrate_');
+    $file = $tmp .'/'. uniqid('backup_migrate_');
     $file .= '.'. $this->extension();
     backup_migrate_temp_files_add($file);
     $this->path = $file;
   }
 }
+

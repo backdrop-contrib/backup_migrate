@@ -24,8 +24,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    * Save the info by importing it into the database.
    */
   function save_file($file, $settings) {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
+    backup_migrate_include('files', 'db');
 
     // Switch to the new db.
     _backup_migrate_db_switch_db($this->dest_url(FALSE));
@@ -42,8 +41,8 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
   /**
    * Destination configuration callback.
    */
-  function settings_form($form) {
-    $form = parent::settings_form($form);
+  function edit_form() {
+    $form = parent::edit_form();
     $form['scheme']['#title'] = t('Database type');
     $form['scheme']['#options'] = array($GLOBALS['db_type'] => $GLOBALS['db_type']);
     $form['scheme']['#description'] = t('The type of the database. Drupal only supports one database type at a time, so this must be the same as the current database type.');
@@ -56,10 +55,11 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
   /**
    * Validate the configuration form. Make sure the db info is valid.
    */
-  function settings_form_validate($values) {
-    if (!preg_match('/[a-zA-Z0-9_\$]+/', $values['path'])) {
+  function edit_form_validate($form, &$form_state) {
+    if (!preg_match('/[a-zA-Z0-9_\$]+/', $form_state['values']['path'])) {
       form_set_error('path', t('The database name is not valid.'));
     }
+    parent::edit_form_validate($form, $form_state);
   }
 }
 
@@ -87,12 +87,20 @@ class backup_migrate_destination_db_defaults extends backup_migrate_destination_
     return parent::op($op);
   }
 
-  function id() {
+  function get_id() {
     return "db_url:$this->db_key";
   }
 
-  function name() {
-    return $this->db_key == 'default' ? t("Default Database") : ($this->db_key .": ". $this->display_location());
+  function get_name() {
+    return $this->db_key == 'default' ? t("Default Database") : ($this->db_key .": ". $this->get_display_location());
+  }
+
+  /**
+   * Get a row of data to be used in a list of items of this type.
+   */  
+  function get_list_row() {
+    // Return none as this type should not be displayed.
+    return array();
   }
 }
 

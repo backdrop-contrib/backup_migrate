@@ -222,7 +222,7 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
    *  Also updates settings to reflect new file mime and file extension.
    */
   function _backup_migrate_file_compress($file, $settings) {
-    switch ($settings['filters']['compression']) {
+    switch ($settings->filters['compression']) {
       case "gzip":
         $from = $file->push_type('gzip');
         if (!$success = $this->_backup_migrate_gzip_encode($from, $file->filepath(), 9)) {

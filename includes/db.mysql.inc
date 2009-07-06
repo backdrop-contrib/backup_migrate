@@ -11,8 +11,8 @@
  */
 function backup_migrate_backup_db_to_file_mysql($file, $settings) {
   $lines = 0;
-  $exclude = !empty($settings['exclude_tables']) ? $settings['exclude_tables'] : array();
-  $nodata = !empty($settings['nodata_tables']) ? $settings['nodata_tables'] : array();
+  $exclude = !empty($settings->exclude_tables) ? $settings->exclude_tables : array();
+  $nodata = !empty($settings->nodata_tables) ? $settings->nodata_tables : array();
   if ($file->open(TRUE)) {
     $file->write(_backup_migrate_get_sql_file_header_mysql());
     $alltables = _backup_migrate_get_tables_mysql();

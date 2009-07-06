@@ -16,13 +16,13 @@ class backup_migrate_destination_email extends backup_migrate_destination {
   var $supported_ops = array('scheduled backup', 'manual backup', 'configure');
 
   /**
-   * Save to (ie. email the database file) to the email destination.
+   * Save to (ie. email the file) to the email destination.
    */
   function save_file($file, $settings) {
     $attachment = new stdClass();
     $attachment->filename = $file->filename();
     $attachment->path = $file->filepath();
-    _backup_migrate_destination_email_mail_backup($attachment, $this->location());
+    _backup_migrate_destination_email_mail_backup($attachment, $this->get_location());
     return $file;
   }
 
@@ -33,7 +33,7 @@ class backup_migrate_destination_email extends backup_migrate_destination {
     $form['location'] = array(
       "#type" => "textfield",
       "#title" => t("Email Address"),
-      "#default_value" => $this->location(),
+      "#default_value" => $this->get_location(),
       "#required" => TRUE,
       "#description" => t('Enter the email address to send the backup files to. Make sure the email sever can handle large file attachments'),
     );

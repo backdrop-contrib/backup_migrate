@@ -31,7 +31,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
    * Load from the ftp destination.
    */
   function load_file($file_id) {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    backup_migrate_include('files');
     $file = new backup_file(array('filename' => $file_id));
     $this->ftp_object();
     if (drupal_ftp_ftp_to_file($file->filepath(), $file_id, '.', $this->ftp)) {
@@ -49,7 +49,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
   }
 
   function list_files() {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    backup_migrate_include('files');
     $files = array();
     $this->ftp_object();
     $ftp_files = drupal_ftp_file_list('.', $this->ftp);
@@ -62,8 +62,8 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
   /**
    * Get the form for the settings for this filter.
    */
-  function settings_form($form) {
-    $form = parent::settings_form($form);
+  function edit_form() {
+    $form = parent::edit_form();
     $form['scheme']['#type'] = 'value';
     $form['scheme']['#value'] = 'ftp';
     return $form;

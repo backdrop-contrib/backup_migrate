@@ -12,7 +12,22 @@
  *
  * @ingroup backup_migrate_destinations
  */
-class backup_migrate_destination_browser_upload extends backup_migrate_destination {
+class backup_migrate_destination_browser extends backup_migrate_destination {
+  /**
+   * Get a row of data to be used in a list of items of this type.
+   */  
+  function get_list_row() {
+    // Return none as this type should not be displayed.
+    return array();
+  }
+}
+
+/**
+ * A destination type for browser upload.
+ *
+ * @ingroup backup_migrate_destinations
+ */
+class backup_migrate_destination_browser_upload extends backup_migrate_destination_browser {
   var $supported_ops = array('restore');
   function __construct() {
     $params = array();
@@ -25,7 +40,7 @@ class backup_migrate_destination_browser_upload extends backup_migrate_destinati
    * File load destination callback.
    */
   function load_file($file_id) {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    backup_migrate_include('files');
     if ($file = file_save_upload('backup_migrate_restore_upload')) {
       $out = new backup_file(array('filepath' => $file->filepath));
       backup_migrate_temp_files_add($file->filepath);
@@ -36,10 +51,11 @@ class backup_migrate_destination_browser_upload extends backup_migrate_destinati
 }
 
 /**
- * The built in default files directories. This is more or less a legacy holdover from v1.
- * But they serve a purpose as a meaningful default.
+ * A destination type for browser download.
+ *
+ * @ingroup backup_migrate_destinations
  */
-class backup_migrate_destination_browser_download extends backup_migrate_destination {
+class backup_migrate_destination_browser_download extends backup_migrate_destination_browser {
   var $supported_ops = array('manual backup');
   function __construct() {
     $params = array();
@@ -52,7 +68,7 @@ class backup_migrate_destination_browser_download extends backup_migrate_destina
    * File save destination callback.
    */
   function save_file($file, $settings) {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    backup_migrate_include('files');
     $file->transfer();
   }
 }

@@ -15,7 +15,7 @@ function backup_migrate_db_restore($source, $file, $settings) {
 
   if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
     // Switch to a different db if specified.
-    _backup_migrate_db_switch_db($source->location());
+    _backup_migrate_db_switch_db($source->get_location());
 
     backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
 
@@ -49,7 +49,7 @@ function backup_migrate_db_backup($source, $file, $settings) {
     $file->push_type($type);
 
     // Switch to a different db if specified.
-    _backup_migrate_db_switch_db($source->location());
+    _backup_migrate_db_switch_db($source->get_location());
 
     backup_migrate_filters_invoke_all('pre_backup', $source, $file, $settings);
 
@@ -72,7 +72,7 @@ function backup_migrate_db_backup($source, $file, $settings) {
  */
 function _backup_migrate_get_table_names($source) {
   $out = array();
-  if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
+  if ($source && $type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
     $function = '_backup_migrate_get_table_names_'. $type;
     if (function_exists($function)) {
       $out = $function();
@@ -154,7 +154,7 @@ function _backup_migrate_db_get_db_type($scheme) {
       case 'mysql':
       case 'mysqli':
         $type = 'mysql';
-        require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/db.mysql.inc';
+        backup_migrate_include('db.mysql');
       break;
       default: 
         $type = false;

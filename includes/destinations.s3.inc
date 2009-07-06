@@ -31,17 +31,17 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Load from the s3 destination.
    */
   function load_file($file_id) {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    backup_migrate_include('files');
     $file = new backup_file(array('filename' => $file_id));
     $s3 = $this->s3_object();
-    $data = $s3->getObject($this->dest_url['path'], $file_id, $file->filename());
+    $data = $s3->getObject($this->dest_url['path'], $file_id, $file->filepath());
     if (!$data->error) {
       return $file;
     }
     return NULL;
   }
 
-/**
+  /**
    * Delete from the s3 destination.
    */
   function delete_file($file_id) {
@@ -49,8 +49,11 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
     $s3->deleteObject($this->dest_url['path'], $file_id);
   }
 
+  /**
+   * List all files from the s3 destination.
+   */
   function list_files() {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+    backup_migrate_include('files');
     $files = array();
     $s3 = $this->s3_object();
     $s3_files = $s3->getBucket($this->dest_url['path']);
@@ -68,8 +71,8 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
   /**
    * Get the form for the settings for this filter.
    */
-  function settings_form($form) {
-    $form = parent::settings_form($form);
+  function edit_form() {
+    $form = parent::edit_form();
     $form['scheme']['#type'] = 'value';
     $form['scheme']['#value'] = 'https';
     $form['host']['#type'] = 'value';

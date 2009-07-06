@@ -42,7 +42,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       $form['advanced']['utils_disable_query_log'] = array(
         '#type' => 'checkbox',
         '#title' => t("Disable query log"),
-        '#default_value' => @$settings['utils_disable_query_log'],
+        '#default_value' => !empty($settings->utils_disable_query_log) ? $settings->utils_disable_query_log : NULL,
         '#description' => t('Disable the devel module\'s query logging during the backup operation. It will be enabled again after backup is complete. This is very highly recommended.'),
       );
     }
@@ -86,7 +86,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    */
   function disable_devel_query($settings) {
     $this->saved_devel_query = variable_get('dev_query', 0);
-    if (module_exists('devel') && variable_get('dev_query', 0) && @$settings['filters']['utils_disable_query_log']) {
+    if (module_exists('devel') && variable_get('dev_query', 0) && !empty($settings->filters['utils_disable_query_log'])) {
       variable_set('dev_query', 0);
     }
   }

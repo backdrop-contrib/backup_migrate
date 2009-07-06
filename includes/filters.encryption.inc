@@ -136,7 +136,7 @@ class backup_migrate_filter_encryption extends backup_migrate_filter {
    *  Also updates settings to reflect new file mime and file extension.
    */
   function file_encrypt($file, $settings) {
-    switch (@$settings['filters']['encryption']) {
+    switch ($settings->filters['encryption']) {
       case "aes":
         $from = $file->push_type('aes');
         $from = new backup_file(array('filepath' => $from));

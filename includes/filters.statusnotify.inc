@@ -58,7 +58,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
    * Send the success email.
    */
   function backup_succeed($settings) {
-    if (@$settings['filters']['notify_success_enable'] && $to = @$settings['filters']['notify_success_email']) {
+    if (@$settings->filters['notify_success_enable'] && $to = @$settings->filters['notify_success_email']) {
       $messages = $this->get_messages();
       $subject = t('!site backup succeeded', array('!site' => variable_get('site_name', 'Drupal site')));
       if ($messages = $this->get_messages()) {
@@ -75,7 +75,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
    * Send the failure email.
    */
   function backup_fail($settings) {
-    if (@$settings['filters']['notify_failure_enable'] && $to = @$settings['filters']['notify_failure_email']) {
+    if (@$settings->filters['notify_failure_enable'] && $to = @$settings->filters['notify_failure_email']) {
       $messages = $this->get_messages();
       $subject = t('!site backup failed', array('!site' => variable_get('site_name', 'Drupal site')));
       if ($messages = $this->get_messages()) {

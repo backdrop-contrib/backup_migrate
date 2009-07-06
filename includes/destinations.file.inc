@@ -24,7 +24,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * File save destination callback.
    */
   function save_file($file, $settings) {
-    if ($dir = $this->location()) {
+    if ($dir = $this->get_location()) {
       if ($this->check_dir($dir)) {
         $filepath = rtrim($dir, "/") ."/". $file->filename();
         rename($file->filepath(), $filepath);
@@ -58,7 +58,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function load_file($file_id) {
     $filepath = $this->get_filepath($file_id);
     if (file_exists($filepath)) {
-      require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+      backup_migrate_include('files');
       return new backup_file(array('filepath' => $filepath));
     }
   }
@@ -68,9 +68,9 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    */
   function list_files() {
     $files = array();
-    if ($dir = $this->location()) {
+    if ($dir = $this->get_location()) {
       if ($handle = @opendir($dir)) {
-        require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/files.inc';
+        backup_migrate_include('files');
         while (FALSE !== ($file = readdir($handle))) {
           $filepath = $dir ."/". $file;
           $files[$file] = new backup_file(array('filepath' => $filepath));
@@ -92,18 +92,22 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Get the filepath from the given file id.
    */
   function get_filepath($file_id) {
-    $filepath = rtrim($this->location(), '/') .'/'. $file_id;
+    $filepath = rtrim($this->get_location(), '/') .'/'. $file_id;
     return $filepath;
   }
 
   /**
    * Get the form for the settings for the files destination.
    */
-  function settings_form($form) {
+  /**
+   * Get the edit form for the item.
+   */
+  function edit_form() {
+    $form = parent::edit_form();
     $form['location'] = array(
       "#type" => "textfield",
       "#title" => t("Directory path"),
-      "#default_value" => $this->location(),
+      "#default_value" => $this->get_location(),
       "#required" => TRUE,
       "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Drupal root directory. The web server must be able to write to this path.'),
     );
@@ -134,25 +138,27 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     }
     return $form;
   }
-
+ 
   /**
    * Validate the form for the settings for the files destination.
    */
-  function settings_form_validate($values) {
+  function edit_form_validate($form, &$form_state) {
+    $values = $form_state['values'];
     if (isset($values['settings']['chmod']) && !empty($values['settings']['chmod']) && !preg_match('/0?[0-7]{3}/', $values['settings']['chmod'])) {
       form_set_error('chmod', t('You must enter a valid chmod octal value (e.g. 644 or 0644) in the change mode field, or leave it blank.'));
     }
+    parent::edit_form_validate($form, $form_state);
   }
 
   /**
    * Submit the form for the settings for the files destination.
    */
-  function settings_form_submit($values) {
+  function edit_form_submit($form, &$form_state) {
     // Add a 0 to the start of a 3 digit file mode to make it proper PHP encoded octal.
-    if (strlen($values['settings']['chmod']) == 3) {
-      $values['settings']['chmod'] = '0' . $values['settings']['chmod'];
+    if (strlen($form_state['values']['settings']['chmod']) == 3) {
+      $form_state['values']['settings']['chmod'] = '0' . $form_state['values']['settings']['chmod'];
     }
-    return $values;
+    parent::edit_form_submit($form, $form_state);
   }
 
   /**
@@ -267,7 +273,6 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 class backup_migrate_destination_files_builtin extends backup_migrate_destination_files {
   function __construct($params = array()) {
     $params['location'] = $this->check_destination_dir($params['mode']);
-    $params['name'] = $params['name'];
     $params['destination_id'] = $params['mode'];
     parent::__construct($params);
   }
@@ -294,21 +299,22 @@ class backup_migrate_destination_files_builtin extends backup_migrate_destinatio
 /**
  * The manual files directory.
  */
-class backup_migrate_destination_files_manual extends backup_migrate_destination_files_builtin {
-  var $supported_ops = array('manual backup', 'restore', 'list files', 'delete');
+class backup_migrate_destination_files_manual extends backup_migrate_destination_files {
+  var $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    parent::__construct(array('mode' => 'manual', 'name' => t('Manual Backups Directory')));
+    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/scheduled');
+    parent::__construct($params + array('location' => $dir, 'name' => t('Manual Backups Directory')));
   }
 }
 
 /**
  * The scheduled files directory.
  */
-class backup_migrate_destination_files_scheduled extends backup_migrate_destination_files_builtin {
-  var $supported_ops = array('scheduled backup', 'restore', 'list files', 'delete');
-  function __construct($mode) {
-    $params = array();
-    parent::__construct(array('mode' => 'scheduled', 'name' => t('Scheduled Backups Directory')));
+class backup_migrate_destination_files_scheduled extends backup_migrate_destination_files {
+  var $supported_ops = array('scheduled backup', 'restore', 'list files', 'configure', 'delete');
+  function __construct($params = array()) {
+    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/scheduled');
+    parent::__construct($params + array('location' => $dir, 'name' => t('Scheduled Backups Directory')));
   }
 }
 
