@@ -337,10 +337,11 @@ class backup_migrate_schedule extends backup_migrate_item {
       $timestamp = time();
     }
     db_query("UPDATE {backup_migrate_schedules}
-                 SET last_run = %d
-               WHERE schedule_id = '%s'",
-      $timestamp,
-      $this->get_id()
+                 SET last_run = :timestamp
+               WHERE schedule_id = :schedule_id",
+      array(
+        ':timestamp' => $timestamp,
+        ':schedule_id' => $this->get_id()
     );
   }
 

@@ -1,5 +1,6 @@
 // $Id$
 
+(function ($) {
 Drupal.backup_migrate = {
   callbackURL : "",  
   autoAttach  : function() {
@@ -56,4 +57,4 @@ Drupal.backup_migrate = {
 if (Drupal.jsEnabled) {
   $(document).ready(Drupal.backup_migrate.autoAttach);
 }
-
+}(jQuery);

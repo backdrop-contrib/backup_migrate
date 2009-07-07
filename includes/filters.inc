@@ -23,6 +23,7 @@ function backup_migrate_get_filters($op = NULL) {
       $filters[] = new $definition['class'];
     }
   }
+  $sort = array();
   // Sort the filters based on the weight for the given operation.
   foreach ($filters as $filter) {
     $sort[] = $filter->weight($op);

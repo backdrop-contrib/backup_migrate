@@ -95,7 +95,7 @@ function _backup_migrate_default_filename() {
     return '[site-name]';
   }
   else {
-    return _backup_migrate_clean_filename(variable_get(site_name, "backup_migrate"));
+    return _backup_migrate_clean_filename(variable_get('site_name', "backup_migrate"));
   }
 }
 

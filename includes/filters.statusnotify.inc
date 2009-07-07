@@ -67,7 +67,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
       else {
         $body = t("The site backup has completed successfully.\n");
       }
-      mail($settings['filters']['notify_success_email'], $subject, $body);
+      mail($settings->filters['notify_success_email'], $subject, $body);
     }
   }
 
