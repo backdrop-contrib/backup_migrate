@@ -72,8 +72,8 @@ function _backup_migrate_get_profile_form_item_options() {
  * Get a form to configure the profile.
  */
 function _backup_migrate_ui_backup_settings_form($profile) {
-  drupal_add_js(array('backup_migrate' => array('checkboxLinkText' => t('View as checkboxes'))), array('type' => 'setting'));
-  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js', array('type' => 'module', 'scope' => 'footer'));
+  drupal_add_js(array('backup_migrate' => array('checkboxLinkText' => t('View as checkboxes'))), 'setting');
+  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
   drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   backup_migrate_include('files', 'db', 'destinations', 'filters');

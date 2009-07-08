@@ -14,27 +14,27 @@ function backup_migrate_db_restore($source, $file, $settings) {
   $num = 0;
 
   if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
-    // Switch to a different db if specified.
-    _backup_migrate_db_switch_db($source->get_location());
-
-    backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
-
     // Open the file using the file wrapper. Check that the dump is of the right type (allow .sql for legacy reasons).
     if ($file->type_id() !== $type && $file->type_id() !== 'sql') {
       _backup_migrate_message("Unable to restore from file %file because it is of an unknown file type.", array("%file" => $file->filepath()), 'error');
     }
     else {
+      // Switch to a different db if specified.
+      _backup_migrate_db_switch_db($source->get_location());
+  
+      backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
+  
       // Dump the database.
       $function = 'backup_migrate_restore_db_from_file_'. $type;
       if (function_exists($function)) {
         $num = $function($file, $settings);
       }
+
+      backup_migrate_filters_invoke_all('post_restore', $file, $settings, $num);
+  
+      // Switch back to the previous db.
+      _backup_migrate_db_switch_db();
     }
-
-    backup_migrate_filters_invoke_all('post_restore', $file, $settings, $num);
-
-    // Switch back to the previous db.
-    _backup_migrate_db_switch_db();
   }
   return $num;
 }

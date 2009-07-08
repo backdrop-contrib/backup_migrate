@@ -688,57 +688,57 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
     return FALSE;
   }
 
-  // Filter the file before restoring.
-  $file = backup_migrate_filters_restore($file);
-  if (!$file) {
-    // No error as filters should take care of that themselves.
-    backup_migrate_cleanup();
-    return FALSE;
-  }
-
-  // Perform the actual restore.
-  $file = backup_migrate_perform_restore_file($file, $destination_id, (object)$settings);
-  if (!$file) {
-    if (_backup_migrate_check_timeout()) {
-      _backup_migrate_message('Could not restore the database because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), 'error');
-    }
-    else {
-      _backup_migrate_message("Could not restore the database.", array(), 'error');
-    }
-    backup_migrate_cleanup();
-    return FALSE;
-  }
-
-  // No errors. Return the file.
+ // Perform the actual restore.
+  $file = backup_migrate_perform_restore_file($file, (object)$settings, backup_migrate_get_destination($destination_id));
   return $file;
 }
 
 /**
  * Restore from a file in the given destination.
  */
-function backup_migrate_perform_restore_file($file, $destination_id, $settings = array()) {
+function backup_migrate_perform_restore_file($file, $settings = array(), $destination = NULL) {
   backup_migrate_include('files', 'db');
 
-  // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < variable_get('backup_migrate_restore_max_time', 1200)) {
-    set_time_limit(variable_get('backup_migrate_restore_max_time', 1200));
+  // Filter the file before restoring.
+  $file = backup_migrate_filters_restore($file);
+
+  if (!$file) {
+    // No error as filters should take care of that themselves.
+    backup_migrate_cleanup();
+    return FALSE;
   }
 
+  // Load the source object from the source id.
   $source = backup_migrate_get_destination($settings->source_id);
 
+  // Restore the backup file to the source db.
   $num = backup_migrate_db_restore($source, $file, $settings);
 
-  if ($num && $destination = backup_migrate_get_destination($destination_id)) {
-    $message = 'Database restored from %destination file %file. %num SQL commands executed.';
+  // If we a have a number of commands executed then it was a success.
+  if ($num) {
+    $message = 'Database restored from %file. %num SQL commands executed.';
+    $replace = array("%num" => $num, '%file' => $file->filename());
+
+    // If we are able to, offer a link to repeat the op.
     if ($destination && $destination->op('list files')) {
       $message .= ' (<a href="!restoreurl">Restore again</a>)';
+      $replace['!restoreurl'] = url('admin/content/backup_migrate/destination/list/restorefile/'. $destination->get_id() ."/". $file->filename());
     }
-    _backup_migrate_message($message, array("%destination" => $destination->get_name(), "%num" => $num, '%file' => $file->filename(), '!restoreurl' => url('admin/content/backup_migrate/destination/list/restorefile/'. $destination_id ."/". $file->filename())));
+    _backup_migrate_message($message, $replace);
   }
-
+  else {
+    if (_backup_migrate_check_timeout()) {
+      _backup_migrate_message('Could not restore the database because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), 'error');
+    }
+    else {
+      _backup_migrate_message("Could not restore the database.", array(), 'error');
+    }
+  }
   // Delete any temp files we've created.
   backup_migrate_cleanup();
-  return $num;
+
+  // Return the file (or FALSE on failure)
+  return $file;
 }
 
 /**

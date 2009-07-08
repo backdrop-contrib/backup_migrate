@@ -26,14 +26,12 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
   function save_file($file, $settings) {
     backup_migrate_include('files', 'db');
 
-    // Switch to the new db.
-    _backup_migrate_db_switch_db($this->dest_url(FALSE));
+    // Set the source_id to the destination_id in the settings since for a restore, the source_id is the 
+    // database that gets restored to.
+    $settings->source_id = $settings->destination_id;
 
-    // Restore the file to the db.
-    backup_migrate_perform_restore_file($file);
-
-    // Switch back to the old db.
-    _backup_migrate_db_switch_db();
+    // Restore the file to the source database.
+    $file = backup_migrate_perform_restore_file($file, $settings);
 
     return $file;
   }

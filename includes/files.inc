@@ -67,6 +67,10 @@ function _backup_migrate_filetypes() {
     ),
   );
   $out += backup_migrate_filters_file_types();
+
+  foreach ($out as $key => $info) {
+    $out[$key]['id'] = empty($info['id']) ? $key : $info['id'];
+  }
   return $out;
 }
 
@@ -419,7 +423,6 @@ class backup_file {
     foreach ($types as $key => $type) {
       if (trim($ext, "_0123456789") === $type['extension']) {
         $this->type = $type;
-        $this->type['id'] = $key;
       }
     }
   }
