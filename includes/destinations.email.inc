@@ -29,7 +29,8 @@ class backup_migrate_destination_email extends backup_migrate_destination {
   /**
    * Get the form for the settings for this filter.
    */
-  function settings_form($form) {
+  function edit_form() {
+    $form = parent::edit_form();
     $form['location'] = array(
       "#type" => "textfield",
       "#title" => t("Email Address"),

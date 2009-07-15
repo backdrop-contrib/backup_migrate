@@ -223,12 +223,12 @@ function backup_migrate_include() {
  * The menu callback for easy manual backups.
  */
 function backup_migrate_ui_manual_backup_quick() {
-  $out = "";
+  $out = array();
   if (user_access('perform backup')) {
-    $out .= drupal_get_form('backup_migrate_ui_manual_quick_backup_form');
+    return drupal_get_form('backup_migrate_ui_manual_quick_backup_form');
   }
   else {
-    $out = t('You do not have permission to back up this site.');
+    return t('You do not have permission to back up this site.');
   }
   return $out;
 }
@@ -266,7 +266,7 @@ function backup_migrate_ui_manual_backup_load_profile_form(&$form_state, $profil
     $form['profile']['profile_id'] = array(
       "#type" => "select",
       "#title" => t("Load Settings"),
-      '#default_value' => $profile->get_id() ? $profile->get_id() : 0,
+      '#default_value' => $profile ? $profile->get_id() : 0,
       "#options" => $profile_options,
     );
     $form['profile']['load_profile'] = array(
@@ -282,8 +282,8 @@ function backup_migrate_ui_manual_backup_load_profile_form(&$form_state, $profil
  */
 function backup_migrate_ui_manual_backup_load_profile_form_submit($form, &$form_state) {
   if ($profile = backup_migrate_get_profile($form_state['values']['profile_id'])) {
-    variable_set("backup_migrate_profile_id", $profile['profile_id']);
-    $form_state['redirect'] = 'admin/content/backup_migrate/export/advanced/'. $profile['profile_id'];
+    variable_set("backup_migrate_profile_id", $profile->get_id());
+    $form_state['redirect'] = 'admin/content/backup_migrate/export/advanced/'. $profile->get_id();
   }
   else {
     variable_set("backup_migrate_profile_id", NULL);

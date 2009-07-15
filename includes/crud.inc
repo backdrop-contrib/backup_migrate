@@ -118,7 +118,7 @@ function backup_migrate_crud_edit_form_validate($form, &$form_state) {
  */
 function backup_migrate_crud_edit_form_submit($form, &$form_state) {
   $item = $form_state['values']['item'];
-  $item->edit_form_submit($form, &$form_state);
+  $item->edit_form_submit($form, $form_state);
   if (empty($form_state['redirect'])) {
     $form_state['redirect'] = 'admin/content/backup_migrate/'. $item->type_name;
   }
@@ -588,7 +588,7 @@ class backup_migrate_item {
     drupal_alter($this->db_table, $items);
 
     // Get the items from the db.
-    $result = db_query("SELECT * FROM {$this->db_table}");
+    $result = db_query("SELECT * FROM {{$this->db_table}}");
     while ($info = db_fetch_array($result)) {
       if ($item = $this->create($info)) {
         $item->load_row($info);
