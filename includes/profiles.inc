@@ -230,13 +230,13 @@ function _backup_migrate_profile_default_profile() {
  * Get the default profile saved by the user (or the module default if none exists).
  */
 function _backup_migrate_profile_saved_default_profile($profile_id = NULL) {
-  $profile_id = $profile_id ? $profile_id : variable_get("backup_migrate_profile_id", NULL);
+  $profile_id = $profile_id ? $profile_id : variable_get("backup_migrate_profile_id", 'default');
   $profile = NULL;
   if ($profile_id) {
     $profile = backup_migrate_get_profile($profile_id);
   }
   if (!$profile) {
-    $profile = _backup_migrate_profile_default_profile();
+    $profile = backup_migrate_get_profile('default');
   }
   return $profile;
 }

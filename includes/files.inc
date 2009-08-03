@@ -54,6 +54,7 @@ function _backup_migrate_filetypes() {
   backup_migrate_include('filters');
   $out = array(
     "sql" => array(
+      'id' => 'mysql',
       "extension" => "sql",
       "filemime" => "text/x-sql",
       "backup" => TRUE,

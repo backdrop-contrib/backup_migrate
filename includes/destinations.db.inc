@@ -31,9 +31,9 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
     $settings->source_id = $settings->destination_id;
 
     // Restore the file to the source database.
-    $file = backup_migrate_perform_restore_file($file, $settings);
+    $num = backup_migrate_perform_restore_file($file, $settings);
 
-    return $file;
+    return $num ? $file : FALSE;
   }
 
   /**

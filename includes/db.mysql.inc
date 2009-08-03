@@ -87,18 +87,53 @@ function _backup_migrate_get_table_structure_sql_mysql($table) {
  *  Get the sql to insert the data for a given table
  */
 function _backup_migrate_dump_table_data_sql_to_file($file, $table) {
+  $rows_per_line = variable_get('backup_migrate_data_rows_per_line', 30);
+  $bytes_per_line = variable_get('backup_migrate_data_bytes_per_line', 2000);
+
   $lines = 0;
   $data = db_query("SELECT * FROM `". $table['Name'] ."`");
+  $rows = $bytes = 0;
+
+  $line = array();
   while ($row = db_fetch_array($data)) {
+    // DB Escape the values.
     $items = array();
     foreach ($row as $key => $value) {
       $items[] = is_null($value) ? "null" : "'". db_escape_string($value) ."'";
     }
+
+    // If there is a row to be added.
     if ($items) {
-      $file->write("INSERT INTO `". $table['Name'] ."` VALUES (". implode(",", $items) .");\n");
-      $lines++;
+      // Start a new line if we need to.
+      if ($rows == 0) {
+        $file->write("INSERT INTO `". $table['Name'] ."` VALUES ");
+        $bytes = $rows = 0;
+      }
+      // Otherwise add a comma to end the previous entry.
+      else {
+        $file->write(",");
+      }
+
+      // Write the data itself.
+      $sql = implode(',', $items);
+      $file->write('('. $sql .')');
+      $bytes += strlen($sql);
+      $rows++;
+
+      // Finish the last line if we've added enough items
+      if ($rows >= $rows_per_line || $bytes >= $bytes_per_line) {
+        $file->write(";\n");
+        $lines++;
+        $bytes = $rows = 0;
+      }
     }
   }
+  // Finish any unfinished insert statements.
+  if ($rows > 0) {
+    $file->write(";\n");
+    $lines++;
+  }
+
   return $lines;
 }
 
@@ -116,6 +151,7 @@ function _backup_migrate_get_sql_file_header_mysql() {
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
 
 SET NAMES utf8;
+
 ";
 }
 
