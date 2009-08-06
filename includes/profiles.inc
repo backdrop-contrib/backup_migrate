@@ -251,6 +251,17 @@ class backup_migrate_profile extends backup_migrate_item {
   var $plural = 'profiles';
 
   /**
+   * This function is not supposed to be called. It is just here to help the po extractor out.
+   */
+  function strings() {
+    // Help the pot extractor find these strings.
+    t('Profile');
+    t('Profiles');
+    t('profile');
+    t('profiles');
+  }
+
+  /**
    * Get the default values for standard parameters.
    */
   function get_default_values() {
@@ -297,10 +308,11 @@ class backup_migrate_profile extends backup_migrate_item {
    * Get the source of the profile.
    */
   function get_source() {
-    if (!empty($this->source_id)) {
-      backup_migrate_include('destinations');
-      return backup_migrate_get_destination($this->source_id);
+    backup_migrate_include('destinations');
+    if (empty($this->source) && !empty($this->source_id)) {
+      $this->source = backup_migrate_get_destination($this->source_id);
     }
+    return empty($this->source) ? NULL : $this->source;
   }
 
   /**
@@ -309,6 +321,27 @@ class backup_migrate_profile extends backup_migrate_item {
   function get_source_name() {
     if ($source = $this->get_source()) {
       return $source->get_name();
+    }
+    return t("Missing");
+  }
+
+  /**
+   * Get the destination of the profile.
+   */
+  function get_destination() {
+    backup_migrate_include('destinations');
+    if (empty($this->destination) && !empty($this->destination_id)) {
+      $this->destination = backup_migrate_get_destination($this->destination_id);
+    }
+    return empty($this->destination) ? NULL : $this->destination;
+  }
+
+  /**
+   * Get the name of the destination.
+   */
+  function get_destination_name() {
+    if ($destination = $this->get_destination()) {
+      return $destination->get_name();
     }
     return t("Missing");
   }

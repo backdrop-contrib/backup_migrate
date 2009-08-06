@@ -50,6 +50,17 @@ class backup_migrate_schedule extends backup_migrate_item {
   var $default_values = array();
 
   /**
+   * This function is not supposed to be called. It is just here to help the po extractor out.
+   */
+  function strings() {
+    // Help the pot extractor find these strings.
+    t('Schedule');
+    t('Schedules');
+    t('schedule');
+    t('schedules');
+  }
+
+  /**
    * Get the default values for this item.
    */
   function get_default_values() {

@@ -197,7 +197,7 @@ function backup_migrate_destination_file_exists($destination_id, $file_id) {
  * Send a file to the destination specified by the settings array.
  */
 function backup_migrate_destination_save_file($file, &$settings) {
-  if ($destination = backup_migrate_get_destination($settings->destination_id)) {
+  if ($destination = $settings->get_destination()) {
     $file = $destination->save_file($file, $settings);
     return $file;
   }
@@ -405,6 +405,17 @@ class backup_migrate_destination extends backup_migrate_item {
 
   var $destination_type = "";
   var $supported_ops = array();
+
+  /**
+   * This function is not supposed to be called. It is just here to help the po extractor out.
+   */
+  function strings() {
+    // Help the pot extractor find these strings.
+    t('Destination');
+    t('Destinations');
+    t('destinations');
+    t('destination');
+  }
 
   function ops() {
     return $this->supported_ops;

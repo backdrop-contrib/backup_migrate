@@ -419,10 +419,10 @@ class backup_migrate_item {
       $out = theme('table', $this->get_list_header(), $rows);
     }
     else {
-      $out = t('There are no '. $this->plural .' to display. ');
+      $out = t('There are no !items to display.', array('!items' => $this->plural));
     }
     if (user_access('administer backup and migrate')) {
-      $out .= l(t("Create a new ". $this->singular), 'admin/content/backup_migrate/'. $this->type_name .'/add');
+      $out .= ' '. l(t('Create a new !item', array('!item' => $this->singular)), 'admin/content/backup_migrate/'. $this->type_name .'/add');
     }
     return $out;
   }
@@ -509,6 +509,18 @@ class backup_migrate_item {
 
   /* Static Functions */
  
+   /**
+   * This function is not supposed to be called. It is just here to help the po extractor out.
+   */
+  function strings() {
+    // Help the pot extractor find these strings.
+    t('List !type');
+    t('Create !type');
+    t('Delete !type');
+    t('Edit !type');
+    t('Export !type');
+  }
+
   /**
    * Get the menu items for manipulating this type.
    */
@@ -523,12 +535,14 @@ class backup_migrate_item {
       'type' => MENU_LOCAL_TASK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list'] = array(
-      'title' => 'List '. ucwords($this->plural),
+      'title' => 'List !type',
+      'title arguments' => array('!type' => t(ucwords($this->plural))),
       'weight' => 1,
       'type' => MENU_DEFAULT_LOCAL_TASK,
     );
     $items['admin/content/backup_migrate/'. $type .'/add'] = array(
-      'title' => 'Create '. ucwords($this->singular),
+      'title' => 'Create !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_create', TRUE),
       'access arguments' => array('administer backup and migrate'),
@@ -536,21 +550,24 @@ class backup_migrate_item {
       'type' => MENU_LOCAL_TASK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list/delete'] = array(
-      'title' => 'Delete '. $this->singular,
+      'title' => 'Delete !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_delete', TRUE),
       'access arguments' => array('administer backup and migrate'),
       'type' => MENU_LOCAL_TASK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list/edit'] = array(
-      'title' => 'Edit '. $this->singular,
+      'title' => 'Edit !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_edit', TRUE),
       'access arguments' => array('administer backup and migrate'),
       'type' => MENU_LOCAL_TASK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list/export'] = array(
-      'title' => 'Export '. $this->singular,
+      'title' => 'Export !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_export', TRUE),
       'access arguments' => array('administer backup and migrate'),

@@ -36,7 +36,7 @@ function backup_migrate_help($section, $arg) {
     ),
     'admin/content/backup_migrate/restore' => array(
       'title' => t('Restore Tab'),
-      'body' => t('Upload a backup and migrate backup file. The restore function will not work with databse dumps from other sources such as phpMyAdmin.'),
+      'body' => t('Upload a backup and migrate backup file. The restore function will not work with database dumps from other sources such as phpMyAdmin.'),
     ),
     'admin/content/backup_migrate/destination' => array(
       'title' => t('Destinations'),
@@ -643,13 +643,12 @@ function backup_migrate_perform_backup(&$settings) {
   // Backup succeeded, 
   $time = timer_stop('backup_migrate_backup');
   $message = 'Site backed up successfully to %file in destination %dest in !time ms.';
-  $destination = backup_migrate_get_destination($settings->destination_id);
   $params = array(
     '%file' => $settings->filename,
-    '%dest' => $destination->get('name'),
+    '%dest' => $settings->get_destination_name(),
     '!time' => $time['time'],
   );
-  if ($links = $destination->get_file_links($file->file_id())) {
+  if (($destination = $settings->get_destination()) && ($links = $destination->get_file_links($file->file_id()))) {
     $params['!links'] = implode(", ", $links);
   }
 
@@ -702,9 +701,15 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
   }
 
   $time = timer_stop('backup_migrate_restore');
-  if ($num && $destination = backup_migrate_get_destination($destination_id)) {
+  if ($num) {
+    $destination = backup_migrate_get_destination($destination_id);
     $message = 'Database restored from %destination file %file. %num SQL commands executed in !time ms';
-    $params = array("%destination" => $destination->get_name(), "%num" => $num, '%file' => $file->filename(), '!time' => $time['time']);
+    $params = array(
+      '%destination' => $destination->get_name(),
+      '%num' => $num,
+      '%file' => $file->filename(),
+      '!time' => $time['time']
+    );
     if ($destination && $destination->op('list files')) {
       $params['!links'] = t('<a href="!restoreurl">Restore again</a>', array('!restoreurl' => url('admin/content/backup_migrate/destination/list/restorefile/'. $destination_id ."/". $file->filename())));
     }
@@ -720,7 +725,7 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
 /**
  * Restore from a file in the given destination.
  */
-function backup_migrate_perform_restore_file($file, $settings = array()) {
+function backup_migrate_perform_restore_file($file, $settings) {
   backup_migrate_include('files', 'db');
 
   // If not in 'safe mode', increase the maximum execution time:
@@ -728,9 +733,9 @@ function backup_migrate_perform_restore_file($file, $settings = array()) {
     set_time_limit(variable_get('backup_migrate_restore_max_time', 1200));
   }
 
-  $source = backup_migrate_get_destination(empty($settings->source_id) ? 'db_url:default' : $settings->source_id);
-
-  $num = backup_migrate_db_restore($source, $file, $settings);
+  $settings->source_id = empty($settings->source_id) ? 'db_url:default' : $settings->source_id;
+  $settings->source = backup_migrate_get_destination($settings->source_id);
+  $num = backup_migrate_db_restore($settings->source, $file, $settings);
 
   return $num;
 }

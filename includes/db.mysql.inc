@@ -67,6 +67,17 @@ function backup_migrate_restore_db_from_file_mysql($file, $settings) {
 }
 
 /**
+ * Lock all of the tables that we'll be backing up.
+ */
+function backup_migrate_db_lock_tables_mysql($tables) {
+  $tables_escaped = array();
+  foreach ($tables as $table) {
+    $tables_escaped[] = '`'. db_escape_table($table) .'`  WRITE';
+  }
+  db_query('LOCK TABLES '. implode(', ', $tables_escaped));
+}
+
+/**
  * Get the sql for the structure of the given table.
  */
 function _backup_migrate_get_table_structure_sql_mysql($table) {

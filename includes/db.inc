@@ -19,21 +19,19 @@ function backup_migrate_db_restore($source, $file, $settings) {
       _backup_migrate_message("Unable to restore from file %file because it is of an unknown file type.", array("%file" => $file->filepath()), 'error');
     }
     else {
-      // Switch to a different db if specified.
-      _backup_migrate_db_switch_db($source->get_location());
-  
       backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
   
+      // Switch to a different db if specified.
+      _backup_migrate_db_switch_db($source->get_location());
       // Dump the database.
       $function = 'backup_migrate_restore_db_from_file_'. $type;
       if (function_exists($function)) {
         $num = $function($file, $settings);
       }
-
-      backup_migrate_filters_invoke_all('post_restore', $file, $settings, $num);
-  
       // Switch back to the previous db.
       _backup_migrate_db_switch_db();
+
+      backup_migrate_filters_invoke_all('post_restore', $file, $settings, $num);
     }
   }
   return $num;
@@ -48,23 +46,46 @@ function backup_migrate_db_backup($source, $file, $settings) {
   if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
     $file->push_type($type);
 
-    // Switch to a different db if specified.
-    _backup_migrate_db_switch_db($source->get_location());
-
     backup_migrate_filters_invoke_all('pre_backup', $source, $file, $settings);
 
+    // Switch to a different db if specified.
+    _backup_migrate_db_switch_db($source->get_location());
     // Dump the database.
     $function = 'backup_migrate_backup_db_to_file_'. $type;
     if (function_exists($function)) {
       $success = $function($file, $settings);
     }
+    // Switch back to the previous db.
+    _backup_migrate_db_switch_db();
 
     backup_migrate_filters_invoke_all('post_backup', $source, $file, $settings, $success);
+  }
+  return $success ? $file : FALSE;
+}
+
+/**
+ * Lock all of the tables that we'll be backing up.
+ */
+function backup_migrate_db_lock_tables($source, $settings) {
+  $tables = array();
+  // Get the db type.
+  if ($type = _backup_migrate_db_get_db_type($source->dest_url['scheme'])) {
+    _backup_migrate_db_switch_db($source->get_location());
+
+    foreach (_backup_migrate_get_table_names($source) as $table) {
+      // There's no need to lock excluded or structure only tables because it doesn't matter if they change.
+      if (!in_array($table, (array)@$settings->exclude_tables)) {
+        $tables[] = $table;
+      }
+    }
+    $function = 'backup_migrate_db_lock_tables_'. $type;
+    if (function_exists($function)) {
+      $success = $function($tables, $settings);
+    }
 
     // Switch back to the previous db.
     _backup_migrate_db_switch_db();
   }
-  return $success ? $file : FALSE;
 }
 
 /**
