@@ -13,19 +13,19 @@
  * @ingroup backup_migrate_filters
  */
 class backup_migrate_filter_compression extends backup_migrate_filter {
-  var $op_weights = array('backup_file' => 100, 'restore_file' => -100);
+  var $op_weights = array('backup' => 100, 'restore' => -100);
 
   /**
    * This function is called on a backup file after the backup has been completed.
    */
-  function backup_file($file, $settings) {
+  function backup($file, $settings) {
     return $this->_backup_migrate_file_compress($file, $settings);
   }
 
   /**
    * This function is called on a backup file before importing it.
    */
-  function restore_file($file, &$settings) {
+  function restore($file, &$settings) {
     return $this->_backup_migrate_file_decompress($file);
   }
 

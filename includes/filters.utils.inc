@@ -43,14 +43,14 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function backup_settings_form($settings) {
     $form = array();
     if (module_exists('devel') && variable_get('dev_query', 0)) {
-      $form['advanced']['utils_disable_query_log'] = array(
+      $form['database']['utils_disable_query_log'] = array(
         '#type' => 'checkbox',
         '#title' => t('Disable query log'),
         '#default_value' => !empty($settings['utils_disable_query_log']) ? $settings['utils_disable_query_log'] : NULL,
         '#description' => t('Disable the devel module\'s query logging during the backup operation. It will be enabled again after backup is complete. This is very highly recommended.'),
       );
     }
-    $form['advanced']['utils_lock_tables'] = array(
+    $form['database']['utils_lock_tables'] = array(
       '#type' => 'checkbox',
       '#title' => t('Lock tables during backup'),
       '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : NULL,
@@ -60,7 +60,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       '#type' => 'checkbox',
       '#title' => t('Take site offline'),
       '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : NULL,
-      '#description' => t('Take the site offline and show a maintenance message.'),
+      '#description' => t('Take the site offline during backup and show a maintenance message. Site will be taken back online once the backup is complete.'),
     );
     $form['advanced']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
@@ -89,7 +89,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       '#type' => 'checkbox',
       '#title' => t('Take site offline'),
       '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : NULL,
-      '#description' => t('Take the site offline and show a maintenance message.'),
+      '#description' => t('Take the site offline during restore and show a maintenance message. Site will be taken back online once the restore is complete.'),
     );
     $form['advanced']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
@@ -163,11 +163,11 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    * Take the site offline if configured to do so.
    */
   function take_site_offline($settings) {
+    // Save the current state of the site in case a restore overwrites it.
+    $this->saved_site_offline = variable_get('site_offline', 0);
     if (@$settings->filters['utils_site_offline']) {
-      $this->saved_site_offline = variable_get('site_offline', 0);
       $this->saved_site_offline_message = variable_get('site_offline_message', NULL);
       variable_set('site_offline', 1);
-  dpm(variable_get('site_offline', 0));
     }
   }
 
@@ -175,8 +175,9 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    * Take the site online again after backup or restore.
    */
   function take_site_online($settings) {
+    // Take the site back off/online because the restored db may have changed that setting.
+    variable_set('site_offline', $this->saved_site_offline);
     if ($settings->filters['utils_site_offline']) {
-      variable_set('site_offline', $this->saved_site_offline);
       variable_set('site_offline_message', $this->saved_site_offline_message);
     }
   }

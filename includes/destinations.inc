@@ -55,14 +55,17 @@ function backup_migrate_backup_migrate_destination_types() {
     ),
     'db' => array(
       'type_name' => t('Database'),
-      'description' => t('Import the backup directly into another MySQL database. Database destinations can also be used as a source to backup from.'),
+      'description' => t('Import the backup directly into another database. Database destinations can also be used as a source to backup from.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
       'class' => 'backup_migrate_destination_db',
-      'can_create' => TRUE,
+      'can_create' => FALSE,
     ),
-    'db_default' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.inc',
-      'class' => 'backup_migrate_destination_db_defaults',
+    'mysql' => array(
+      'type_name' => t('MySQL Database'),
+      'description' => t('Import the backup directly into another MySQL database. Database destinations can also be used as a source to backup from.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.db.mysql.inc',
+      'class' => 'backup_migrate_destination_db_mysql',
+      'can_create' => TRUE,
     ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
@@ -110,14 +113,32 @@ function backup_migrate_backup_migrate_destinations() {
   $out['upload']    = backup_migrate_create_destination('browser_upload');
 
   // Expose the configured databases as sources.
+  backup_migrate_include('filters');
+  $out              += backup_migrate_filters_invoke_all('destinations');
+/*
   global $db_url;
   $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
   foreach ((array)$urls as $key => $url) {
-    if ($destination = backup_migrate_create_destination('db_default', array('db_key' => $key))) {
-      $out[$destination->get_id()] = $destination;
+    // Only mysql is currently supported. If more DBMs's are implemented, theis will need to be abstacted.
+    if (strpos($url, 'mysql') === 0) {
+      if ($destination = backup_migrate_create_destination('mysql', array('url' => $url))) {
+        // Treat the default database differently because it is probably the only one available.
+        if ($key == 'default') {
+          $destination->set_id('db');
+          $destination->set_name(t('Default Database'));
+          // Dissalow backing up to the default database because that's confusing and potentially dangerous.
+          unset($destination->supported_ops['scheduled backup']);
+          unset($destination->supported_ops['manual backup']);
+        }
+        else {
+          $destination->set_id('db:'. $key);
+          $destination->set_name($key .": ". $destination->get_display_location());
+        }
+        $out[$destination->get_id()] = $destination;
+      }
     }
   }
-
+*/
   return $out;
 }
 
@@ -307,13 +328,13 @@ function backup_migrate_ui_destination_restore_file_confirm(&$form_state, $desti
       "#title" => t("Database"),
       "#options" => _backup_migrate_get_destination_form_item_options('source'),
       "#description" => t("Choose the database to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to."),
-      "#default_value" => 'db_url:default',
+      "#default_value" => 'db',
     );
   }
   else {
     $form['source_id'] = array(
       "#type" => "value",
-      "#value" => 'db_url:default',
+      "#value" => 'db',
     );
   }
 
@@ -383,6 +404,51 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
 /* Utilities */
 
 /**
+ * Get the source options as a form element.
+ */
+function _backup_migrate_get_source_form($source_id = 'db') {
+  backup_migrate_include('destinations');
+
+  $form = array();
+  $sources = _backup_migrate_get_source_pulldown($source_id);
+  if (count($sources['#options']) > 1) {
+    $form['source'] = array(
+      "#type" => "fieldset",
+      "#title" => t("Backup Source"),
+      "#collapsible" => TRUE,
+      "#collapsed" => FALSE,
+      "#tree" => FALSE,
+    );
+    $sources['#description'] = t("Choose the database to backup. Any database destinations you have created and any databases specified in your settings.php can be backed up.");
+
+    $form['source']['source_id'] = $sources;
+  }
+  else {
+    $form = array();
+    $form['source']['source_id'] = array(
+      "#type" => "value",
+      "#value" => $source_id,
+    );
+  }
+  return $form;
+}
+
+/**
+ * Get pulldown to select existing source options.
+ */
+function _backup_migrate_get_source_pulldown($source_id = NULL) {
+  backup_migrate_include('destinations');
+  $sources = _backup_migrate_get_destination_form_item_options('source');
+  $form = array(
+    "#type" => "select",
+    "#title" => t("Backup Source"),
+    "#options" => _backup_migrate_get_destination_form_item_options('source'),
+    "#default_value" => $source_id,
+  );
+  return $form;
+}
+
+/**
  * Get the destination options as an options array for a form item.
  */
 function _backup_migrate_get_destination_form_item_options($op) {
@@ -433,6 +499,10 @@ class backup_migrate_destination extends backup_migrate_item {
     return @$this->name;
   }
 
+  function set_name($name) {
+    return $this->name = $name;
+  }
+
   function set_type($type) {
     $this->type = $type;
   }
@@ -443,6 +513,10 @@ class backup_migrate_destination extends backup_migrate_item {
 
   function get_display_location() {
     return $this->get_location();
+  }
+
+  function file_types() {
+    return array();
   }
 
   function settings($key = NULL) {
@@ -726,6 +800,59 @@ class backup_migrate_destination extends backup_migrate_item {
       'type' => MENU_CALLBACK,
     );
     return $items;
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function backup_settings_default() {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function backup_settings_form(&$form, $settings) {
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function backup_settings_form_validate($form_values) {
+  }
+
+  /**
+   * Submit the settings form. Any values returned will be saved.
+   */
+  function backup_settings_form_submit($form_values) {
+    return $form_values;
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_default() {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_form($settings) {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_form_validate($form_values) {
+  }
+
+  /**
+   * Submit the settings form. Any values returned will be saved.
+   */
+  function restore_settings_form_submit($form_values) {
+    return $form_values;
   }
 }
 

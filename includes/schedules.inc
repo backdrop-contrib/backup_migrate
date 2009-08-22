@@ -66,6 +66,7 @@ class backup_migrate_schedule extends backup_migrate_item {
   function get_default_values() {
     return array(
         'name' => t("Untitled Schedule"),
+        'source_id' => 'db',
         'enabled' => 1,
         'keep' => 0,
         'period' => 60 * 60 * 24,
@@ -211,6 +212,9 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#title" => t("Schedule Name"),
       "#default_value" => $this->get('name'),
     );
+
+    $form += _backup_migrate_get_source_form($this->get('source_id'));
+
     $form['profile_id'] = array(
       "#type" => "select",
       "#title" => t("Settings Profile"),
@@ -330,6 +334,7 @@ class backup_migrate_schedule extends backup_migrate_item {
     if ($this->is_enabled() && $this->last_run < ($now - ($this->period))) {
       if ($settings = $this->get_profile()) {
         $settings->destination_id = $this->destination_id;
+        $settings->source_id = $this->source_id;
         backup_migrate_perform_backup($settings);
         $this->update_last_run($now);
         $this->remove_expired_backups();

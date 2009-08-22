@@ -84,12 +84,13 @@ function _backup_migrate_destination_email_mail_backup($attachment, $to) {
       $this->body    = "";
     }
 
-    function add_attachment($message, $name = "", $ctype = "application/octet-stream", $encode = NULL) {
+    function add_attachment($message, $name = "", $ctype = "application/octet-stream", $encode = NULL, $attach = FALSE) {
       $this->parts[] = array(
         "ctype" => $ctype,
         "message" => $message,
         "encode" => $encode,
         "name" => $name,
+        "attach" => $attach,
       );
     }
 
@@ -97,7 +98,8 @@ function _backup_migrate_destination_email_mail_backup($attachment, $to) {
       $message  = $part["message"];
       $message  = chunk_split(base64_encode($message));
       $encoding = "base64";
-      return "Content-Type: ". $part["ctype"] . ($part["name"] ? "; name = \"". $part["name"] ."\"" : "") ."\nContent-Transfer-Encoding: $encoding\n\n$message\n";
+      $disposition = $part['attach'] ? "Content-Disposition: attachment; filename=$part[name]\n" : '';
+      return "Content-Type: ". $part["ctype"] . ($part["name"] ? "; name = \"". $part["name"] ."\"" : "") ."\nContent-Transfer-Encoding: $encoding\n$disposition\n$message\n";
     }
 
     function build_multipart() {
@@ -126,9 +128,9 @@ function _backup_migrate_destination_email_mail_backup($attachment, $to) {
   $mail->headers = 'Errors-To: [EMAIL='. $mail->from .']'. $mail->from .'[/EMAIL]';
   $mail->to      = $to;
   $mail->subject = t('Database backup from !site: !file', array('!site' => variable_get('site_name', 'drupal'), '!file' => $attachment->filename));
-  $mail->body    = t('Database backup attached.');
+  $mail->body    = t('Database backup attached.') ."\n\n";
 
-  $mail->add_attachment("$attach", $attachment->filename, "Content-Transfer-Encoding: base64 /9j/4AAQSkZJRgABAgEASABIAAD/7QT+UGhvdG9zaG");
+  $mail->add_attachment("$attach", $attachment->filename, "Content-Transfer-Encoding: base64 /9j/4AAQSkZJRgABAgEASABIAAD/7QT+UGhvdG9zaG", NULL, TRUE);
   $mail->send();
 }
 

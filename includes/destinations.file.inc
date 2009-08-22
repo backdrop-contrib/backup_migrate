@@ -99,9 +99,6 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   /**
    * Get the form for the settings for the files destination.
    */
-  /**
-   * Get the edit form for the item.
-   */
   function edit_form() {
     $form = parent::edit_form();
     $form['location'] = array(

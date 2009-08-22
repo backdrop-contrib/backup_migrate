@@ -388,10 +388,13 @@ class backup_migrate_item {
 
     $item_id = $this->get_id();
 
-    $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
 
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
+      $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
       $out['delete'] = l(t("delete"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
+    }
+    else {
+      $out['edit'] = l(t("override"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
     }
 
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
@@ -480,7 +483,7 @@ class backup_migrate_item {
       '#value' => $this->get_id(),
     );
     $form['actions'] = array('#prefix' => '<div class="container-inline">', '#suffix' => '</div>', '#weight' => 99);
-    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save '. $this->singular));
+    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save !type', array('!type' => t($this->singular))));
     $form['actions']['cancel'] = array('#value' => l(t('Cancel'), 'admin/content/backup_migrate/destination'));
     return $form;
   }

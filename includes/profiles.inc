@@ -76,13 +76,9 @@ function _backup_migrate_ui_backup_settings_form($profile) {
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
   drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
-  backup_migrate_include('files', 'db', 'destinations', 'filters');
+  backup_migrate_include('files', 'destinations', 'filters');
 
   $form    = array();
-  $source = $profile->get_source();
-  $tables  = _backup_migrate_get_table_names($source);
-
-  $form['source'] = _backup_migrate_get_source_form($profile);
 
   $form['file'] = array(
     "#type" => "fieldset",
@@ -122,31 +118,8 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#default_value" => $profile->timestamp_format,
     "#description" => t('Should be a PHP <a href="!url">date()</a> format string.', array('!url' => 'http://www.php.net/date')),
   );
-  $form['tables'] = array(
-    "#type" => "fieldset",
-    "#title" => t("Database Tables"),
-    "#collapsible" => TRUE,
-    "#collapsed" => TRUE,
-    "#tree" => FALSE,
-    "#description" => t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Drupal install, so <strong>do not change these settings unless you know what you're doing</strong>."),
-  );
-  $form['tables']['exclude_tables'] = array(
-    "#type" => "select",
-    "#multiple" => TRUE,
-    "#title" => t("Exclude the following tables altogether"),
-    "#options" => $tables,
-    "#default_value" => $profile->exclude_tables,
-    "#description" => t("The selected tables will not be added to the backup file."),
-  );
-  $form['tables']['nodata_tables'] = array(
-    "#type" => "select",
-    "#multiple" => TRUE,
-    "#title" => t("Exclude the data from the following tables"),
-    "#options" => $tables,
-    "#default_value" => $profile->nodata_tables,
-    "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
-  );
-  $form['advanced'] = array();
+
+  $form['advanced'] = array('#weight' => 10);
   $form = array_merge_recursive($form, backup_migrate_filters_settings_form($profile->filters, 'backup'));
 
   // Add the advanced fieldset if there are any fields in it.
@@ -161,63 +134,12 @@ function _backup_migrate_ui_backup_settings_form($profile) {
 }
 
 /**
- * Get the source options as a form element.
- */
-function _backup_migrate_get_source_form($profile) {
-  backup_migrate_include('destinations');
-
-  $form = array();
-  $sources = _backup_migrate_get_source_pulldown($source_id = NULL);
-  if (count($sources['#options']) > 1) {
-    $form = array(
-      "#type" => "fieldset",
-      "#title" => t("Backup Source"),
-      "#collapsible" => TRUE,
-      "#collapsed" => FALSE,
-      "#tree" => FALSE,
-    );
-    $sources['#description'] = t("Choose the database to backup. Any database destinations you have created and any databases specified in your settings.php can be backed up.");
-
-    $form['source_id'] = $sources;
-  }
-  else {
-    $form = array();
-    $form['source_id'] = array(
-      "#type" => "value",
-      "#value" => $profile->source_id,
-    );
-    $form['source_name'] = array(
-      "#type" => "value",
-      "#value" => $profile->get_source_name(),
-    );
-  }
-  return $form;
-}
-
-/**
- * Get pulldown to select existing source options.
- */
-function _backup_migrate_get_source_pulldown($source_id = NULL) {
-  backup_migrate_include('destinations');
-  $sources = _backup_migrate_get_destination_form_item_options('source');
-  $form = array(
-    "#type" => "select",
-    "#title" => t("Backup Source"),
-    "#options" => _backup_migrate_get_destination_form_item_options('source'),
-    "#default_value" => $source_id,
-  );
-  return $form;
-}
-
-/**
  * Get the default profile.
  */
 function _backup_migrate_profile_default_profile() {
-  backup_migrate_include('db', 'files', 'filters');
+  backup_migrate_include('files', 'filters');
   return array(
-    'source_id' => 'db_url:default',
-    'exclude_tables' => _backup_migrate_default_exclude_tables(),
-    'nodata_tables' => _backup_migrate_default_structure_only_tables(),
+    'source_id' => 'db',
     'filename' => _backup_migrate_default_filename(),
     'append_timestamp' => 1,
     'timestamp_format' => 'Y-m-d\TH-i-s',
@@ -285,8 +207,6 @@ class backup_migrate_profile extends backup_migrate_item {
       'name'                  => array('title' => t('Name')),
       'source_name'           => array('title' => t('Source')),
       'filename'              => array('title' => t('Filename')),
-      'exclude_tables_count'  => array('title' => t('Excluded Tables')),
-      'nodata_tables_count'   => array('title' => t('No Data Tables')),
     ) + $out;
     return $out;
   }
@@ -344,20 +264,6 @@ class backup_migrate_profile extends backup_migrate_item {
       return $destination->get_name();
     }
     return t("Missing");
-  }
-
-  /**
-   * Get the number of excluded tables.
-   */
-  function get_exclude_tables_count() {
-    return count($this->exclude_tables) ? count($this->exclude_tables) : t("No tables excluded");
-  }
-
-  /**
-   * Get the number of excluded tables.
-   */
-  function get_nodata_tables_count() {
-    return count($this->nodata_tables) ? count($this->nodata_tables) : t("No data omitted");
   }
 
   /**

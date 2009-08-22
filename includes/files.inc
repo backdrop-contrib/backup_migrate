@@ -39,7 +39,7 @@ function _backup_migrate_temp_files_delete() {
       // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
       // We should only attempt to delete writable files to prevent errors in shared environments.
       // This could still cause issues in shared environments with poorly configured file permissions.
-      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file->filename) && @filectime($file->filename) < $expire) {
+      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file) && @filectime($file) < $expire) {
         unlink("$dir/$file");
       }
     }
@@ -52,22 +52,8 @@ function _backup_migrate_temp_files_delete() {
  */
 function _backup_migrate_filetypes() {
   backup_migrate_include('filters');
-  $out = array(
-    "sql" => array(
-      'id' => 'mysql',
-      "extension" => "sql",
-      "filemime" => "text/x-sql",
-      "backup" => TRUE,
-      "restore" => TRUE,
-    ),
-    "mysql" => array(
-      "extension" => "mysql",
-      "filemime" => "text/x-sql",
-      "backup" => TRUE,
-      "restore" => TRUE,
-    ),
-  );
-  $out += backup_migrate_filters_file_types();
+
+  $out = backup_migrate_filters_file_types();
 
   foreach ($out as $key => $info) {
     $out[$key]['id'] = empty($info['id']) ? $key : $info['id'];
