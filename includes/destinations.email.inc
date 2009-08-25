@@ -19,6 +19,12 @@ class backup_migrate_destination_email extends backup_migrate_destination {
    * Save to (ie. email the file) to the email destination.
    */
   function save_file($file, $settings) {
+    $size = filesize($file->filepath());
+    $max = variable_get('backup_migrate_max_email_size', 20971520);
+    if ($size > $max) {
+      _backup_migrate_message('Could not email the file @file because it is @size and Backup and Migrate only supports emailing files smaller than @max.', array('@file' => $file->filename(), '@size' => format_size($size), '@max' => format_size($max)), 'error');
+      return FALSE;
+    }
     $attachment = new stdClass();
     $attachment->filename = $file->filename();
     $attachment->path = $file->filepath();
