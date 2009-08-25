@@ -88,8 +88,9 @@ function backup_migrate_crud_ui_list() {
  */
 function backup_migrate_crud_ui_edit($item_id) {
   if ($type = backup_migrate_crud_type_load(arg(3))) {
-    $item = $type->item($item_id);
-    return drupal_get_form('backup_migrate_crud_edit_form', $item);
+    if ($item = $type->item($item_id)) {
+      return drupal_get_form('backup_migrate_crud_edit_form', $item);
+    }
   }
 }
 
@@ -388,7 +389,6 @@ class backup_migrate_item {
 
     $item_id = $this->get_id();
 
-
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
       $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
       $out['delete'] = l(t("delete"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
@@ -605,8 +605,6 @@ class backup_migrate_item {
       }
     }
 
-    drupal_alter($this->db_table, $items);
-
     // Get the items from the db.
     $result = db_query("SELECT * FROM {{$this->db_table}}");
     while ($info = db_fetch_array($result)) {
@@ -616,6 +614,12 @@ class backup_migrate_item {
         $items[$item->get_id()] = $item;
       }
     }
+
+    // Allow other modules to alter the items. This should maybe be before the db override code above
+    // but then the filters are not able to set defaults for missing values. Other modules should just
+    // be careful not to overwrite the user's UI changes in an unexpected way.
+    drupal_alter($this->db_table, $items);
+
     return $items;
   }
 
