@@ -299,7 +299,7 @@ class backup_migrate_destination_files_builtin extends backup_migrate_destinatio
 class backup_migrate_destination_files_manual extends backup_migrate_destination_files {
   var $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/scheduled');
+    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/manual');
     parent::__construct($params + array('location' => $dir, 'name' => t('Manual Backups Directory')));
   }
 }
