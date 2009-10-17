@@ -478,13 +478,15 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
  */
 function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
   // Save the settings profile if the save box is checked.
-  $form_state['values']['nodata_tables'] = array_filter((array)$form_state['values']['nodata_tables']);
-  $form_state['values']['exclude_tables'] = array_filter((array)$form_state['values']['exclude_tables']);
+//  $form_state['values']['nodata_tables'] = array_filter((array)$form_state['values']['nodata_tables']);
+//  $form_state['values']['exclude_tables'] = array_filter((array)$form_state['values']['exclude_tables']);
+
+  $profile = backup_migrate_crud_create_item('profile', $form_state['values']);
+
   if ($form_state['values']['save_settings'] && user_access('administer backup and migrate')) {
     if (@$form_state['values']['create_new']) {
-      $form_state['values']['profile_id'] = NULL;
+      $profile->set_id(NULL);
     }
-    $profile = backup_migrate_crud_create_item('profile', $form_state['values']);
     $profile->save();
     variable_set("backup_migrate_profile_id", $profile->get_id());
     variable_set("backup_migrate_destination_id", $form_state['values']['destination_id']);
@@ -492,8 +494,7 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
 
   // Perform the actual backup if that is what was selected.
   if ($form_state['values']['op'] == t('Backup Database') && user_access('perform backup')) {
-    $settings = backup_migrate_crud_create_item('profile', $form_state['values']);
-    backup_migrate_ui_manual_backup_perform($settings);
+    backup_migrate_ui_manual_backup_perform($profile);
   }
   $form_state['redirect'] = "admin/content/backup_migrate/export/advanced";
 }

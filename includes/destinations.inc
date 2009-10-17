@@ -903,6 +903,7 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
     $out .= ($parts['user'] && $parts['pass']) ? ":". urlencode($parts['pass']) : '';
     $out .= ($parts['user'] || $parts['pass']) ? "@" : "";
     $out .= $parts['host'];
+    $out .= !empty($parts['port']) ? ':' .$parts['port'] : '';
     $out .= "/". $parts['path'];
     return $out;
   }
@@ -930,30 +931,35 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
       "#default_value" => @$this->dest_url['scheme'] ? $this->dest_url['scheme'] : 'mysql',
       "#required" => TRUE,
       "#options" => array($GLOBALS['db_type'] => $GLOBALS['db_type']),
+      "#weight" => 0,
     );
     $form['host'] = array(
       "#type" => "textfield",
       "#title" => t("Host"),
       "#default_value" => @$this->dest_url['host'] ? $this->dest_url['host'] : 'localhost',
       "#required" => TRUE,
+      "#weight" => 10,
     );
     $form['path'] = array(
       "#type" => "textfield",
       "#title" => t("Path"),
       "#default_value" => @$this->dest_url['path'],
       "#required" => TRUE,
+      "#weight" => 20,
     );
     $form['user'] = array(
       "#type" => "textfield",
       "#title" => t("Username"),
       "#default_value" => @$this->dest_url['user'],
       "#required" => TRUE,
+      "#weight" => 30,
     );
     $form['pass'] = array(
       "#type" => "password",
       "#title" => t("Password"),
       "#default_value" => @$this->dest_url['pass'],
       '#description' => '',
+      "#weight" => 40,
     );
     if (@$this->dest_url['pass']) {
       $form['old_password'] = array(

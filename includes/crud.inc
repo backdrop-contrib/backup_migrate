@@ -352,7 +352,10 @@ class backup_migrate_item {
    */
   function set_id($id) {
     $keys = (array)$this->get_primary_key();
-    return $this->{$keys[0]} = $id;
+    if (!empty($keys[0])) {
+      return $this->{$keys[0]} = $id;
+    }
+    return NULL;
   }
 
   /**

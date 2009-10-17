@@ -39,7 +39,7 @@ function _backup_migrate_temp_files_delete() {
       // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
       // We should only attempt to delete writable files to prevent errors in shared environments.
       // This could still cause issues in shared environments with poorly configured file permissions.
-      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file) && @filectime($file) < $expire) {
+      if (strpos($file, 'backup_migrate_') === 0 && is_writable("$dir/$file") && @filectime("$dir/$file") < $expire) {
         unlink("$dir/$file");
       }
     }

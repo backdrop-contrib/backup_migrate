@@ -85,8 +85,8 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    */
   function _backup_db_to_file($file, $settings) {
     $lines = 0;
-    $exclude = !empty($settings->exclude_tables) ? $settings->exclude_tables : array();
-    $nodata = !empty($settings->nodata_tables) ? $settings->nodata_tables : array();
+    $exclude = !empty($settings->filters['exclude_tables']) ? $settings->filters['exclude_tables'] : array();
+    $nodata = !empty($settings->filters['nodata_tables']) ? $settings->filters['nodata_tables'] : array();
     if ($file->open(TRUE)) {
       $file->write($this->_get_sql_file_header());
       $alltables = $this->_get_tables();
