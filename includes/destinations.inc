@@ -903,7 +903,7 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
     $out .= ($parts['user'] && $parts['pass']) ? ":". urlencode($parts['pass']) : '';
     $out .= ($parts['user'] || $parts['pass']) ? "@" : "";
     $out .= $parts['host'];
-    $out .= !empty($parts['port']) ? ':' .$parts['port'] : '';
+    $out .= !empty($parts['port']) ? ':'. $parts['port'] : '';
     $out .= "/". $parts['path'];
     return $out;
   }
