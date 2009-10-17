@@ -92,7 +92,8 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
      return array(
       'nodata_tables' => $nodata_tables,
       'exclude_tables' => array(),
-    );
+      'utils_lock_tables' => FALSE,
+   );
   }
 
   /**
@@ -125,6 +126,13 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
       "#default_value" => $settings['nodata_tables'],
       "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
     );
+    $form['database']['utils_lock_tables'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Lock tables during backup'),
+      '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : NULL,
+      '#description' => t('This can help reduce data corruption, but will make your site unresponsive.'),
+    );
+
     return $form;
   }
 
@@ -136,6 +144,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
     $this->switch_db();
 
     backup_migrate_filters_invoke_all('pre_backup', $this, $file, $settings);
+    $this->lock_tables($settings);
 
     // Switch to a different db if specified.
     $this->switch_db();
@@ -143,7 +152,9 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
     // Switch back to the previous db.
     $this->switch_db(TRUE);
 
+    $this->unlock_tables($settings);
     backup_migrate_filters_invoke_all('post_backup', $this, $file, $settings, $success);
+
     return $success ? $file : FALSE;
   }
 
@@ -227,21 +238,40 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    * Lock the database in anticipation of a backup.
    */
   function lock_tables($settings) {
-    $this->switch_db();
-    foreach ($this->get_table_names() as $table) {
-      // There's no need to lock excluded or structure only tables because it doesn't matter if they change.
-      if (empty($settings->filters['exclude_tables']) && !in_array($table, (array)$settings->filters['exclude_tables'])) {
-        $tables[] = $table;
+    if ($settings->filters['utils_lock_tables']) {
+      $this->switch_db();
+      $tables = array();
+      foreach ($this->get_table_names() as $table) {
+        // There's no need to lock excluded or structure only tables because it doesn't matter if they change.
+        if (empty($settings->filters['exclude_tables']) || !in_array($table, (array)$settings->filters['exclude_tables'])) {
+          $tables[] = $table;
+        }
       }
       $this->_lock_tables($tables);
+      $this->switch_db(TRUE);
     }
-    $this->switch_db(TRUE);
   }
 
   /**
    * Lock the list of given tables in the database.
    */
   function _lock_tables($tables) {
+    // Must be overridden.
+  }
+
+  /**
+   * Unlock any tables that have been locked.
+   */
+  function unlock_tables($settings) {
+    if ($settings->filters['utils_lock_tables']) {
+      $this->_unlock_tables();
+    }
+  }
+
+  /**
+   * Unlock the list of given tables in the database.
+   */
+  function _unlock_tables($tables) {
     // Must be overridden.
   }
 

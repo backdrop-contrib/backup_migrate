@@ -155,11 +155,20 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    * Lock the list of given tables in the database.
    */
   function _lock_tables($tables) {
-    $tables_escaped = array();
-    foreach ($tables as $table) {
-      $tables_escaped[] = '`'. db_escape_table($table) .'`  WRITE';
+    if ($tables) {
+      $tables_escaped = array();
+      foreach ($tables as $table) {
+        $tables_escaped[] = '`'. db_escape_table($table) .'`  WRITE';
+      }
+      db_query('LOCK TABLES '. implode(', ', $tables_escaped));
     }
-    db_query('LOCK TABLES '. implode(', ', $tables_escaped));
+  }
+
+  /**
+   * Unlock all tables in the database.
+   */
+  function _unlock_tables() {
+    db_query('UNLOCK TABLES');
   }
 
   /**

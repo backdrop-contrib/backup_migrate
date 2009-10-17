@@ -21,7 +21,6 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function backup_settings_default() {
     return array(
       'utils_disable_query_log' => TRUE,
-      'utils_lock_tables' => FALSE,
       'utils_site_offline' => FALSE,
     );
   }
@@ -32,7 +31,6 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function restore_settings_default() {
     return array(
       'utils_disable_query_log' => TRUE,
-      'utils_lock_tables' => FALSE,
       'utils_site_offline' => FALSE,
     );
   }
@@ -50,12 +48,6 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
         '#description' => t('Disable the devel module\'s query logging during the backup operation. It will be enabled again after backup is complete. This is very highly recommended.'),
       );
     }
-    $form['database']['utils_lock_tables'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Lock tables during backup'),
-      '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : NULL,
-      '#description' => t('This can help reduce data corruption, but will make your site unresponsive.'),
-    );
     $form['advanced']['utils_site_offline'] = array(
       '#type' => 'checkbox',
       '#title' => t('Take site offline'),
@@ -94,7 +86,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $form['advanced']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Site off-line message'),
-      '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
+      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
       '#description' => t('Message to show visitors when the site is in off-line mode.')
     );
     return $form;
@@ -103,11 +95,9 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function pre_backup($source, $file, $settings) {
     $this->take_site_offline($settings);
     $this->disable_devel_query($settings);
-    $this->lock_tables($settings);
   }
 
   function post_backup($source, $file, $settings) {
-    $this->unlock_tables($settings);
     $this->enable_devel_query($settings);
     $this->take_site_online($settings);
   }
@@ -141,23 +131,6 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     }
   }
 
-  /**
-   * Lock the tables to be backed up if the lock setting is set.
-   */
-  function lock_tables($settings) {
-    if ($settings->filters['utils_lock_tables']) {
-      backup_migrate_db_lock_tables($settings->source, $settings);
-    }
-  }
-
-  /**
-   * Unlock any tables that have been locked.
-   */
-  function unlock_tables($settings) {
-    if ($settings->filters['utils_lock_tables']) {
-      db_unlock_tables();
-    }
-  }
 
   /**
    * Take the site offline if configured to do so.
