@@ -622,10 +622,10 @@ function backup_migrate_perform_backup(&$settings) {
   $file = backup_migrate_filters_backup($file, $settings);
   if (!$file) {
     if (_backup_migrate_check_timeout()) {
-      backup_migrate_backup_fail('Could not backup the database because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), $settings);
+      backup_migrate_backup_fail('Could not complete the backup because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), $settings);
     }
     else {
-      backup_migrate_backup_fail("Could not backup the database.", array(), $settings);
+      backup_migrate_backup_fail("Could not complete the backup.", array(), $settings);
     }
     return FALSE;
   }
@@ -878,6 +878,7 @@ function _backup_migrate_backup_with_defaults($destination_id = "manual") {
 
   $settings = _backup_migrate_profile_saved_default_profile();
   $settings->destination_id = $destination_id;
+  $settings->source_id = 'db';
   backup_migrate_perform_backup($settings);
 }
 
