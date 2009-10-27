@@ -14,7 +14,13 @@ function backup_migrate_drush_command() {
   $items['bam backup'] = array(
     'callback' => 'backup_migrate_drush_backup',
     'description' => dt('Backup the site\'s database with Backup and Migrate.'),
+    'examples' => array(
+      'drush bam backup' => 'Backup the default databse to the manual backup directory using the default settings.', 
+      'drush bam backup db scheduled mysettings' => 'Backup the database to the scheduled directory using a settings profile called "mysettings"', 
+      'drush bam backup files' => 'Backup the files directory to the manual directory using the default settings. The Backup and Migrate Files module is required for files backups.', 
+    ),
     'arguments' => array(
+      'source'        => "Optional. The id of the source (usually a database) to backup. Use 'drush bam sources' to get a list of sources. Defaults to 'db'",
       'destination'   => "Optional. The id of destination to send the backup file to. Use 'drush bam destinations' to get a list of destinations. Defaults to 'manual'",
       'profile'       => "Optional. The id of a settings profile to use. Use 'drush bam profiles' to get a list of available profiles. Defaults to 'default'",
     ),
@@ -23,13 +29,18 @@ function backup_migrate_drush_command() {
     'callback' => 'backup_migrate_drush_restore',
     'description' => dt('Restore the site\'s database with Backup and Migrate.'),
     'arguments' => array(
-      'destination'   => "Optional. The id of destination to send the backup file to. Use 'drush bam destinations' to get a list of destinations. Defaults to 'manual'",
+      'source'        => "Required. The id of the source (usually a database) to restore the backup to. Use 'drush bam sources' to get a list of sources. Defaults to 'db'",
+      'destination'   => "Required. The id of destination to send the backup file to. Use 'drush bam destinations' to get a list of destinations. Defaults to 'manual'",
       'backup id'     => "Required. The id of a backup file restore. Use 'drush bam backups' to get a list of available backup files.",
     ),
   );
   $items['bam destinations'] = array(
     'callback' => 'backup_migrate_drush_destinations',
     'description' => dt('Get a list of available destinations.'),
+  );
+  $items['bam sources'] = array(
+    'callback' => 'backup_migrate_drush_sources',
+    'description' => dt('Get a list of available sources.'),
   );
   $items['bam profiles'] = array(
     'callback' => 'backup_migrate_drush_profiles',
@@ -66,12 +77,16 @@ function backup_migrate_drush_help($section) {
 /**
  * Backup the default database.
  */
-function backup_migrate_drush_backup($destination_id = 'manual', $profile_id = 'default') {
-  backup_migrate_include('files', 'db', 'profiles', 'destinations');
+function backup_migrate_drush_backup($source_id = 'db', $destination_id = 'manual', $profile_id = 'default') {
+  backup_migrate_include('profiles', 'destinations');
 
   // Set the message mode to logging.
   _backup_migrate_message_callback('_backup_migrate_message_drush');
 
+  if (!backup_migrate_get_destination($source_id)) {
+    _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam sources' to get a list of available sources or use 'db' to backup the Drupal database.", array('@source' => $source_id), 'error');
+    return;
+  }
   if (!backup_migrate_get_destination($destination_id)) {
     _backup_migrate_message("Could not find the destination '@destination'. Try using 'drush bam destinations' to get a list of available destinations.", array('@destination' => $destination_id), 'error');
     return;
@@ -84,39 +99,59 @@ function backup_migrate_drush_backup($destination_id = 'manual', $profile_id = '
 
   _backup_migrate_message('Starting backup...');
   $settings->destination_id = $destination_id;
+  $settings->source_id = $source_id;
   backup_migrate_perform_backup($settings);
 }
 
 /**
  * Restore to the default database.
  */
-function backup_migrate_drush_restore($destination_id = 'manual', $file_id = '') {
-  backup_migrate_include('files', 'db', 'profiles', 'destinations');
+function backup_migrate_drush_restore($source_id = '', $destination_id = '', $file_id = '') {
+  backup_migrate_include('profiles', 'destinations');
 
   // Set the message mode to drush output.
   _backup_migrate_message_callback('_backup_migrate_message_drush');
 
+  if (!backup_migrate_get_destination($source_id)) {
+    _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam sources' to get a list of available sources or use 'db' to backup the Drupal database.", array('@source' => $source_id), 'error');
+    return;
+  }
   if (!$destination = backup_migrate_get_destination($destination_id)) {
     _backup_migrate_message("Could not find the destination '@destination'. Try using 'drush bam destinations' to get a list of available destinations.", array('@destination' => $destination_id), 'error');
     return;
   }
-  if (!$file = backup_migrate_destination_get_file($destination_id, $file_id)) {
+  if (!$file_id || !$file = backup_migrate_destination_get_file($destination_id, $file_id)) {
     _backup_migrate_message("Could not find the file '@file'. Try using 'drush bam backups @destination' to get a list of available backup files in this destination destinations.", array('@destination' => $destination_id, '@file' => $file_id), 'error');
     return;
   }
 
   _backup_migrate_message('Starting restore...');
+  $settings = array('source_id' => $source_id);
   backup_migrate_perform_restore($destination_id, $file_id);
 }
-
 
 /**
  * Get a list of available destinations.
  */
 function backup_migrate_drush_destinations() {
+  return _backup_migrate_drush_destinations();
+}
+
+/**
+ * Get a list of available sources.
+ */
+function backup_migrate_drush_sources() {
+  return _backup_migrate_drush_destinations('source');
+}
+
+
+/**
+ * Get a list of available destinations with the given op.
+ */
+function _backup_migrate_drush_destinations($op = NULL) {
   backup_migrate_include('destinations');
   $rows = array(array(dt('ID'), dt('Name'), dt('Operations')));
-  foreach (backup_migrate_get_destinations() as $destination) {
+  foreach (backup_migrate_get_destinations($op) as $destination) {
     $rows[] = array(
       $destination->get_id(),
       $destination->get_name(),
