@@ -486,13 +486,23 @@ class backup_migrate_destination extends backup_migrate_item {
   function ops() {
     return $this->supported_ops;
   }
-
+  
   /**
    * Does this destination support the given operation.
    */
   function op($op) {
     $ops = (array)$this->ops();
     return in_array($op, $ops);
+  }
+
+  /**
+   * Remove the given op from the support list.
+   */
+  function remove_op($op) {
+    $key = array_search($op, $this->supported_ops);
+    if ($key !== FALSE) {
+      unset($this->supported_ops[$key]);
+    }
   }
 
   function get_name() {

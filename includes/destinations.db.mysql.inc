@@ -55,8 +55,8 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
             $destination->set_id('db');
             $destination->set_name(t('Default Database'));
             // Dissalow backing up to the default database because that's confusing and potentially dangerous.
-            unset($destination->supported_ops['scheduled backup']);
-            unset($destination->supported_ops['manual backup']);
+            $destination->remove_op('scheduled backup');
+            $destination->remove_op('manual backup');
           }
           else {
             $destination->set_id('db:'. $key);
