@@ -13,7 +13,7 @@
  * @ingroup backup_migrate_destinations
  */
 class backup_migrate_destination_db extends backup_migrate_destination_remote {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'restore', 'configure', 'source');
+  var $supported_ops = array('scheduled backup', 'manual backup', 'configure', 'source');
 
   function type_name() {
     return t("Database");
@@ -27,12 +27,12 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
 
     // Set the source_id to the destination_id in the settings since for a restore, the source_id is the 
     // database that gets restored to.
-    $settings->source_id = $settings->destination_id;
+    $settings->set_source($this->get_id());
 
     // Restore the file to the source database.
-    $num = backup_migrate_perform_restore_file($file, $settings);
+    $file = backup_migrate_perform_restore($this->get_id(), $file, $settings);
 
-    return $num ? $file : FALSE;
+    return $file;
   }
 
   /**

@@ -332,6 +332,16 @@ function backup_migrate_ui_manual_quick_backup_form(&$form_state) {
   return $form;
 }
 
+
+/**
+ * Validate the quick backup form.
+ */
+function backup_migrate_ui_manual_quick_backup_form_validate($form, &$form_state) {
+  if ($form_state['values']['source_id'] == $form_state['values']['destination_id']) {
+    form_set_error('destination_id', t('A source cannot be backed up to itself. Please pick a different destination for this backup.'));
+  }
+}
+
 /**
  * Submit the quick backup form.
  */
@@ -464,6 +474,7 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
       '#value' => t('Save Without Backing Up'),
     );
   }
+  $form['#validate'] = array('backup_migrate_ui_manual_quick_backup_form_validate');
 
   $form[] = array(
     '#type' => 'submit',
@@ -472,6 +483,7 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
   );
   return $form;
 }
+
 
 /**
  * Submit the form. Save the values as defaults if desired and output the backup file.
@@ -657,7 +669,7 @@ function backup_migrate_perform_backup(&$settings) {
 /**
  * Restore from a file in the given destination.
  */
-function backup_migrate_perform_restore($destination_id, $file_id, $settings = array()) {
+function backup_migrate_perform_restore($destination_id, $file, $settings = array()) {
   backup_migrate_include('files', 'filters');
   timer_start('backup_migrate_restore');
 
@@ -675,12 +687,14 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
   // Register shutdown callback.
   register_shutdown_function('backup_migrate_shutdown', $settings);
 
-  // Load the file from the destination.
-  $file = backup_migrate_destination_get_file($destination_id, $file_id);
-  if (!$file) {
-    _backup_migrate_message("Could not restore because the file could not be loaded from the destination.", array(), 'error');
-    backup_migrate_cleanup();
-    return FALSE;
+  if (!is_object($file)) {
+    // Load the file from the destination.
+    $file = backup_migrate_destination_get_file($destination_id, $file_id);
+    if (!$file) {
+      _backup_migrate_message("Could not restore because the file could not be loaded from the destination.", array(), 'error');
+      backup_migrate_cleanup();
+      return FALSE;
+    }
   }
 
   // Filter the file and perform the restore.
@@ -717,24 +731,6 @@ function backup_migrate_perform_restore($destination_id, $file_id, $settings = a
 
   // No errors. Return the file.
   return $file;
-}
-
-/**
- * Restore from a file in the given destination.
- */
-function backup_migrate_perform_restore_file($file, $settings) {
-  backup_migrate_include('files');
-
-  // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < variable_get('backup_migrate_restore_max_time', 1200)) {
-    set_time_limit(variable_get('backup_migrate_restore_max_time', 1200));
-  }
-
-  $settings->source_id = empty($settings->source_id) ? 'db' : $settings->source_id;
-  $settings->source = backup_migrate_get_destination($settings->source_id);
-  $num = backup_migrate_db_restore($settings->source, $file, $settings);
-
-  return $num;
 }
 
 /**
