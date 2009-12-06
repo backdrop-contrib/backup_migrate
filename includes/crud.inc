@@ -392,15 +392,16 @@ class backup_migrate_item {
 
     $item_id = $this->get_id();
 
-    if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
+    if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB || @$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
       $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
-      $out['delete'] = l(t("delete"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
     }
-    else {
+    else if (@$this->storage == BACKUP_MIGRATE_STORAGE_NONE) {
       $out['edit'] = l(t("override"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
     }
-
-    if (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
+    if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
+      $out['delete'] = l(t("delete"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
+    }
+    else if (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
       $out['delete'] = l(t("revert"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
     }
 
