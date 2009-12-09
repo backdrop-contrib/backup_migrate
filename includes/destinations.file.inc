@@ -192,7 +192,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function check_web_dir($directory) {
     // Check for a htaccess file which adequately protects the backup files.
     $htaccess_lines = "order allow,deny\ndeny from all\n";
-    if (!is_file($directory .'/.htaccess') || strpos(file_get_contents($directory .'/.htaccess'), $htaccess_lines) === FALSE) {
+    if (!is_file($directory .'/.htaccess') || !is_readable($directory .'/.htaccess') || strpos(file_get_contents($directory .'/.htaccess'), $htaccess_lines) === FALSE) {
       // Attempt to protect the backup files from public access using htaccess.
       if (($fp = @fopen($directory .'/.htaccess', 'w')) && @fputs($fp, $htaccess_lines)) {
         fclose($fp);
@@ -264,42 +264,12 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 }
 
 /**
- * The built in default files directories. This is more or less a legacy holdover from v1.
- * But they serve a purpose as a meaningful default.
- */
-class backup_migrate_destination_files_builtin extends backup_migrate_destination_files {
-  function __construct($params = array()) {
-    $params['location'] = $this->check_destination_dir($params['mode']);
-    $params['destination_id'] = $params['mode'];
-    parent::__construct($params);
-  }
-
-  /**
-   * Check the default backup desitantion directory. Included as legacy support.
-   */
-  function check_destination_dir($mode = "manual") {
-    return $this->check_dir($this->get_save_path($mode));
-  }
-
-  /**
-   * Return the path on the server to save the dump files.
-   */
-  function get_save_path($mode = "") {
-    $dir = file_directory_path() ."/backup_migrate";
-    if ($mode) {
-      $dir .= $mode == "manual" ? "/manual" : "/scheduled";
-    }
-    return $dir;
-  }
-}
-
-/**
  * The manual files directory.
  */
 class backup_migrate_destination_files_manual extends backup_migrate_destination_files {
   var $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/manual');
+    $dir = file_directory_path() .'/backup_migrate/manual';
     parent::__construct($params + array('location' => $dir, 'name' => t('Manual Backups Directory')));
   }
 }
@@ -310,7 +280,7 @@ class backup_migrate_destination_files_manual extends backup_migrate_destination
 class backup_migrate_destination_files_scheduled extends backup_migrate_destination_files {
   var $supported_ops = array('scheduled backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/scheduled');
+    $dir = file_directory_path() .'/backup_migrate/scheduled';
     parent::__construct($params + array('location' => $dir, 'name' => t('Scheduled Backups Directory')));
   }
 }

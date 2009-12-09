@@ -31,6 +31,12 @@ INSTALLATION:
 OPTIONAL:
 * Enable token.module to allow token replacement in backup file names.
 
+LIGHTTPD USERS:
+Add the following code to your lighttp.conf to secure your backup directories:
+  $HTTP["url"] =~ "^/sites/default/files/backup_migrate/" {
+       url.access-deny = ( "" )
+  }
+
 -------------------------------------------------------------------------------
 
 VERY IMPORTANT SECURITY NOTE:

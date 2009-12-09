@@ -277,8 +277,10 @@ class backup_migrate_item {
     $out = array();
     // Return fields as specified in the schema.
     $schema = $this->get_schema();
-    foreach ($schema['fields'] as $field => $info) {
-      $out[$field] = $this->get($field);
+    if (!empty($schema['fields']) && is_array($schema['fields'])) {
+      foreach ($schema['fields'] as $field => $info) {
+        $out[$field] = $this->get($field);
+      }
     }
     return $out;
   }

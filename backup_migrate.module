@@ -478,7 +478,7 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
 
   $form[] = array(
     '#type' => 'submit',
-    '#value' => t('Backup Database'),
+    '#value' => t('Backup now'),
     '#weight' => 100,
   );
   return $form;
@@ -505,7 +505,7 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
   }
 
   // Perform the actual backup if that is what was selected.
-  if ($form_state['values']['op'] == t('Backup Database') && user_access('perform backup')) {
+  if ($form_state['values']['op'] == t('Backup now') && user_access('perform backup')) {
     backup_migrate_ui_manual_backup_perform($profile);
   }
   $form_state['redirect'] = "admin/content/backup_migrate/export/advanced";
@@ -570,7 +570,7 @@ function backup_migrate_ui_manual_restore_form() {
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Restore Database'),
+    '#value' => t('Restore now'),
   );
   if (user_access('access backup files')) {
     $form[] = array(
@@ -689,7 +689,7 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
 
   if (!is_object($file)) {
     // Load the file from the destination.
-    $file = backup_migrate_destination_get_file($destination_id, $file_id);
+    $file = backup_migrate_destination_get_file($destination_id, $file);
     if (!$file) {
       _backup_migrate_message("Could not restore because the file could not be loaded from the destination.", array(), 'error');
       backup_migrate_cleanup();
@@ -701,10 +701,10 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
   $file = backup_migrate_filters_restore($file, $settings);
   if (!$file) {
     if (_backup_migrate_check_timeout()) {
-      backup_migrate_restore_fail('Could not restore the database because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), 'error');
+      backup_migrate_restore_fail('Could not perform the restore because the script timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), 'error');
     }
     else {
-      backup_migrate_restore_fail("Could not restore the database.", array(), 'error');
+      backup_migrate_restore_fail("Could not perform the restore.", array(), 'error');
     }
     backup_migrate_cleanup();
     return FALSE;
