@@ -257,14 +257,14 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
     $headers = array(
       array('data' => 'Filename', 'field' => 'filename'),
       array('data' => 'Date', 'field' => 'filetime'),
-      array('data' => 'Age',  'field' => 'filetime'),
+      array('data' => 'Age',  'field' => 'filetime', 'sort' => 'desc'),
       array('data' => 'Size', 'field' => 'filesize'),
       t('Operations'),
     );
 
     $sort_order = tablesort_get_order($headers);
-    $sort_key   = $sort_order['sql'] ? $sort_order['sql'] : 'filename';
-    $sort_dir   = tablesort_get_sort($headers) == 'asc' ? SORT_ASC : SORT_DESC;
+    $sort_key   = $sort_order['sql'] ? $sort_order['sql'] : 'filetime';
+    $sort_dir   = tablesort_get_sort($headers) == 'desc' ? SORT_DESC : SORT_ASC;
 
     $files      = $destination->list_files();
 
