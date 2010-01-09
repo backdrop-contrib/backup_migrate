@@ -140,7 +140,12 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $this->saved_site_offline = variable_get('site_offline', 0);
     if (@$settings->filters['utils_site_offline']) {
       $this->saved_site_offline_message = variable_get('site_offline_message', NULL);
+      if (!empty($settings->filters['utils_site_offline_message'])) {
+        $this->saved_site_offline_message = variable_get('site_offline_message', NULL);
+        variable_set('site_offline_message', $settings->filters['utils_site_offline_message']);
+      }
       variable_set('site_offline', 1);
+      _backup_migrate_message('Site was taken offline.');
     }
   }
 
@@ -151,7 +156,10 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     // Take the site back off/online because the restored db may have changed that setting.
     variable_set('site_offline', $this->saved_site_offline);
     if ($settings->filters['utils_site_offline']) {
-      variable_set('site_offline_message', $this->saved_site_offline_message);
+      if (!empty($this->saved_site_offline_message)) {
+        variable_set('site_offline_message', $this->saved_site_offline_message);
+      }
+      _backup_migrate_message('Site was taken online.');
     }
   }
 }

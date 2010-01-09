@@ -811,7 +811,6 @@ function backup_migrate_shutdown($settings) {
 
 /**
  * Action to backup the drupal site. Requires actions.module.
- */
 function action_backup_migrate_backup($op, $edit = array()) {
   switch ($op) {
     case 'do':
@@ -843,10 +842,10 @@ function action_backup_migrate_backup($op, $edit = array()) {
       return '';
   }
 }
+ */
 
 /*
  * Implementation of hook_action_info().
- */
 function backup_migrate_action_info() {
   return array(
     'backup_migrate_action_backup' => array(
@@ -856,6 +855,7 @@ function backup_migrate_action_info() {
     ),
   );
 }
+ */
 
 /*
  * Action callback.
