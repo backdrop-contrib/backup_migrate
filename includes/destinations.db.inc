@@ -12,9 +12,10 @@
  *
  * @ingroup backup_migrate_destinations
  */
-
 class backup_migrate_destination_db extends backup_migrate_destination_remote {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'restore', 'configure', 'source');
+  var $supported_ops = array('scheduled backup', 'manual backup', 'configure', 'source');
+  var $db_target = 'default';
+
 
   function type_name() {
     return t("Database");
@@ -24,16 +25,14 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    * Save the info by importing it into the database.
    */
   function save_file($file, $settings) {
-    backup_migrate_include('files', 'db');
+    backup_migrate_include('files');
 
-    // Switch to the new db.
-    _backup_migrate_db_switch_db($this->dest_url(FALSE));
+    // Set the source_id to the destination_id in the settings since for a restore, the source_id is the 
+    // database that gets restored to.
+    $settings->set_source($this->get_id());
 
-    // Restore the file to the db.
-    backup_migrate_perform_restore_file($file);
-
-    // Switch back to the old db.
-    _backup_migrate_db_switch_db();
+    // Restore the file to the source database.
+    $file = backup_migrate_perform_restore($this->get_id(), $file, $settings);
 
     return $file;
   }
@@ -44,7 +43,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
   function edit_form() {
     $form = parent::edit_form();
     $form['scheme']['#title'] = t('Database type');
-    $form['scheme']['#options'] = array($GLOBALS['db_type'] => $GLOBALS['db_type']);
+//    $form['scheme']['#options'] = array($GLOBALS['db_type'] => $GLOBALS['db_type']);
     $form['scheme']['#description'] = t('The type of the database. Drupal only supports one database type at a time, so this must be the same as the current database type.');
     $form['path']['#title'] = t('Database name');
     $form['path']['#description'] = t('The name of the database. The database must exist, it will not be created for you.');
@@ -61,46 +60,229 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
     }
     parent::edit_form_validate($form, $form_state);
   }
-}
 
-/**
- * A destination for databases defined in settings.php.
- *
- * @ingroup backup_migrate_destinations
- */
-class backup_migrate_destination_db_defaults extends backup_migrate_destination_db {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'source');
-  var $db_key = "";
-
-  function __construct($params) {
-    global $db_url;
-    $this->db_key = $params['db_key'];
-    $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
-    $this->set_url($urls[$this->db_key]);
-  }
-
-  function op($op) {
-    // Don't allow backups to the default db as it's dangerous, confusing and of limited use.
-    if ($this->db_key == 'default' && ($op == 'manual backup' || $op == 'scheduled backup')) {
-      return FALSE;
-    }
-    return parent::op($op);
-  }
-
-  function get_id() {
-    return "db_url:$this->db_key";
-  }
-
-  function get_name() {
-    return $this->db_key == 'default' ? t("Default Database") : ($this->db_key .": ". $this->get_display_location());
+  /**
+   * Get the form for the settings for this destination.
+   *
+   * Return the default tables whose data can be ignored. These tables mostly contain
+   *  info which can be easily reproducted (such as cache or search index)
+   *  but also tables which can become quite bloated but are not necessarily extremely
+   *  important to back up or migrate during development (such ass access log and watchdog)
+   */
+  function backup_settings_default() {
+    $core = array(
+        'cache',
+        'cache_filter',
+        'cache_calendar_ical',
+        'cache_menu',
+        'cache_page',
+        'cache_views',
+        'cache_block',
+        'cache_update',
+        'cache_form',
+        'cache_bootstrap',
+        'cache_form',
+        'cache_field',
+        'cache_form',
+        'cache_image',
+        'cache_path',
+        'sessions',
+        'search_dataset',
+        'search_index',
+        'search_keywords_log',
+        'search_total',
+        'watchdog',
+        'accesslog',
+        'devel_queries',
+        'devel_times',
+      );
+    $nodata_tables = array_merge($core, module_invoke_all('devel_caches'));
+     return array(
+      'nodata_tables' => $nodata_tables,
+      'exclude_tables' => array(),
+      'utils_lock_tables' => FALSE,
+   );
   }
 
   /**
-   * Get a row of data to be used in a list of items of this type.
-   */  
-  function get_list_row() {
-    // Return none as this type should not be displayed.
+   * Get the form for the backup settings for this destination.
+   */
+  function backup_settings_form(&$form, $settings) {
+    $tables  = $this->get_table_names();
+    $form['database'] = array(
+      "#type" => "fieldset",
+      "#title" => t("Database Options"),
+      "#collapsible" => TRUE,
+      "#collapsed" => TRUE,
+      "#tree" => FALSE,
+      "#description" => t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Drupal install, so <strong>do not change these settings unless you know what you're doing</strong>."),
+      '#weight' => 5,
+    );
+    $form['database']['exclude_tables'] = array(
+      "#type" => "select",
+      "#multiple" => TRUE,
+      "#title" => t("Exclude the following tables altogether"),
+      "#options" => $tables,
+      "#default_value" => $settings['exclude_tables'],
+      "#description" => t("The selected tables will not be added to the backup file."),
+    );
+    $form['database']['nodata_tables'] = array(
+      "#type" => "select",
+      "#multiple" => TRUE,
+      "#title" => t("Exclude the data from the following tables"),
+      "#options" => $tables,
+      "#default_value" => $settings['nodata_tables'],
+      "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
+    );
+    $form['database']['utils_lock_tables'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Lock tables during backup'),
+      '#default_value' => !empty($settings['utils_lock_tables']) ? $settings['utils_lock_tables'] : NULL,
+      '#description' => t('This can help reduce data corruption, but will make your site unresponsive.'),
+    );
+
+    return $form;
+  }
+
+  /**
+   * Backup from this source.
+   */
+  function backup_to_file($file, $settings) {
+    $file->push_type($this->get_file_type_id());
+
+    backup_migrate_filters_invoke_all('pre_backup', $this, $file, $settings);
+    //$this->lock_tables($settings);
+
+    // Switch to a different db if specified.
+    $success = $this->_backup_db_to_file($file, $settings);
+
+    //$this->unlock_tables($settings);
+    backup_migrate_filters_invoke_all('post_backup', $this, $file, $settings, $success);
+
+    return $success ? $file : FALSE;
+  }
+
+  /**
+   * Restore to this source.
+   */
+  function restore_from_file($file, &$settings) {
+    $num = 0;
+    $type = $this->get_file_type_id();
+    // Open the file using the file wrapper. Check that the dump is of the right type (allow .sql for legacy reasons).
+    if ($file->type_id() !== $this->get_file_type_id() && $file->type_id() !== 'sql') {
+      _backup_migrate_message("Unable to restore from file %file because a %type file can't be restored to this database.", array("%file" => $file->filepath(), '%type' => $file->type_id()), 'error');
+    }
+    else {
+      backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
+
+      // Restore the database.
+      $num = $this->_restore_db_from_file($file, $settings);
+      $settings->performed_action = $num ? t('%num SQL commands executed.', array('%num' => $num)) : '';
+
+      backup_migrate_filters_invoke_all('post_restore', $file, $settings, $num);
+    }
+    return $num;
+  }
+
+  /**
+   * Get the db connection for the specified db.
+   */
+  function _get_db_connection() {
+    static $conn = NULL;
+    if (!$conn) {
+      $target = $key = '';
+      $parts = explode(':', $this->get_id());
+      // One of the predefined databases (set in settings.php)
+      if ($parts[0] == 'db') {
+        $key    = empty($parts[1]) ? 'default' : $parts[1];
+        $target = empty($parts[2]) ? 'default' : $parts[2];
+      }
+      // Another db url.
+      else {
+        $info = array(
+          'driver'    => empty($this->dest_url['scheme'])   ? NULL : $this->dest_url['scheme'],
+          'host'      => empty($this->dest_url['host'])     ? NULL : $this->dest_url['host'],
+          'port'      => empty($this->dest_url['port'])     ? NULL : $this->dest_url['port'],
+          'username'  => empty($this->dest_url['user'])     ? NULL : $this->dest_url['user'],
+          'password'  => empty($this->dest_url['pass'])     ? NULL : $this->dest_url['pass'],
+          'database'  => empty($this->dest_url['path'])     ? NULL : $this->dest_url['path'], 
+        );
+        $key    = uniqid('backup_migrate_tmp_');
+        $target = 'default';
+        Database::addConnectionInfo($key, $target, $info);
+      }
+      if ($target && $key) {
+        $conn = Database::getConnection($target, $key);
+      }
+    }
+    return $conn;
+  }
+
+  /**
+   * Backup the databases to a file.
+   */
+  function _backup_db_to_file($file, $settings) {
+    // Must be overridden.
+  }
+
+  /**
+   * Backup the databases to a file.
+   */
+  function _restore_db_from_file($file, $settings) {
+    // Must be overridden.
+  }
+
+  /**
+   * Get a list of tables in the database.
+   */
+  function get_table_names() {
+    // Must be overridden.
     return array();
   }
-}
 
+  /**
+   * Lock the database in anticipation of a backup.
+   */
+  function lock_tables($settings) {
+    if ($settings->filters['utils_lock_tables']) {
+      $tables = array();
+      foreach ($this->get_table_names() as $table) {
+        // There's no need to lock excluded or structure only tables because it doesn't matter if they change.
+        if (empty($settings->filters['exclude_tables']) || !in_array($table, (array)$settings->filters['exclude_tables'])) {
+          $tables[] = $table;
+        }
+      }
+      $this->_lock_tables($tables);
+    }
+  }
+
+  /**
+   * Lock the list of given tables in the database.
+   */
+  function _lock_tables($tables) {
+    // Must be overridden.
+  }
+
+  /**
+   * Unlock any tables that have been locked.
+   */
+  function unlock_tables($settings) {
+    if ($settings->filters['utils_lock_tables']) {
+      $this->_unlock_tables();
+    }
+  }
+
+  /**
+   * Unlock the list of given tables in the database.
+   */
+  function _unlock_tables($tables) {
+    // Must be overridden.
+  }
+
+  /**
+   * Get the file type for to backup this destination to.
+   */
+  function get_file_type_id() {
+    return 'sql';
+  }
+}

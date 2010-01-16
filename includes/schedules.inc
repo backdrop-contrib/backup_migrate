@@ -50,11 +50,23 @@ class backup_migrate_schedule extends backup_migrate_item {
   var $default_values = array();
 
   /**
+   * This function is not supposed to be called. It is just here to help the po extractor out.
+   */
+  function strings() {
+    // Help the pot extractor find these strings.
+    t('Schedule');
+    t('Schedules');
+    t('schedule');
+    t('schedules');
+  }
+
+  /**
    * Get the default values for this item.
    */
   function get_default_values() {
     return array(
         'name' => t("Untitled Schedule"),
+        'source_id' => 'db',
         'enabled' => 1,
         'keep' => 0,
         'period' => 60 * 60 * 24,
@@ -200,6 +212,9 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#title" => t("Schedule Name"),
       "#default_value" => $this->get('name'),
     );
+
+    $form += _backup_migrate_get_source_form($this->get('source_id'));
+
     $form['profile_id'] = array(
       "#type" => "select",
       "#title" => t("Settings Profile"),
@@ -316,9 +331,14 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function cron() {
     $now = time();
-    if ($this->is_enabled() && $this->last_run < ($now - ($this->period))) {
+
+    // Add a small negative buffer (1% of the entire period) to the time to account for slight difference in cron run length.
+    $wait_time = $this->period - ($this->period * variable_get('backup_migrate_schedule_buffer', 0.01));
+
+    if ($this->is_enabled() && ($now - $this->last_run) >= $wait_time) {
       if ($settings = $this->get_profile()) {
         $settings->destination_id = $this->destination_id;
+        $settings->source_id = $this->source_id;
         backup_migrate_perform_backup($settings);
         $this->update_last_run($now);
         $this->remove_expired_backups();
@@ -337,10 +357,12 @@ class backup_migrate_schedule extends backup_migrate_item {
       $timestamp = time();
     }
     db_query("UPDATE {backup_migrate_schedules}
-                 SET last_run = %d
-               WHERE schedule_id = '%s'",
-      $timestamp,
-      $this->get_id()
+                 SET last_run = :timestamp
+               WHERE schedule_id = :schedule_id",
+      array(
+        ':timestamp' => $timestamp,
+        ':schedule_id' => $this->get_id()
+      )
     );
   }
 

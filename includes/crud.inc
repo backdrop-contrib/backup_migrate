@@ -88,15 +88,16 @@ function backup_migrate_crud_ui_list() {
  */
 function backup_migrate_crud_ui_edit($item_id) {
   if ($type = backup_migrate_crud_type_load(arg(3))) {
-    $item = $type->item($item_id);
-    return drupal_get_form('backup_migrate_crud_edit_form', $item);
+    if ($item = $type->item($item_id)) {
+      return drupal_get_form('backup_migrate_crud_edit_form', $item);
+    }
   }
 }
 
 /**
  * A form callback to edit an item.
  */
-function backup_migrate_crud_edit_form($form_state, $item) {
+function backup_migrate_crud_edit_form($form, $form_state, $item) {
   $form = $item->edit_form();
   $form['item'] = array(
     '#type' => 'value',
@@ -118,7 +119,7 @@ function backup_migrate_crud_edit_form_validate($form, &$form_state) {
  */
 function backup_migrate_crud_edit_form_submit($form, &$form_state) {
   $item = $form_state['values']['item'];
-  $item->edit_form_submit($form, &$form_state);
+  $item->edit_form_submit($form, $form_state);
   if (empty($form_state['redirect'])) {
     $form_state['redirect'] = 'admin/content/backup_migrate/'. $item->type_name;
   }
@@ -251,7 +252,7 @@ class backup_migrate_item {
    */  
   function delete() {
     $keys = (array)$this->get_primary_key();
-    db_query("DELETE FROM {$this->db_table} WHERE $keys[0] = '%s'", $this->get_id());
+    db_query("DELETE FROM {$this->db_table} WHERE $keys[0] = :id", array(':id' => $this->get_id()));
   }
 
 
@@ -276,8 +277,10 @@ class backup_migrate_item {
     $out = array();
     // Return fields as specified in the schema.
     $schema = $this->get_schema();
-    foreach ($schema['fields'] as $field => $info) {
-      $out[$field] = $this->get($field);
+    if (!empty($schema['fields']) && is_array($schema['fields'])) {
+      foreach ($schema['fields'] as $field => $info) {
+        $out[$field] = $this->get($field);
+      }
     }
     return $out;
   }
@@ -302,7 +305,7 @@ class backup_migrate_item {
     $schema = $this->get_schema();
     // Load fields as specified in the schema.
     foreach ($schema['fields'] as $field => $info) {
-      $params[$field] = empty($info['serialize']) ? $data[$field] : unserialize(db_decode_blob($data[$field]));
+      $params[$field] = empty($info['serialize']) ? $data[$field] : unserialize($data[$field]);
     }
     $this->from_array($params);
   }
@@ -351,7 +354,10 @@ class backup_migrate_item {
    */
   function set_id($id) {
     $keys = (array)$this->get_primary_key();
-    return $this->{$keys[0]} = $id;
+    if (!empty($keys[0])) {
+      return $this->{$keys[0]} = $id;
+    }
+    return NULL;
   }
 
   /**
@@ -384,17 +390,20 @@ class backup_migrate_item {
    * Get the action links for a destination.
    */
   function get_action_links() {
-    $out = array();
+    $out = array('edit' => '', 'delete' => '');
 
     $item_id = $this->get_id();
 
-    $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
-
+    if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB || @$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
+      $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
+    }
+    else if (@$this->storage == BACKUP_MIGRATE_STORAGE_NONE) {
+      $out['edit'] = l(t("override"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
+    }
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
       $out['delete'] = l(t("delete"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
     }
-
-    if (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
+    else if (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
       $out['delete'] = l(t("revert"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
     }
 
@@ -416,13 +425,10 @@ class backup_migrate_item {
       }
     }
     if (count($rows)) {
-      $out = theme('table', $this->get_list_header(), $rows);
+      $out = theme('table', array('header' => $this->get_list_header(), 'rows' => $rows));
     }
     else {
-      $out = t('There are no '. $this->plural .' to display. ');
-    }
-    if (user_access('administer backup and migrate')) {
-      $out .= l(t("Create a new ". $this->singular), 'admin/content/backup_migrate/'. $this->type_name .'/add');
+      $out = t('There are no !items to display.', array('!items' => $this->plural));
     }
     return $out;
   }
@@ -463,7 +469,7 @@ class backup_migrate_item {
    */
   function get_actions() {
     $links = $this->get_action_links();
-    return implode(" | ", $links);
+    return implode(" &nbsp; ", $links);
   }
 
   /**
@@ -480,7 +486,7 @@ class backup_migrate_item {
       '#value' => $this->get_id(),
     );
     $form['actions'] = array('#prefix' => '<div class="container-inline">', '#suffix' => '</div>', '#weight' => 99);
-    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save '. $this->singular));
+    $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save !type', array('!type' => t($this->singular))));
     $form['actions']['cancel'] = array('#value' => l(t('Cancel'), 'admin/content/backup_migrate/destination'));
     return $form;
   }
@@ -509,6 +515,18 @@ class backup_migrate_item {
 
   /* Static Functions */
  
+   /**
+   * This function is not supposed to be called. It is just here to help the po extractor out.
+   */
+  function strings() {
+    // Help the pot extractor find these strings.
+    t('List !type');
+    t('Create !type');
+    t('Delete !type');
+    t('Edit !type');
+    t('Export !type');
+  }
+
   /**
    * Get the menu items for manipulating this type.
    */
@@ -523,38 +541,43 @@ class backup_migrate_item {
       'type' => MENU_LOCAL_TASK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list'] = array(
-      'title' => 'List '. ucwords($this->plural),
+      'title' => 'List !type',
+      'title arguments' => array('!type' => t(ucwords($this->plural))),
       'weight' => 1,
       'type' => MENU_DEFAULT_LOCAL_TASK,
     );
-    $items['admin/content/backup_migrate/'. $type .'/add'] = array(
-      'title' => 'Create '. ucwords($this->singular),
+    $items['admin/content/backup_migrate/'. $type .'/list/add'] = array(
+      'title' => 'Add !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_create', TRUE),
       'access arguments' => array('administer backup and migrate'),
       'weight' => 2,
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_LOCAL_ACTION,
     );
     $items['admin/content/backup_migrate/'. $type .'/list/delete'] = array(
-      'title' => 'Delete '. $this->singular,
+      'title' => 'Delete !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_delete', TRUE),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list/edit'] = array(
-      'title' => 'Edit '. $this->singular,
+      'title' => 'Edit !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_edit', TRUE),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
     );
     $items['admin/content/backup_migrate/'. $type .'/list/export'] = array(
-      'title' => 'Export '. $this->singular,
+      'title' => 'Export !type',
+      'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_export', TRUE),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
     );
     return $items;
   }
@@ -585,17 +608,21 @@ class backup_migrate_item {
       }
     }
 
-    drupal_alter($this->db_table, $items);
-
     // Get the items from the db.
-    $result = db_query("SELECT * FROM {$this->db_table}");
-    while ($info = db_fetch_array($result)) {
+    $result = db_query("SELECT * FROM {{$this->db_table}}", array(), array('fetch' => PDO::FETCH_ASSOC));
+    foreach ($result as $info) {
       if ($item = $this->create($info)) {
         $item->load_row($info);
         $item->storage = empty($items[$item->get_id()]) ? BACKUP_MIGRATE_STORAGE_DB : BACKUP_MIGRATE_STORAGE_OVERRIDEN;
         $items[$item->get_id()] = $item;
       }
     }
+
+    // Allow other modules to alter the items. This should maybe be before the db override code above
+    // but then the filters are not able to set defaults for missing values. Other modules should just
+    // be careful not to overwrite the user's UI changes in an unexpected way.
+    drupal_alter($this->db_table, $items);
+
     return $items;
   }
 

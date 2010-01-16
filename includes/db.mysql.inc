@@ -20,10 +20,10 @@ function backup_migrate_backup_db_to_file_mysql($file, $settings) {
       if (_backup_migrate_check_timeout()) {
         return FALSE;
       }
-      if ($table['Name'] && !isset($exclude[$table['Name']])) {
+      if ($table->name && !isset($exclude[$table->name])) {
         $file->write(_backup_migrate_get_table_structure_sql_mysql($table));
         $lines++;
-        if (!in_array($table['Name'], $nodata)) {
+        if (!in_array($table->name, $nodata)) {
           $lines += _backup_migrate_dump_table_data_sql_to_file($file, $table);
         }
       }
@@ -52,7 +52,7 @@ function backup_migrate_restore_db_from_file_mysql($file, $settings) {
       $line = trim($line);
       if ($line) {
         // Use the helper instead of the api function to avoid substitution of '{' etc.
-        _db_query($line);
+        Database::getConnection()->prepare($line)->execute();
         $num++;
       }
     }
@@ -71,12 +71,13 @@ function backup_migrate_restore_db_from_file_mysql($file, $settings) {
  */
 function _backup_migrate_get_table_structure_sql_mysql($table) {
   $out = "";
-  $result = db_query("SHOW CREATE TABLE `". $table['Name'] ."`");
+
+  $result = db_query("SHOW CREATE TABLE `". $table->name ."`");
   if ($create = db_fetch_array($result)) {
-    $out .= "DROP TABLE IF EXISTS `". $table['Name'] ."`;\n";
-    $out .= strtr($create['Create Table'], "\n", " ");
-    if ($table['Auto_increment']) {
-      $out .= " AUTO_INCREMENT=". $table['Auto_increment'];
+    $out .= "DROP TABLE IF EXISTS `". $table->name ."`;\n";
+    $out .= strtr($create['create table'], array("\n" => " ", '"' => '`'));
+    if ($table->auto_increment) {
+      $out .= " AUTO_INCREMENT=". $table->auto_increment;
     }
     $out .= ";\n";
   }
@@ -88,14 +89,14 @@ function _backup_migrate_get_table_structure_sql_mysql($table) {
  */
 function _backup_migrate_dump_table_data_sql_to_file($file, $table) {
   $lines = 0;
-  $data = db_query("SELECT * FROM `". $table['Name'] ."`");
+  $data = db_query("SELECT * FROM `". $table->name ."`");
   while ($row = db_fetch_array($data)) {
     $items = array();
     foreach ($row as $key => $value) {
-      $items[] = is_null($value) ? "null" : "'". db_escape_string($value) ."'";
+      $items[] = is_null($value) ? "null" : "'". mysql_escape_string($value) ."'";
     }
     if ($items) {
-      $file->write("INSERT INTO `". $table['Name'] ."` VALUES (". implode(",", $items) .");\n");
+      $file->write("INSERT INTO `". $table->name ."` VALUES (". implode(",", $items) .");\n");
       $lines++;
     }
   }
@@ -141,8 +142,8 @@ function _backup_migrate_get_tables_mysql() {
   $out = array();
   // get auto_increment values and names of all tables
   $tables = db_query("show table status");
-  while ($table = db_fetch_array($tables)) {
-    $out[$table['Name']] = $table;
+  foreach ($tables as $table) {
+    $out[$table->name] = $table;
   }
   return $out;
 }
@@ -153,8 +154,8 @@ function _backup_migrate_get_tables_mysql() {
  */
 function _backup_migrate_get_table_names_mysql() {
   $out = array();
-  foreach (_backup_migrate_get_tables_mysql() as $table) {
-    $out[$table['Name']] = $table['Name'];
+  foreach (_backup_migrate_get_tables_mysql() as $key => $table) {
+    $out[$key] = $table->name;
   }
   return $out;
 }

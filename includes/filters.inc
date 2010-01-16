@@ -23,6 +23,7 @@ function backup_migrate_get_filters($op = NULL) {
       $filters[] = new $definition['class'];
     }
   }
+  $sort = array();
   // Sort the filters based on the weight for the given operation.
   foreach ($filters as $filter) {
     $sort[] = $filter->weight($op);
@@ -38,6 +39,10 @@ function backup_migrate_get_filters($op = NULL) {
  */
 function backup_migrate_backup_migrate_filters() {
   return array(
+    'backup_restore' => array(
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.backup_restore.inc',
+      'class' => 'backup_migrate_filter_backup_restore',
+    ),
     'compression' => array(
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
       'class' => 'backup_migrate_filter_compression',
@@ -64,7 +69,7 @@ function backup_migrate_filters_invoke_all() {
   $args    = func_get_args();
   $op      = array_shift($args);
   $out     = array();
-  $filters = backup_migrate_get_filters();
+  $filters = backup_migrate_get_filters($op);
   foreach ($filters as $filter) {
     if (method_exists($filter, $op)) {
       $out = array_merge_recursive($out, (array)call_user_func_array(array($filter, $op), $args));
@@ -76,11 +81,11 @@ function backup_migrate_filters_invoke_all() {
 /**
  * Filter a backup file before sending it to the destination.
  */
-function backup_migrate_filters_backup($file, $settings) {
-  $filters = backup_migrate_get_filters('backup_file');
+function backup_migrate_filters_backup($file, &$settings) {
+  $filters = backup_migrate_get_filters('backup');
   foreach ($filters as $filter) {
     if ($file) {
-      $file = $filter->backup_file($file, $settings);
+      $file = $filter->backup($file, $settings);
     }
   }
   return $file;
@@ -89,11 +94,11 @@ function backup_migrate_filters_backup($file, $settings) {
 /**
  * Filter a backup file before sending it to the destination.
  */
-function backup_migrate_filters_restore($file) {
-  $filters = backup_migrate_get_filters('restore_file');
+function backup_migrate_filters_restore($file, &$settings) {
+  $filters = backup_migrate_get_filters('restore');
   foreach ($filters as $filter) {
     if ($file) {
-      $file = $filter->restore_file($file, $settings);
+      $file = $filter->restore($file, $settings);
     }
   }
   return $file;
@@ -112,12 +117,10 @@ function backup_migrate_filters_settings_form($settings, $op) {
  * Add a form parent to the filter settings so that the filter values are saved in the right table.
  */
 function backup_migrate_filters_settings_form_set_parents($form) {
-  foreach ($form as $key => $item) {
-    if (isset($item['#type']) && !isset($item['#parents'])) {
+  foreach (element_children($form) as $key) {
+    $form[$key] = backup_migrate_filters_settings_form_set_parents($form[$key]);
+    if (!isset($form[$key]['#parents'])) {
       $form[$key]['#parents'] = array('filters', $key);
-    }
-    else {
-      $form[$key] = backup_migrate_filters_settings_form_set_parents($item);
     }
   }
   return $form;
@@ -216,16 +219,24 @@ class backup_migrate_filter {
   }
 
   /**
+   * Declare any default destinations for this filter.
+   */
+  function destinations() {
+    return array();
+  }
+
+
+  /**
    * This function is called on a backup file after the backup has been completed.
    */
-  function backup_file($file, $settings) {
+  function backup($file, $settings) {
     return $file;
   }
 
   /**
    * This function is called on a backup file before importing it.
    */
-  function restore_file($file, $settings) {
+  function restore($file, $settings) {
     return $file;
   }
 

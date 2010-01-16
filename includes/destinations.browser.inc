@@ -42,8 +42,8 @@ class backup_migrate_destination_browser_upload extends backup_migrate_destinati
   function load_file($file_id) {
     backup_migrate_include('files');
     if ($file = file_save_upload('backup_migrate_restore_upload')) {
-      $out = new backup_file(array('filepath' => $file->filepath));
-      backup_migrate_temp_files_add($file->filepath);
+      $out = new backup_file(array('filepath' => $file->uri));
+      backup_migrate_temp_files_add($file->uri);
       return $out;
     }
     return NULL;

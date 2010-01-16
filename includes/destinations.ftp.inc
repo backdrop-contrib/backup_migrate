@@ -66,12 +66,19 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
     $form = parent::edit_form();
     $form['scheme']['#type'] = 'value';
     $form['scheme']['#value'] = 'ftp';
+    $form['port'] = array(
+      "#type" => "textfield",
+      "#title" => t("Port"),
+      "#default_value" => @$this->dest_url['port'] ? $this->dest_url['port'] : '21',
+      "#weight" => 15,
+    );
     return $form;
   }
 
   function ftp_object() {
     if (!$this->ftp) {
-      $this->ftp = drupal_ftp_ftp_object($this->dest_url['host'], $this->dest_url['user'], $this->dest_url['pass'], $this->dest_url['path']);
+      $this->dest_url['port'] = empty($this->dest_url['port']) ? '21' : $this->dest_url['port'];
+      $this->ftp = drupal_ftp_ftp_object($this->dest_url['host'], $this->dest_url['port'], $this->dest_url['user'], $this->dest_url['pass'], $this->dest_url['path']);
     }
     return $this->ftp;
   }
@@ -89,10 +96,11 @@ define('DRUPAL_FTP_FT_FILE', 1);
 /**
  *  creates a new ftp object. if any elements of ftp_map are missing, they'll be filled with the server defaults.
  */
-function drupal_ftp_ftp_object($server, $user, $pass, $dir) {
+function drupal_ftp_ftp_object($server, $port, $user, $pass, $dir) {
   $ftp = new stdClass();
 
   $ftp->__server = $server;
+  $ftp->__port = $port;
   $ftp->__user = $user;
   $ftp->__password = $pass;
   $ftp->__directory = $dir;
@@ -112,7 +120,7 @@ function drupal_ftp_connect(&$ftp) {
 
   if (!$ftp->__conn && !drupal_ftp_connected($ftp)) {
     // Attempt to connect to the remote server
-    $ftp->__conn = @ftp_connect($ftp->__server);
+    $ftp->__conn = @ftp_connect($ftp->__server, $ftp->__port);
 
     if (!$ftp->__conn) {
       _backup_migrate_message('FTP Error: Couldn\'t connect to server @server', array('@server' => $ftp->__server), 'error');

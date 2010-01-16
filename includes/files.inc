@@ -32,7 +32,7 @@ function _backup_migrate_temp_files_delete() {
   }
 
   // Delete temp files abandoned for 6 or more hours.
-  $dir = file_directory_temp();
+  $dir = file_directory_path('temporary://');
   $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
   if (file_exists($dir) && is_dir($dir) && is_readable($dir) && $handle = opendir($dir)) {
     while (FALSE !== ($file = @readdir($handle))) {
@@ -52,21 +52,12 @@ function _backup_migrate_temp_files_delete() {
  */
 function _backup_migrate_filetypes() {
   backup_migrate_include('filters');
-  $out = array(
-    "sql" => array(
-      "extension" => "sql",
-      "filemime" => "text/x-sql",
-      "backup" => TRUE,
-      "restore" => TRUE,
-    ),
-    "mysql" => array(
-      "extension" => "mysql",
-      "filemime" => "text/x-sql",
-      "backup" => TRUE,
-      "restore" => TRUE,
-    ),
-  );
-  $out += backup_migrate_filters_file_types();
+
+  $out = backup_migrate_filters_file_types();
+
+  foreach ($out as $key => $info) {
+    $out[$key]['id'] = empty($info['id']) ? $key : $info['id'];
+  }
   return $out;
 }
 
@@ -95,7 +86,7 @@ function _backup_migrate_default_filename() {
     return '[site-name]';
   }
   else {
-    return _backup_migrate_clean_filename(variable_get(site_name, "backup_migrate"));
+    return _backup_migrate_clean_filename(variable_get('site_name', "backup_migrate"));
   }
 }
 
@@ -143,7 +134,7 @@ class backup_file {
    * Get the current filepath.
    */
   function filepath() {
-    return $this->path;
+    return drupal_realpath($this->path);
   }
 
   /**
@@ -309,11 +300,11 @@ class backup_file {
    */
   function transfer() {
     $headers = array(
-      'Content-Type: '. $this->mimetype(),
-      'Content-Disposition: attachment; filename="'. $this->filename() .'"',
+      array('key' => 'Content-Type', 'value' => $this->mimetype()),
+      array('key' => 'Content-Disposition', 'value' => 'attachment; filename="'. $this->filename() .'"'),
     );
     if ($size = $this->info('filesize')) {
-      $headers[] = 'Content-Length: '. $size;
+      $headers[] = array('key' => 'Content-Length', 'value' => $size);
     }
 
     // Suppress the warning you get when the buffer is empty.
@@ -324,8 +315,8 @@ class backup_file {
         // To prevent HTTP header injection, we delete new lines that are
         // not followed by a space or a tab.
         // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-        $header = preg_replace('/\r?\n(?!\t| )/', '', $header);
-        drupal_set_header($header);
+        $header['value'] = preg_replace('/\r?\n(?!\t| )/', '', $header['value']);
+        drupal_add_http_header($header['key'], $header['value']);
       }
       // Transfer file in 1024 byte chunks to save memory usage.
       while ($data = $this->read(1024)) {
@@ -428,14 +419,7 @@ class backup_file {
    * Get a temporary file name with path.
    */
   function temporary_file() {
-    $tmp = realpath(file_directory_temp());
-    // Check the writability of the temp directory.
-    if (!is_writable(realpath(file_directory_temp()))) {
-      _backup_migrate_message('Your temporary directory %tmp is not writable. Backup and migrate needs to be able to create temporary files.', array('%tmp' => $tmp), 'error');
-    }
-
-    // Use a full path so that the files can be deleted during the shutdown function if needed.
-    $file = $tmp .'/'. uniqid('backup_migrate_');
+    $file = drupal_tempnam('temporary://', 'backup_migrate_');
     $file .= '.'. $this->extension();
     backup_migrate_temp_files_add($file);
     $this->path = $file;

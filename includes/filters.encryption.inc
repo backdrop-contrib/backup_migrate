@@ -13,19 +13,19 @@
  * @ingroup backup_migrate_filters
  */
 class backup_migrate_filter_encryption extends backup_migrate_filter {
-  var $op_weights = array('backup_file' => 170, 'restore_file' => -170);
+  var $op_weights = array('backup' => 170, 'restore' => -170);
 
   /**
    * This function is called on a backup file after the backup has been completed.
    */
-  function backup_file($file, $settings) {
+  function backup($file, $settings) {
     return $this->file_encrypt($file, $settings);
   }
 
   /**
    * This function is called on a backup file before importing it.
    */
-  function restore_file($file, &$settings) {
+  function restore($file, &$settings) {
     return $this->file_decrypt($file);
   }
 
@@ -136,19 +136,20 @@ class backup_migrate_filter_encryption extends backup_migrate_filter {
    *  Also updates settings to reflect new file mime and file extension.
    */
   function file_encrypt($file, $settings) {
-    switch ($settings->filters['encryption']) {
-      case "aes":
-        $from = $file->push_type('aes');
-        $from = new backup_file(array('filepath' => $from));
-        if (!$success = $this->aes_encrypt($from, $file)) {
-          $file = NULL;
-        }
-        break;
+    if (!empty($settings->filters['encryption'])) {
+      switch ($settings->filters['encryption']) {
+        case "aes":
+          $from = $file->push_type('aes');
+          $from = new backup_file(array('filepath' => $from));
+          if (!$success = $this->aes_encrypt($from, $file)) {
+            $file = NULL;
+          }
+          break;
+      }
+      if (!$file) {
+        _backup_migrate_message("Could not encrypt backup file. Try backing up without encryption.", array(), 'error');
+      }
     }
-    if (!$file) {
-      _backup_migrate_message("Could not encrypt backup file. Try backing up without encryption.", array(), 'error');
-    }
-
     return $file;
   }
 

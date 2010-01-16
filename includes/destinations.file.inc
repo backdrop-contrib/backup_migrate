@@ -99,9 +99,6 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   /**
    * Get the form for the settings for the files destination.
    */
-  /**
-   * Get the edit form for the item.
-   */
   function edit_form() {
     $form = parent::edit_form();
     $form['location'] = array(
@@ -165,17 +162,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Prepare the destination directory for the backups.
    */
   function check_dir($directory) {
-    $out = TRUE;
-    $dirs = array();
-    foreach (explode('/', $directory) as $dir) {
-      $dirs[] = $dir;
-      $path = implode($dirs, '/');
-      if ($path && !is_dir(realpath($path)) && !file_check_directory($path, FILE_CREATE_DIRECTORY)) {
-        $out = FALSE;
-      }
-    }
-
-    if (!$out || !file_check_directory($directory)) {
+    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_CREATE_DIRECTORY)) {
       // Unable to create destination directory.
       _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
       return FALSE;
@@ -267,42 +254,12 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 }
 
 /**
- * The built in default files directories. This is more or less a legacy holdover from v1.
- * But they serve a purpose as a meaningful default.
- */
-class backup_migrate_destination_files_builtin extends backup_migrate_destination_files {
-  function __construct($params = array()) {
-    $params['location'] = $this->check_destination_dir($params['mode']);
-    $params['destination_id'] = $params['mode'];
-    parent::__construct($params);
-  }
-
-  /**
-   * Check the default backup desitantion directory. Included as legacy support.
-   */
-  function check_destination_dir($mode = "manual") {
-    return $this->check_dir($this->get_save_path($mode));
-  }
-
-  /**
-   * Return the path on the server to save the dump files.
-   */
-  function get_save_path($mode = "") {
-    $dir = file_directory_path() ."/backup_migrate";
-    if ($mode) {
-      $dir .= $mode == "manual" ? "/manual" : "/scheduled";
-    }
-    return $dir;
-  }
-}
-
-/**
  * The manual files directory.
  */
 class backup_migrate_destination_files_manual extends backup_migrate_destination_files {
   var $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/scheduled');
+    $dir = file_directory_path('private') .'/backup_migrate/manual';
     parent::__construct($params + array('location' => $dir, 'name' => t('Manual Backups Directory')));
   }
 }
@@ -313,7 +270,7 @@ class backup_migrate_destination_files_manual extends backup_migrate_destination
 class backup_migrate_destination_files_scheduled extends backup_migrate_destination_files {
   var $supported_ops = array('scheduled backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = $this->check_dir(file_directory_path() .'/backup_migrate/scheduled');
+    $dir = file_directory_path('private') .'/backup_migrate/scheduled';
     parent::__construct($params + array('location' => $dir, 'name' => t('Scheduled Backups Directory')));
   }
 }
