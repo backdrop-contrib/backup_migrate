@@ -130,9 +130,26 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     $form['advanced']['#collapsible'] = true;
   }
 
+  $form['#validate'][]  = '_backup_migrate_ui_backup_settings_form_validate';
+  $form['#submit'][]    = '_backup_migrate_ui_backup_settings_form_submit';
+
   return $form;
 }
 
+/**
+ * Validate the profile form.
+ */
+function _backup_migrate_ui_backup_settings_form_validate($form, &$form_state) {
+  backup_migrate_filters_settings_form_validate('backup', $form, &$form_state);
+}
+
+/**
+ * Submit the profile form.
+ */
+function _backup_migrate_ui_backup_settings_form_submit($form, &$form_state) {
+  backup_migrate_filters_settings_form_submit('backup', $form, &$form_state);
+}
+  
 /**
  * Get the default profile.
  */

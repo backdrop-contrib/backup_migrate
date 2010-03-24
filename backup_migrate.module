@@ -474,7 +474,8 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
       '#value' => t('Save Without Backing Up'),
     );
   }
-  $form['#validate'] = array('backup_migrate_ui_manual_quick_backup_form_validate');
+  $form['#validate'][] = 'backup_migrate_ui_manual_quick_backup_form_validate';
+  $form['#submit'][] = 'backup_migrate_ui_manual_backup_form_submit';
 
   $form[] = array(
     '#type' => 'submit',
@@ -489,15 +490,15 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
  * Submit the form. Save the values as defaults if desired and output the backup file.
  */
 function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
-  // Save the settings profile if the save box is checked.
-//  $form_state['values']['nodata_tables'] = array_filter((array)$form_state['values']['nodata_tables']);
-//  $form_state['values']['exclude_tables'] = array_filter((array)$form_state['values']['exclude_tables']);
-
+  // Create a profile with the gien settings.
   $profile = backup_migrate_crud_create_item('profile', $form_state['values']);
 
+  // Save the settings profile if the save box is checked.
   if ($form_state['values']['save_settings'] && user_access('administer backup and migrate')) {
     if (@$form_state['values']['create_new']) {
+      // Reset the id and storage so a new item will be saved.
       $profile->set_id(NULL);
+      $profile->storage = BACKUP_MIGRATE_STORAGE_NONE;
     }
     $profile->save();
     variable_set("backup_migrate_profile_id", $profile->get_id());

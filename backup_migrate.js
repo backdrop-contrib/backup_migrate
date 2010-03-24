@@ -45,11 +45,11 @@ Drupal.backup_migrate = {
     var $select = $('#'+ field_id);
     var $checkboxes = $('<div></div>').addClass('backup-migrate-tables-checkboxes');
     $('option', $select).each(function(i) {
-      $checkboxes.append('<div class="form-item"><label class="option backup-migrate-table-select"><input type="checkbox" class="backup-migrate-tables-checkbox" id="edit-'+ field_id +'-'+ this.value +'" name="'+ field +'[]"'+ (this.selected ? 'checked="checked"' : '') +' value="'+ this.value +'"/>'+this.value+'</label></div>');
+      $checkboxes.append('<div class="form-item"><label class="option backup-migrate-table-select"><input type="checkbox" class="backup-migrate-tables-checkbox" id="edit-'+ field_id +'-'+ this.value +'" name="'+ $select.attr('name') +'"'+ (this.selected ? 'checked="checked"' : '') +' value="'+ this.value +'"/>'+this.value+'</label></div>');
     });
     $select.parent().find('.backup-migrate-checkbox-link').remove();
     $select.before($checkboxes);
-    $select.remove();
+    $select.hide();
     Drupal.backup_migrate.processCheckboxes($checkboxes);
   }
 }

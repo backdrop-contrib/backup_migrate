@@ -103,6 +103,8 @@ function backup_migrate_crud_edit_form($form_state, $item) {
     '#type' => 'value',
     '#value' => $item,
   );
+  $form['#validate'][]  = 'backup_migrate_crud_edit_form_validate';
+  $form['#submit'][]    = 'backup_migrate_crud_edit_form_submit';
   return $form;
 }
 

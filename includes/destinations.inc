@@ -486,7 +486,7 @@ class backup_migrate_destination extends backup_migrate_item {
   function ops() {
     return $this->supported_ops;
   }
-  
+
   /**
    * Does this destination support the given operation.
    */
@@ -828,14 +828,13 @@ class backup_migrate_destination extends backup_migrate_item {
   /**
    * Get the form for the settings for this filter.
    */
-  function backup_settings_form_validate($form_values) {
+  function backup_settings_form_validate($form, &$form_state) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  function backup_settings_form_submit($form_values) {
-    return $form_values;
+  function backup_settings_form_submit($form, &$form_state) {
   }
 
   /**
