@@ -86,11 +86,12 @@ function backup_migrate_crud_ui_list() {
 /**
  * Page callback to edit an item.
  */
-function backup_migrate_crud_ui_edit($item_id) {
+function backup_migrate_crud_ui_edit($item_id = NULL) {
   if ($type = backup_migrate_crud_type_load(arg(3))) {
-    if ($item = $type->item($item_id)) {
+    if ($item_id && $item = $type->item($item_id)) {
       return drupal_get_form('backup_migrate_crud_edit_form', $item);
     }
+    drupal_goto('admin/content/backup_migrate/'. arg(3));
   }
 }
 
@@ -131,10 +132,12 @@ function backup_migrate_crud_edit_form_submit($form, &$form_state) {
 /**
  * Page callback to delete an item.
  */
-function backup_migrate_crud_ui_delete($item_id) {
+function backup_migrate_crud_ui_delete($item_id = NULL) {
   if ($type = backup_migrate_crud_type_load(arg(3))) {
-    $item = $type->item($item_id);
-    return drupal_get_form('backup_migrate_crud_delete_confirm_form', $item);
+    if ($item_id && $item = $type->item($item_id)) {
+      return drupal_get_form('backup_migrate_crud_delete_confirm_form', $item);
+    }
+    drupal_goto('admin/content/backup_migrate/'. arg(3));
   }
 }
 
@@ -164,12 +167,12 @@ function backup_migrate_crud_delete_confirm_form_submit($form, &$form_state) {
 /**
  * Export an item.
  */
-function backup_migrate_crud_ui_export($item_id) {
-  if ($item_id) {
-    if ($type = backup_migrate_crud_type_load(arg(3))) {
-      $item = $type->item($item_id);
+function backup_migrate_crud_ui_export($item_id = NULL) {
+  if ($type = backup_migrate_crud_type_load(arg(3))) {
+    if ($item_id && $item = $type->item($item_id)) {
       return drupal_get_form('backup_migrate_crud_export_form', $item->export());
     }
+    drupal_goto('admin/content/backup_migrate/'. arg(3));
   }
 }
 
