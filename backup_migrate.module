@@ -346,6 +346,7 @@ function backup_migrate_ui_manual_quick_backup_form_validate($form, &$form_state
  * Submit the quick backup form.
  */
 function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) {
+  backup_migrate_include('profiles', 'destinations');
   if (user_access('perform backup')) {
     // For a quick backup use the default settings.
     $settings = _backup_migrate_profile_saved_default_profile($form_state['values']['profile_id']);
