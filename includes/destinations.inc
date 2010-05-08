@@ -191,7 +191,9 @@ function backup_migrate_get_destination($id) {
  */
 function backup_migrate_create_destination($destination_type, $params = array()) {
   $params['type'] = $destination_type;
-  return backup_migrate_destination::create($params);
+  // Create a new dummy destination to call the create method on because the base item create is not static.
+  $destination = new backup_migrate_destination();
+  return $destination->create($params);
 }
 
 /**

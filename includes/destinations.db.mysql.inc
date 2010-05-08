@@ -172,7 +172,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   /**
    * Unlock all tables in the database.
    */
-  function _unlock_tables() {
+  function _unlock_tables($settings) {
     $this->query('UNLOCK TABLES');
   }
 

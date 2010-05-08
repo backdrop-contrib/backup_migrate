@@ -18,7 +18,7 @@ class backup_migrate_filter_encryption extends backup_migrate_filter {
   /**
    * This function is called on a backup file after the backup has been completed.
    */
-  function backup($file, $settings) {
+  function backup($file, &$settings) {
     return $this->file_encrypt($file, $settings);
   }
 

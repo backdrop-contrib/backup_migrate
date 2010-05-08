@@ -15,6 +15,7 @@
 class backup_migrate_destination_db extends backup_migrate_destination_remote {
   var $supported_ops = array('scheduled backup', 'manual backup', 'configure', 'source');
   var $db_target = 'default';
+  var $connection = null;
 
 
   function type_name() {
@@ -188,8 +189,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    * Get the db connection for the specified db.
    */
   function _get_db_connection() {
-    static $conn = NULL;
-    if (!$conn) {
+    if (!$this->connection) {
       $target = $key = '';
       $parts = explode(':', $this->get_id());
       // One of the predefined databases (set in settings.php)
@@ -199,23 +199,30 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
       }
       // Another db url.
       else {
-        $info = array(
-          'driver'    => empty($this->dest_url['scheme'])   ? NULL : $this->dest_url['scheme'],
-          'host'      => empty($this->dest_url['host'])     ? NULL : $this->dest_url['host'],
-          'port'      => empty($this->dest_url['port'])     ? NULL : $this->dest_url['port'],
-          'username'  => empty($this->dest_url['user'])     ? NULL : $this->dest_url['user'],
-          'password'  => empty($this->dest_url['pass'])     ? NULL : $this->dest_url['pass'],
-          'database'  => empty($this->dest_url['path'])     ? NULL : $this->dest_url['path'], 
-        );
-        $key    = uniqid('backup_migrate_tmp_');
-        $target = 'default';
-        Database::addConnectionInfo($key, $target, $info);
+        // If the url is specified build it into a connection info array.
+        if (!empty($this->dest_url)) {
+          $info = array(
+            'driver'    => empty($this->dest_url['scheme'])   ? NULL : $this->dest_url['scheme'],
+            'host'      => empty($this->dest_url['host'])     ? NULL : $this->dest_url['host'],
+            'port'      => empty($this->dest_url['port'])     ? NULL : $this->dest_url['port'],
+            'username'  => empty($this->dest_url['user'])     ? NULL : $this->dest_url['user'],
+            'password'  => empty($this->dest_url['pass'])     ? NULL : $this->dest_url['pass'],
+            'database'  => empty($this->dest_url['path'])     ? NULL : $this->dest_url['path'], 
+          );
+          $key    = uniqid('backup_migrate_tmp_');
+          $target = 'default';
+          Database::addConnectionInfo($key, $target, $info);
+        }
+        // No database selected. Assume the default.
+        else {
+          $key = $target = 'default';
+        }
       }
       if ($target && $key) {
-        $conn = Database::getConnection($target, $key);
+        $this->connection = Database::getConnection($target, $key);
       }
     }
-    return $conn;
+    return $this->connection;
   }
 
   /**
