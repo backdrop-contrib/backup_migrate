@@ -141,9 +141,9 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    */
   function backup_to_file($file, $settings) {
     $file->push_type($this->get_file_type_id());
-    $this->switch_db();
 
     backup_migrate_filters_invoke_all('pre_backup', $this, $file, $settings);
+
     $this->lock_tables($settings);
 
     // Switch to a different db if specified.
