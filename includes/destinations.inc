@@ -255,7 +255,7 @@ function _backup_migrate_destination_get_file_links($destination_id, $file_id) {
 function backup_migrate_ui_destination_display_files($destination_id = NULL) {
   $out = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
-    drupal_set_title(t('%title Files', array('%title' => $destination->get_name())));
+    drupal_set_title(t('@title Files', array('@title' => $destination->get_name())));
 
     $headers = array(
       array('data' => t('Filename'), 'field' => 'filename'),
@@ -330,7 +330,7 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
 /**
  * Ask confirmation for file restore.
  */
-function backup_migrate_ui_destination_restore_file_confirm(&$form_state, $destination_id, $file_id) {
+function backup_migrate_ui_destination_restore_file_confirm($form, &$form_state, $destination_id, $file_id) {
   $sources = _backup_migrate_get_destination_form_item_options('source');
   if (count($sources) > 1) {
     $form['source_id'] = array(
@@ -392,7 +392,7 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
 /**
  * Ask confirmation for file deletion.
  */
-function backup_migrate_ui_destination_delete_file_confirm(&$form_state, $destination_id, $file_id) {
+function backup_migrate_ui_destination_delete_file_confirm($form, &$form_state, $destination_id, $file_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
   return confirm_form($form, t('Are you sure you want to delete the backup file?'), 'admin/content/backup_migrate/destination/list/files/'. $destination_id, t('Are you sure you want to delete the backup file %file_id? <strong>This action cannot be undone.</strong>', array('%file_id' => $file_id)), t('Delete'), t('Cancel'));
