@@ -26,7 +26,7 @@ INSTALLATION:
   admin/build/modules. 
 * Go to admin/user/permissions and grant permission to any roles that need to be 
   able to backup or restore the databse.
-* Configure and use the module at admin/content/backup_migrate
+* Configure and use the module at admin/structure/backup_migrate
 
 OPTIONAL:
 * Enable token.module to allow token replacement in backup file names.

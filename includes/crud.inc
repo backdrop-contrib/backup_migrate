@@ -121,7 +121,7 @@ function backup_migrate_crud_edit_form_submit($form, &$form_state) {
   $item = $form_state['values']['item'];
   $item->edit_form_submit($form, $form_state);
   if (empty($form_state['redirect'])) {
-    $form_state['redirect'] = 'admin/content/backup_migrate/'. $item->type_name;
+    $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH . '/'. $item->type_name;
   }
 }
 
@@ -139,13 +139,13 @@ function backup_migrate_crud_ui_delete($item_id) {
 /**
  * Ask confirmation for deletion of a item.
  */
-function backup_migrate_crud_delete_confirm_form(&$form_state, $item) {
+function backup_migrate_crud_delete_confirm_form($form, &$form_state, $item) {
   $form['item'] = array(
     '#type' => 'value',
     '#value' => $item,
   );
   $message = $item->delete_confirm_message();
-  return confirm_form($form, t('Are you sure?'), 'admin/content/backup_migrate/'. $item->type_name, $message, t('Delete'), t('Cancel'));
+  return confirm_form($form, t('Are you sure?'), BACKUP_MIGRATE_MENU_PATH . '/'. $item->type_name, $message, t('Delete'), t('Cancel'));
 }
 
 /**
@@ -156,7 +156,7 @@ function backup_migrate_crud_delete_confirm_form_submit($form, &$form_state) {
     $item = $form_state['values']['item'];
     $item->delete();
   }
-  $form_state['redirect'] = "admin/content/backup_migrate/". $item->type_name;
+  $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH . "/". $item->type_name;
 }
 
 /**
@@ -174,7 +174,7 @@ function backup_migrate_crud_ui_export($item_id) {
 /**
  * Ask confirmation for deletion of a destination.
  */
-function backup_migrate_crud_export_form(&$form_state, $export) {
+function backup_migrate_crud_export_form($form, &$form_state, $export) {
   $form['export'] = array(
     '#title' => t('Exported content'),
     '#type' => 'textarea',
@@ -244,7 +244,8 @@ class backup_migrate_item {
     if (!$this->get_id()) {
       $this->generate_id();
     }
-    drupal_write_record($this->db_table, $this->to_array(), !empty($this->storage) ? $this->get_primary_key() : array());
+    $data = $this->to_array();
+    drupal_write_record($this->db_table, $data, !empty($this->storage) ? $this->get_primary_key() : array());
   }
 
   /**
@@ -395,20 +396,20 @@ class backup_migrate_item {
     $item_id = $this->get_id();
 
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB || @$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
-      $out['edit'] = l(t("edit"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
+      $out['edit'] = l(t("edit"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/edit/$item_id");
     }
     else if (@$this->storage == BACKUP_MIGRATE_STORAGE_NONE) {
-      $out['edit'] = l(t("override"), "admin/content/backup_migrate/$this->type_name/list/edit/$item_id");
+      $out['edit'] = l(t("override"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/edit/$item_id");
     }
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
-      $out['delete'] = l(t("delete"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
+      $out['delete'] = l(t("delete"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/delete/$item_id");
     }
     else if (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
-      $out['delete'] = l(t("revert"), "admin/content/backup_migrate/$this->type_name/list/delete/$item_id");
+      $out['delete'] = l(t("revert"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/delete/$item_id");
     }
 
     // Export link disabled until we have an import function.
-    //$out['export'] = l(t("export"), "admin/content/backup_migrate/$this->type_name/list/export/$item_id");
+    //$out['export'] = l(t("export"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/export/$item_id");
 
     return $out;
   }
@@ -487,7 +488,7 @@ class backup_migrate_item {
     );
     $form['actions'] = array('#prefix' => '<div class="container-inline">', '#suffix' => '</div>', '#weight' => 99);
     $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save !type', array('!type' => t($this->singular))));
-    $form['actions']['cancel'] = array('#value' => l(t('Cancel'), 'admin/content/backup_migrate/destination'));
+    $form['actions']['cancel'] = array('#value' => l(t('Cancel'), BACKUP_MIGRATE_MENU_PATH . '/destination'));
     return $form;
   }
 
@@ -532,7 +533,7 @@ class backup_migrate_item {
    */
   function get_menu_items() {
     $type = $this->type_name;
-    $items['admin/content/backup_migrate/'. $type] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/' . $type] = array(
       'title' => ucwords($this->plural),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_list', TRUE),
@@ -540,13 +541,13 @@ class backup_migrate_item {
       'weight' => 2,
       'type' => MENU_LOCAL_TASK,
     );
-    $items['admin/content/backup_migrate/'. $type .'/list'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/' . $type .'/list'] = array(
       'title' => 'List !type',
       'title arguments' => array('!type' => t(ucwords($this->plural))),
       'weight' => 1,
       'type' => MENU_DEFAULT_LOCAL_TASK,
     );
-    $items['admin/content/backup_migrate/'. $type .'/list/add'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/' . $type .'/list/add'] = array(
       'title' => 'Add !type',
       'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
@@ -555,7 +556,7 @@ class backup_migrate_item {
       'weight' => 2,
       'type' => MENU_LOCAL_ACTION,
     );
-    $items['admin/content/backup_migrate/'. $type .'/list/delete'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/' . $type .'/list/delete'] = array(
       'title' => 'Delete !type',
       'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
@@ -563,7 +564,7 @@ class backup_migrate_item {
       'access arguments' => array('administer backup and migrate'),
       'type' => MENU_CALLBACK,
     );
-    $items['admin/content/backup_migrate/'. $type .'/list/edit'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/' . $type .'/list/edit'] = array(
       'title' => 'Edit !type',
       'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
@@ -571,7 +572,7 @@ class backup_migrate_item {
       'access arguments' => array('administer backup and migrate'),
       'type' => MENU_CALLBACK,
     );
-    $items['admin/content/backup_migrate/'. $type .'/list/export'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/' . $type .'/list/export'] = array(
       'title' => 'Export !type',
       'title arguments' => array('!type' => t(ucwords($this->singular))),
       'page callback' => 'backup_migrate_menu_callback',
