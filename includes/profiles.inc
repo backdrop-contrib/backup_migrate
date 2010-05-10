@@ -92,21 +92,8 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#title" => t("Backup file name"),
     "#default_value" => $profile->filename,
   );
-  if (module_exists('token')) {
-    $form['file']['token_help'] = array(
-      '#title' => t('Replacement patterns'),
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $form['file']['token_help']['help'] = array(
-      '#value' => theme('token_help', ''),
-    );
-    $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
-  }
-  else {
-    $form['file']['filename']['#description'] = t('If you install the <a href="!tokenurl">Token Module</a> you can use tokens in the file name.', array('!tokenurl' => 'http://drupal.org/project/token'));
-  }
+  $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
+
   $form['file']['append_timestamp'] = array(
     "#type" => "checkbox",
     "#title" => t("Append a timestamp."),

@@ -65,9 +65,7 @@ function _backup_migrate_filetypes() {
  * Construct a filename using token and some cleaning.
  */
 function _backup_migrate_clean_filename($filename) {
-  if (module_exists('token') && function_exists('token_replace')) {
-    $filename = token_replace($filename, 'global');
-  }
+  $filename = token_replace($filename);
   $filename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $filename);
   if (drupal_strlen($filename) > 50) {
     $filename = drupal_substr($filename, 0, 50);
@@ -82,12 +80,7 @@ function _backup_migrate_clean_filename($filename) {
  * Construct a default filename using the site's name.
  */
 function _backup_migrate_default_filename() {
-  if (module_exists('token')) {
-    return '[site-name]';
-  }
-  else {
-    return _backup_migrate_clean_filename(variable_get('site_name', "backup_migrate"));
-  }
+  return '[site:name]';
 }
 
 /**
