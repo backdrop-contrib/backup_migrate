@@ -643,7 +643,7 @@ function backup_migrate_perform_backup(&$settings) {
   timer_start('backup_migrate_backup');
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < 1200) {
+  if (!ini_get('safe_mode') && strpos(ini_get('disable_functions'), 'set_time_limit') === FALSE && ini_get('max_execution_time') < 1200) {
     set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
 
@@ -704,7 +704,7 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
   timer_start('backup_migrate_restore');
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < variable_get('backup_migrate_backup_max_time', 1200)) {
+  if (!ini_get('safe_mode') && strpos(ini_get('disable_functions'), 'set_time_limit') === FALSE && ini_get('max_execution_time') < variable_get('backup_migrate_backup_max_time', 1200)) {
     set_time_limit(variable_get('backup_migrate_restore_max_time', 1200));
   }
 
