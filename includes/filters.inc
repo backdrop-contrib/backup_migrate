@@ -72,7 +72,7 @@ function backup_migrate_filters_invoke_all() {
   $filters = backup_migrate_get_filters($op);
   foreach ($filters as $filter) {
     if (method_exists($filter, $op)) {
-      $out = array_merge_recursive($out, (array)call_user_func_array(array($filter, $op), $args));
+      $out = array_merge_recursive($out, (array)call_user_func_array(array($filter, $op), &$args));
     }
   }
   return $out;
