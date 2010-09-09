@@ -329,7 +329,7 @@ function backup_migrate_update_2004() {
   if (db_column_exists('backup_migrate_destinations', 'username')) {
     db_drop_field('backup_migrate_destinations', 'username');
   }
-  if (db_column_exists('backup_migrate_destinations', 'password')) {  
+  if (db_column_exists('backup_migrate_destinations', 'password')) {
     db_drop_field('backup_migrate_destinations', 'password');
   }
 
@@ -340,11 +340,11 @@ function backup_migrate_update_2004() {
  * Move the backup and migrate directory to the private directory.
  */
 function backup_migrate_update_7200() {
-  $from = file_directory_path('public') .'/backup_migrate';
-  $to   = file_directory_path('private') .'/backup_migrate';
+  $form = 'public://backup_migrate';
+  $to   = 'private://backup_migrate';
   if (drupal_realpath($from) && !drupal_realpath($to)) {
     if (!rename($from, $to)) {
-      drupal_set_message(t('Unable to move the backups directory to your private folder, please check file permissions and move the directory %from to %to', array('%from' => drupal_realpath($from), '%to' => drupal_realpath(file_directory_path('private')))), 'warning');
+      drupal_set_message(t('Unable to move the backups directory to your private folder, please check file permissions and move the directory %from to %to', array('%from' => drupal_realpath($from), '%to' => drupal_realpath($to))), 'warning');
     }
   }
 }

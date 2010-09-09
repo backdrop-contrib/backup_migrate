@@ -27,6 +27,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     if ($dir = $this->get_location()) {
       if ($this->check_dir($dir)) {
         $filepath = rtrim($dir, "/") ."/". $file->filename();
+        $filepath = drupal_realpath($filepath);
         rename($file->filepath(), $filepath);
 
         // chmod, chown and chgrp the file if needed.
@@ -135,7 +136,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     }
     return $form;
   }
- 
+
   /**
    * Validate the form for the settings for the files destination.
    */
@@ -244,7 +245,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Check if a file can be read remotely via http.
    */
   function test_file_readable_remotely($path, $contents) {
-    $url = $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
+    $url = file_create_url($path);
     $result = drupal_http_request($url);
     if (strpos($result->data, $contents) !== FALSE) {
       return TRUE;
@@ -259,7 +260,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 class backup_migrate_destination_files_manual extends backup_migrate_destination_files {
   var $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = file_directory_path('private') .'/backup_migrate/manual';
+    $dir = 'private://backup_migrate/manual';
     parent::__construct($params + array('location' => $dir, 'name' => t('Manual Backups Directory')));
   }
 }
@@ -270,8 +271,7 @@ class backup_migrate_destination_files_manual extends backup_migrate_destination
 class backup_migrate_destination_files_scheduled extends backup_migrate_destination_files {
   var $supported_ops = array('scheduled backup', 'restore', 'list files', 'configure', 'delete');
   function __construct($params = array()) {
-    $dir = file_directory_path('private') .'/backup_migrate/scheduled';
+    $dir = 'private://backup_migrate/scheduled';
     parent::__construct($params + array('location' => $dir, 'name' => t('Scheduled Backups Directory')));
   }
 }
-

@@ -32,14 +32,14 @@ function _backup_migrate_temp_files_delete() {
   }
 
   // Delete temp files abandoned for 6 or more hours.
-  $dir = file_directory_path('temporary://');
+  $dir = file_stream_wrapper_get_instance_by_scheme('temporary')->getDirectoryPath();
   $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
   if (file_exists($dir) && is_dir($dir) && is_readable($dir) && $handle = opendir($dir)) {
     while (FALSE !== ($file = @readdir($handle))) {
       // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
       // We should only attempt to delete writable files to prevent errors in shared environments.
       // This could still cause issues in shared environments with poorly configured file permissions.
-      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file->filename) && @filectime($file->filename) < $expire) {
+      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file) && @filectime($file) < $expire) {
         unlink("$dir/$file");
       }
     }
@@ -418,4 +418,3 @@ class backup_file {
     $this->path = $file;
   }
 }
-
