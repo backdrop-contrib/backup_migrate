@@ -261,7 +261,7 @@ class backup_migrate_profile extends backup_migrate_item {
    */
   function get_source() {
     backup_migrate_include('destinations');
-    if (empty($this->source) && !empty($this->source_id)) {
+    if (!empty($this->source_id) && (empty($this->source) || $this->source->destination_id !== $this->source_id)) {
       $this->source = backup_migrate_get_destination($this->source_id);
     }
     return empty($this->source) ? NULL : $this->source;
