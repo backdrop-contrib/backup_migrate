@@ -20,7 +20,6 @@ function backup_migrate_get_profiles() {
   if ($profiles === NULL) {
     $profiles = backup_migrate_crud_get_items('profile');
   }
-  dpm($profiles);
   return $profiles;
 }
 

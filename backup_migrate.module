@@ -942,6 +942,11 @@ function _backup_migrate_message_callback($callback = NULL) {
 
 function _backup_migrate_check_timeout() {
   static $timeout;
+
+  // Max execution of 0 means unlimited.
+  if (ini_get('max_execution_time') == 0) {
+    return false;
+  }
   // Figure out when we should stop execution.
   if (!$timeout) {
     $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - variable_get('backup_migrate_timeout_buffer', 5);
