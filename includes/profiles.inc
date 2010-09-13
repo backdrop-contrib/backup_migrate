@@ -20,6 +20,7 @@ function backup_migrate_get_profiles() {
   if ($profiles === NULL) {
     $profiles = backup_migrate_crud_get_items('profile');
   }
+  dpm($profiles);
   return $profiles;
 }
 
@@ -281,7 +282,7 @@ class backup_migrate_profile extends backup_migrate_item {
    */
   function get_destination() {
     backup_migrate_include('destinations');
-    if (empty($this->destination) && !empty($this->destination_id)) {
+    if (!empty($this->destination_id) && (empty($this->destination) || $this->destination->destination_id !== $this->destination_id)) {
       $this->destination = backup_migrate_get_destination($this->destination_id);
     }
     return empty($this->destination) ? NULL : $this->destination;
