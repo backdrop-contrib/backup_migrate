@@ -168,7 +168,6 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
       return FALSE;
     }
-
     // If the destination directory is within the webroot, then secure it as best we can.
     if ($this->dir_in_webroot($directory)) {
       $directory = $this->check_web_dir($directory);
@@ -222,8 +221,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 
     // Attempt to read the test file via http. This may fail for other reasons,
     // so it's not a bullet-proof check.
-    $path = trim(drupal_substr($directory .'/test.txt', drupal_strlen(file_directory_path())), '\\/');
-    if ($this->test_file_readable_remotely($path, $test_contents)) {
+    if ($this->test_file_readable_remotely($directory .'/test.txt', $test_contents)) {
       $message = t("Security notice: Backup and Migrate will not save backup files to the server because the destination directory is publicly accessible. If you want to save files to the server, please secure the '%directory' directory", array('%directory' => $directory));
       drupal_set_message($message, "error");
       return FALSE;
@@ -235,7 +233,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Check if the given directory is within the webroot and is therefore web accessible.
    */
   function dir_in_webroot($directory) {
-    if (strpos(realpath($directory), realpath($_SERVER['DOCUMENT_ROOT'])) !== FALSE) {
+    if (strpos(drupal_realpath($directory), realpath($_SERVER['DOCUMENT_ROOT'])) !== FALSE) {
       return TRUE;
     }
     return FALSE;

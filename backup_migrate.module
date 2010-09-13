@@ -616,7 +616,8 @@ function backup_migrate_ui_manual_restore_form() {
  * The restore submit. Do the restore.
  */
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
-  if ($file = file_save_upload('backup_migrate_restore_upload')) {
+  $validators = array('file_validate_extensions' => array('gz zip sql mysql'));
+  if ($file = file_save_upload('backup_migrate_restore_upload', $validators)) {
     backup_migrate_include('destinations');
     backup_migrate_perform_restore('upload', $file->uri, $form_state['values']);
   }
@@ -829,7 +830,7 @@ function backup_migrate_shutdown($settings) {
     backup_migrate_cleanup();
     backup_migrate_backup_fail('The operation timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), $settings);
     // The session will have already been written and closed, so we need to write any changes directly.
-    sess_write(session_id(), session_encode());
+    _drupal_session_write(session_id(), session_encode());
     // Add a redirect or we'll just get whitescreened.
     drupal_goto(BACKUP_MIGRATE_MENU_PATH);
   }
