@@ -220,7 +220,7 @@ function drupal_ftp_file_to_ftp($file, $ftp_filename, $ftp_directory, &$ftp) {
     $complete_filename = $ftp_directory .'/'. $ftp_filename;
     $put_file = @ftp_put($ftp->__conn, $complete_filename, $source, FTP_BINARY);
     if (!$put_file) {
-      _backup_migrate_message('FTP Error: Couldn\'t write to @complete_filename when trying to save file on the ftp server.', array('@complete_filename', $complete_filename), 'error');
+      _backup_migrate_message('FTP Error: Couldn\'t write to @complete_filename when trying to save file on the ftp server.', array('@complete_filename' => $complete_filename), 'error');
       return FALSE;
     }
 
