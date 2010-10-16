@@ -144,6 +144,22 @@ function backup_migrate_filters_settings_form_set_parents($form) {
   return $form;
 }
 
+
+/**
+ * Validate all the filters.
+ */
+function backup_migrate_filters_settings_form_validate($op, $form, &$form_state) {
+  //backup_migrate_filters_invoke_all($op .'_settings_form_validate', $form, $form_state);
+}
+
+/**
+ * Submit all of the filters.
+ */
+function backup_migrate_filters_settings_form_submit($op, $form, &$form_state) {
+  //backup_migrate_filters_invoke_all($op .'_settings_form_submit', $form, $form_state);
+}
+
+
 /**
  * Get the default settings for the filters.
  */

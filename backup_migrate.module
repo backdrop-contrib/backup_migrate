@@ -374,6 +374,7 @@ function backup_migrate_ui_manual_quick_backup_form_validate($form, &$form_state
  * Submit the quick backup form.
  */
 function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) {
+  backup_migrate_include('profiles', 'destinations');
   if (user_access('perform backup')) {
     // For a quick backup use the default settings.
     $settings = _backup_migrate_profile_saved_default_profile($form_state['values']['profile_id']);
@@ -431,6 +432,7 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js', array('type' => 'module', 'scope' => 'footer'));
 
   $form = array();
+
   $form += _backup_migrate_get_source_form('db');
   $form += _backup_migrate_ui_backup_settings_form($profile);
 
@@ -504,7 +506,8 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
       '#value' => t('Save Without Backing Up'),
     );
   }
-  $form['#validate'] = array('backup_migrate_ui_manual_quick_backup_form_validate');
+  $form['#validate'][] = 'backup_migrate_ui_manual_quick_backup_form_validate';
+  $form['#submit'][] = 'backup_migrate_ui_manual_backup_form_submit';
 
   $form[] = array(
     '#type' => 'submit',
@@ -525,9 +528,12 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
 
   $profile = backup_migrate_crud_create_item('profile', $form_state['values']);
 
+  // Save the settings profile if the save box is checked.
   if ($form_state['values']['save_settings'] && user_access('administer backup and migrate')) {
     if (@$form_state['values']['create_new']) {
+      // Reset the id and storage so a new item will be saved.
       $profile->set_id(NULL);
+      $profile->storage = BACKUP_MIGRATE_STORAGE_NONE;
     }
     $profile->save();
     variable_set("backup_migrate_profile_id", $profile->get_id());
@@ -970,6 +976,11 @@ function _backup_migrate_message_callback($callback = NULL) {
 
 function _backup_migrate_check_timeout() {
   static $timeout;
+
+  // Max execution of 0 means unlimited.
+  if (ini_get('max_execution_time') == 0) {
+    return false;
+  }
   // Figure out when we should stop execution.
   if (!$timeout) {
     $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - variable_get('backup_migrate_timeout_buffer', 5);
