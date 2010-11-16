@@ -21,7 +21,8 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    */
   function save_file($file, $settings) {
     $s3 = $this->s3_object();
-    if ($s3->putObject($s3->inputFile($file->filepath(), FALSE), $this->dest_url['path'], $file->filename(), S3::ACL_PRIVATE)) {
+    $path = $file->filename();
+    if ($s3->putObject($s3->inputFile($file->filepath(), FALSE), $this->dest_url['path'], $this->remote_path($file->filename()), S3::ACL_PRIVATE)) {
       return $file;
     }
     return FALSE;
@@ -34,7 +35,7 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
     backup_migrate_include('files');
     $file = new backup_file(array('filename' => $file_id));
     $s3 = $this->s3_object();
-    $data = $s3->getObject($this->dest_url['path'], $file_id, $file->filepath());
+    $data = $s3->getObject($this->dest_url['path'], $this->remote_path($file_id), $file->filepath());
     if (!$data->error) {
       return $file;
     }
@@ -46,7 +47,7 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    */
   function delete_file($file_id) {
     $s3 = $this->s3_object();
-    $s3->deleteObject($this->dest_url['path'], $file_id);
+    $s3->deleteObject($this->dest_url['path'], $this->remote_path($file_id));
   }
 
   /**
@@ -56,14 +57,14 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
     backup_migrate_include('files');
     $files = array();
     $s3 = $this->s3_object();
-    $s3_files = $s3->getBucket($this->dest_url['path']);
+    $s3_files = $s3->getBucket($this->dest_url['path'], $this->settings('subdir'));
     foreach ((array)$s3_files as $id => $file) {
       $info = array(
-        'filename' => $file['name'],
+        'filename' => $this->local_path($file['name']),
         'filesize' => $file['size'],
         'filetime' => $file['time'],
       );
-      $files[$id] = new backup_file($info);
+      $files[$info['filename']] = new backup_file($info);
     }
     return $files;
   }
@@ -81,7 +82,36 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
     $form['path']['#description'] = 'This bucket must already exist. It will not be created for you.';
     $form['user']['#title'] = 'Access Key ID';
     $form['pass']['#title'] = 'Secret Access Key';
+
+    $form['settings']['subdir'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Subdirectory'),
+      '#default_value' => $this->settings('subdir'),
+    );
+    $form['settings']['#weight'] = 25;
+    $form['settings']['#tree'] = TRUE;
+
     return $form;
+  }
+
+  /**
+   * Generate a filepath with the correct prefix.
+   */
+  function remote_path($path) {
+    if ($subdir = $this->settings('subdir')) {
+      $path = $subdir .'/'. $path;
+    }
+    return $path;
+  }
+
+  /**
+   * Generate a filepath with the correct prefix.
+   */
+  function local_path($path) {
+    if ($subdir = $this->settings('subdir')) {
+      $path = str_replace($subdir .'/', '', $path);
+    }
+    return $path;
   }
 
   function s3_object() {

@@ -67,6 +67,13 @@ function backup_migrate_backup_migrate_destination_types() {
       'class' => 'backup_migrate_destination_db_mysql',
       'can_create' => TRUE,
     ),
+    'bam' => array(
+      'description' => t('Save the backup files to a Backup and Migrate server.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.bam_server.inc',
+      'class' => 'backup_migrate_destination_bam_Server',
+      'type_name' => t('Backup and Migrate Server'),
+      'can_create' => TRUE,
+    ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
@@ -314,7 +321,11 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
   if (backup_migrate_destination_file_exists($destination_id, $file_id)) {
     return drupal_get_form('backup_migrate_ui_destination_restore_file_confirm', $destination_id, $file_id);
   }
-  drupal_goto(user_access('access backup files') ? "admin/content/backup_migrate/destination/list/files/". $destination_id : "admin/content/backup_migrate");
+  _backup_migrate_message('Cannot restore from the the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
+  if ($destination_id && user_access('access backup files')) {
+    drupal_goto('admin/content/backup_migrate/destination/list/files/' . $destination_id);
+  }
+  drupal_goto('admin/content/backup_migrate');
 }
 
 /**
@@ -376,7 +387,11 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
   if (backup_migrate_destination_file_exists($destination_id, $file_id)) {
     return drupal_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
   }
-  drupal_goto("admin/content/backup_migrate");
+  _backup_migrate_message('Cannot delete the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
+  if ($destination_id && user_access('access backup files')) {
+    drupal_goto('admin/content/backup_migrate/destination/list/files/' . $destination_id);
+  }
+  drupal_goto('admin/content/backup_migrate');
 }
 
 /**
