@@ -14,6 +14,7 @@ function backup_migrate_drush_command() {
   $items['bam-backup'] = array(
     'callback' => 'backup_migrate_drush_backup',
     'description' => dt('Backup the site\'s database with Backup and Migrate.'),
+    'aliases' => array('bb'),
     'examples' => array(
       'drush bam-backup' => 'Backup the default databse to the manual backup directory using the default settings.', 
       'drush bam-backup db scheduled mysettings' => 'Backup the database to the scheduled directory using a settings profile called "mysettings"', 
