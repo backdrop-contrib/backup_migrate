@@ -67,13 +67,6 @@ function backup_migrate_backup_migrate_destination_types() {
       'class' => 'backup_migrate_destination_db_mysql',
       'can_create' => TRUE,
     ),
-    'bam' => array(
-      'description' => t('Save the backup files to a Backup and Migrate server.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.bam_server.inc',
-      'class' => 'backup_migrate_destination_bam_Server',
-      'type_name' => t('Backup and Migrate Server'),
-      'can_create' => TRUE,
-    ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
