@@ -50,7 +50,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
         // Only mysql/mysqli supported by this destination.
         $key = $db_key . ':' . $tgt_key;
         if ($info['driver'] === 'mysql') {
-          $url = $info['driver'] . '://' . $info['username'] . ':' . $info['password'] . '@' . $info['host'] . ($info['port'] ? ':' . $info['port'] : '') . '/' . $info['database'];
+          $url = $info['driver'] . '://' . $info['username'] . ':' . $info['password'] . '@' . $info['host'] . (isset($info['port']) ? ':' . $info['port'] : '') . '/' . $info['database'];
           if ($destination = backup_migrate_create_destination('mysql', array('url' => $url))) {
             // Treat the default database differently because it is probably the only one available.
             if ($key == 'default:default') {
