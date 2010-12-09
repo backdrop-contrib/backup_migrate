@@ -164,18 +164,22 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function check_dir($directory) {
     $out = TRUE;
     $dirs = array();
-    foreach (explode('/', $directory) as $dir) {
-      $dirs[] = $dir;
-      $path = implode($dirs, '/');
-      if ($path && !is_dir(realpath($path)) && !file_check_directory($path, FILE_CREATE_DIRECTORY)) {
-        $out = FALSE;
-      }
-    }
 
-    if (!$out || !file_check_directory($directory)) {
-      // Unable to create destination directory.
-      _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
-      return FALSE;
+    // If the directory doesn't exist try to create it.
+    if (!is_dir($directory)) {
+      foreach (explode('/', $directory) as $dir) {
+        $dirs[] = $dir;
+        $path = implode($dirs, '/');
+        if ($path && !is_dir(realpath($path)) && !file_check_directory($path, FILE_CREATE_DIRECTORY)) {
+          $out = FALSE;
+        }
+      }
+
+      if (!$out || !file_check_directory($directory)) {
+        // Unable to create destination directory.
+        _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
+        return FALSE;
+      }
     }
 
     // If the destination directory is within the webroot, then secure it as best we can.
