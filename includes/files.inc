@@ -333,6 +333,7 @@ class backup_file {
 
     // Start buffering and throw away the results so that errors don't get appended to the file.
     ob_start('_backup_migrate_file_dispose_buffer');
+    backup_migrate_cleanup();
     module_invoke_all('exit');
     exit();
   }
