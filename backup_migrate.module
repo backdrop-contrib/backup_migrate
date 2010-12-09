@@ -143,17 +143,14 @@ function backup_migrate_menu() {
  * Takes care of scheduled backups and deletes abandoned temp files.
  */
 function backup_migrate_cron() {
-  // Backing up requires a full bootstrap as it uses the file functionality in 
-  // files.inc. Running poormanscron with caching on can cause cron to run without
-  // a full bootstrap so we manually finish bootstrapping here.
-  require_once DRUPAL_ROOT . '/includes/common.inc';
-  _drupal_bootstrap_full();
-
   // Set the message mode to logging.
   _backup_migrate_message_callback('_backup_migrate_message_log');
 
   backup_migrate_include('schedules');
   backup_migrate_schedules_run();
+
+  backup_migrate_include('files');
+  _backup_migrate_temp_files_delete();
 }
 
 /**

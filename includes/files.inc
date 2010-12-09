@@ -39,7 +39,7 @@ function _backup_migrate_temp_files_delete() {
       // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
       // We should only attempt to delete writable files to prevent errors in shared environments.
       // This could still cause issues in shared environments with poorly configured file permissions.
-      if (strpos($file, 'backup_migrate_') === 0 && is_writable($file) && @filectime($file) < $expire) {
+      if (strpos($file, 'backup_migrate_') === 0 && is_writable("$dir/$file") && @filectime("$dir/$file") < $expire) {
         unlink("$dir/$file");
       }
     }
@@ -326,6 +326,7 @@ class backup_file {
 
     // Start buffering and throw away the results so that errors don't get appended to the file.
     ob_start('_backup_migrate_file_dispose_buffer');
+    backup_migrate_cleanup();
     module_invoke_all('exit');
     exit();
   }
@@ -418,3 +419,4 @@ class backup_file {
     $this->path = $file;
   }
 }
+
