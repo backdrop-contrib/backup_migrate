@@ -31,23 +31,27 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * File save destination callback.
    */
   function save_file($file, $settings) {
-    if ($dir = $this->get_realpath()) {
-      if ($this->check_dir($dir)) {
+    if ($dir = $this->get_location()) {
+      if ($dir = $this->check_dir($dir)) {
         $filepath = rtrim($dir, "/") ."/". $file->filename();
-        rename($file->filepath(), $filepath);
-
-        // chmod, chown and chgrp the file if needed.
-        if ($chmod = $this->settings('chmod')) {
-          if (!@chmod($filepath, octdec($chmod))) {
-            _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
+        if (file_unmanaged_move($file->filepath(), $filepath)) {
+  
+          // chmod, chown and chgrp the file if needed.
+          if ($chmod = $this->settings('chmod')) {
+            if (!@chmod($filepath, octdec($chmod))) {
+              _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
+            }
           }
-        }
-        if ($chgrp = $this->settings('chgrp')) {
-          if (!@chgrp($filepath, $chgrp)) {
-            _backup_migrate_message('Unable to set the file group for: @file', array('@file' => $filepath), 'error');
+          if ($chgrp = $this->settings('chgrp')) {
+            if (!@chgrp($filepath, $chgrp)) {
+              _backup_migrate_message('Unable to set the file group for: @file', array('@file' => $filepath), 'error');
+            }
           }
+          return $file;
         }
-        return $file;
+        else {
+          _backup_migrate_message('Unable to save the file to the directory: @dir', array('@dir' => $dir), 'error');
+        }
       }
     }
   }
@@ -172,7 +176,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Prepare the destination directory for the backups.
    */
   function check_dir($directory) {
-    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_CREATE_DIRECTORY)) {
+    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       // Unable to create destination directory.
       _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
       return FALSE;
