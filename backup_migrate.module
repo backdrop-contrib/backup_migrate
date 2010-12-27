@@ -902,7 +902,7 @@ function _backup_migrate_message($message, $replace = array(), $type = 'status')
 function _backup_migrate_messages($message = NULL, $replace = array(), $type = 'status') {
   static $messages = array();
   if ($message) {
-    $messages[] = array('message' => $message, 'replace' => $replace, 'type' => 'status');
+    $messages[] = array('message' => $message, 'replace' => $replace, 'type' => $type);
   }
   return $messages;
 }
