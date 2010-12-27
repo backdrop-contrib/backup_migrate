@@ -619,7 +619,7 @@ function backup_migrate_ui_manual_restore_form() {
  * The restore submit. Do the restore.
  */
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
-  $validators = array('file_validate_extensions' => array('gz zip sql mysql'));
+  $validators = array('file_validate_extensions' => array('gz zip sql mysql bz bz2'));
   if ($file = file_save_upload('backup_migrate_restore_upload', $validators)) {
     backup_migrate_include('destinations');
     backup_migrate_perform_restore('upload', $file->uri, $form_state['values']);
