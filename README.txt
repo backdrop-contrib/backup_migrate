@@ -30,6 +30,9 @@ INSTALLATION:
 
 OPTIONAL:
 * Enable token.module to allow token replacement in backup file names.
+* To Backup to Amazon S3:
+    - Download the S3 library from http://undesigned.org.za/2007/10/22/amazon-s3-php-class
+      and place it in the includes directory in this module.
 
 LIGHTTPD USERS:
 Add the following code to your lighttp.conf to secure your backup directories:

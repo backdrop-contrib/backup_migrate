@@ -20,10 +20,11 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Save to to the s3 destination.
    */
   function save_file($file, $settings) {
-    $s3 = $this->s3_object();
-    $path = $file->filename();
-    if ($s3->putObject($s3->inputFile($file->filepath(), FALSE), $this->get_bucket(), $this->remote_path($file->filename()), S3::ACL_PRIVATE)) {
-      return $file;
+    if ($s3 = $this->s3_object()) {
+      $path = $file->filename();
+      if ($s3->putObject($s3->inputFile($file->filepath(), FALSE), $this->get_bucket(), $this->remote_path($file->filename()), S3::ACL_PRIVATE)) {
+        return $file;
+      }
     }
     return FALSE;
   }
@@ -34,10 +35,11 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
   function load_file($file_id) {
     backup_migrate_include('files');
     $file = new backup_file(array('filename' => $file_id));
-    $s3 = $this->s3_object();
-    $data = $s3->getObject($this->get_bucket(), $this->remote_path($file_id), $file->filepath());
-    if (!$data->error) {
-      return $file;
+    if ($s3 = $this->s3_object()) {
+      $data = $s3->getObject($this->get_bucket(), $this->remote_path($file_id), $file->filepath());
+      if (!$data->error) {
+        return $file;
+      }
     }
     return NULL;
   }
@@ -46,8 +48,9 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Delete from the s3 destination.
    */
   function delete_file($file_id) {
-    $s3 = $this->s3_object();
-    $s3->deleteObject($this->get_bucket(), $this->remote_path($file_id));
+    if ($s3 = $this->s3_object()) {
+      $s3->deleteObject($this->get_bucket(), $this->remote_path($file_id));
+    }
   }
 
   /**
@@ -56,15 +59,16 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
   function list_files() {
     backup_migrate_include('files');
     $files = array();
-    $s3 = $this->s3_object();
-    $s3_files = $s3->getBucket($this->get_bucket(), $this->get_subdir());
-    foreach ((array)$s3_files as $id => $file) {
-      $info = array(
-        'filename' => $this->local_path($file['name']),
-        'filesize' => $file['size'],
-        'filetime' => $file['time'],
-      );
-      $files[$info['filename']] = new backup_file($info);
+    if ($s3 = $this->s3_object()) {
+      $s3_files = $s3->getBucket($this->get_bucket(), $this->get_subdir());
+      foreach ((array)$s3_files as $id => $file) {
+        $info = array(
+          'filename' => $this->local_path($file['name']),
+          'filesize' => $file['size'],
+          'filetime' => $file['time'],
+        );
+        $files[$info['filename']] = new backup_file($info);
+      }
     }
     return $files;
   }
@@ -73,6 +77,9 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Get the form for the settings for this filter.
    */
   function edit_form() {
+    // Check for the library.
+    $this->s3_object();
+
     $form = parent::edit_form();
     $form['scheme']['#type'] = 'value';
     $form['scheme']['#value'] = 'https';
@@ -151,11 +158,17 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
   }
 
   function s3_object() {
-    require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/S3.php';
-    if (!$this->s3) {
-      $this->s3 = new S3($this->dest_url['user'], $this->dest_url['pass']);
+    if (file_exists('./'. drupal_get_path('module', 'backup_migrate') .'/includes/S3.php')) {
+      require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/S3.php';
+      if (!$this->s3) {
+        $this->s3 = new S3($this->dest_url['user'], $this->dest_url['pass']);
+      }
+      return $this->s3;
     }
-    return $this->s3;
+    else {
+      drupal_set_message(t('Due to drupal.org code hosting policies, the S3 library needed to use an S3 destination is no longer distributed with this module. You must download the library from !link and place it in the includes directory in the Backup and Migrate module directory.', array('!link' => l('http://undesigned.org.za/2007/10/22/amazon-s3-php-class', 'http://undesigned.org.za/2007/10/22/amazon-s3-php-class'))), 'error', FALSE);
+      return NULL;
+    }
   }
 }
 
