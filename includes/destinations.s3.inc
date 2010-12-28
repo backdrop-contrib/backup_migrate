@@ -78,8 +78,11 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
     $form['scheme']['#value'] = 'https';
     $form['host']['#type'] = 'value';
     $form['host']['#value'] = 's3.amazonaws.com';
+
     $form['path']['#title'] = 'S3 Bucket';
+    $form['path']['#default_value'] = $this->get_bucket();
     $form['path']['#description'] = 'This bucket must already exist. It will not be created for you.';
+
     $form['user']['#title'] = 'Access Key ID';
     $form['pass']['#title'] = 'Secret Access Key';
 
@@ -87,9 +90,9 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
       '#type' => 'textfield',
       '#title' => t('Subdirectory'),
       '#default_value' => $this->get_subdir(),
+      '#weight' => 25
     );
-    $form['settings']['#weight'] = 25;
-    $form['settings']['#tree'] = TRUE;
+    $form['settings']['#weight'] = 50;
 
     return $form;
   }
@@ -99,6 +102,7 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    */
   function edit_form_submit($form, &$form_state) {
     // Append the subdir onto the path.
+
     if (!empty($form_state['values']['subdir'])) {
       $form_state['values']['path'] .= '/'. trim($form_state['values']['subdir'], '/');
     }
@@ -109,7 +113,7 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Generate a filepath with the correct prefix.
    */
   function remote_path($path) {
-    if ($subdir = $this->settings('subdir')) {
+    if ($subdir = $this->get_subdir()) {
       $path = $subdir .'/'. $path;
     }
     return $path;
@@ -129,7 +133,7 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Get the bucket which is the first part of the path.
    */
   function get_bucket() {
-    $parts = explode('/', $this->dest_url['path']);
+    $parts = explode('/', @$this->dest_url['path']);
     return $parts[0];
   }
 
@@ -137,9 +141,13 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
    * Get the bucket which is the first part of the path.
    */
   function get_subdir() {
-    $parts = explode('/', $this->dest_url['path']);
+    // Support the older style of subdir saving.
+    if ($subdir = $this->settings('subdir')) {
+      return $subdir;
+    }
+    $parts = explode('/', @$this->dest_url['path']);
     array_shift($parts);
-    return implode(array_filter($parts));
+    return implode('/', array_filter($parts));
   }
 
   function s3_object() {
