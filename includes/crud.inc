@@ -259,7 +259,7 @@ class backup_migrate_item {
    */  
   function delete() {
     $keys = (array)$this->get_primary_key();
-    db_query("DELETE FROM {$this->db_table} WHERE $keys[0] = :id", array(':id' => $this->get_id()));
+    db_query('DELETE FROM {' . $this->db_table . '} WHERE ' . $keys[0] . ' = :id', array(':id' => $this->get_id()));
   }
 
 
