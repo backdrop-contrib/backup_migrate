@@ -66,7 +66,7 @@ function backup_migrate_crud_menu() {
  * Page callback to create a new item.
  */
 function backup_migrate_crud_ui_create() {
-  if ($type = backup_migrate_crud_type_load(arg(3))) {
+  if ($type = backup_migrate_crud_type_load(arg(BACKUP_MIGRATE_MENU_DEPTH))) {
     $item = $type->create(array());
     return drupal_get_form('backup_migrate_crud_edit_form', $item);
   }
@@ -77,7 +77,7 @@ function backup_migrate_crud_ui_create() {
  */
 function backup_migrate_crud_ui_list() {
   $out = '';
-  if ($type = backup_migrate_crud_type_load(arg(3))) {
+  if ($type = backup_migrate_crud_type_load(arg(BACKUP_MIGRATE_MENU_DEPTH))) {
     $out = $type->get_list();
   }
   return $out;
@@ -87,11 +87,11 @@ function backup_migrate_crud_ui_list() {
  * Page callback to edit an item.
  */
 function backup_migrate_crud_ui_edit($item_id = NULL) {
-  if ($type = backup_migrate_crud_type_load(arg(3))) {
+  if ($type = backup_migrate_crud_type_load(arg(BACKUP_MIGRATE_MENU_DEPTH))) {
     if ($item_id && $item = $type->item($item_id)) {
       return drupal_get_form('backup_migrate_crud_edit_form', $item);
     }
-    drupal_goto(BACKUP_MIGRATE_MENU_PATH. '/' . arg(3));
+    drupal_goto(BACKUP_MIGRATE_MENU_PATH. '/' . arg(BACKUP_MIGRATE_MENU_DEPTH));
   }
 }
 
@@ -134,11 +134,11 @@ function backup_migrate_crud_edit_form_submit($form, &$form_state) {
  * Page callback to delete an item.
  */
 function backup_migrate_crud_ui_delete($item_id = NULL) {
-  if ($type = backup_migrate_crud_type_load(arg(3))) {
+  if ($type = backup_migrate_crud_type_load(arg(BACKUP_MIGRATE_MENU_DEPTH))) {
     if ($item_id && $item = $type->item($item_id)) {
       return drupal_get_form('backup_migrate_crud_delete_confirm_form', $item);
     }
-    drupal_goto('admin/content/backup_migrate/'. arg(3));
+    drupal_goto('admin/content/backup_migrate/'. arg(BACKUP_MIGRATE_MENU_DEPTH));
   }
 }
 
@@ -169,11 +169,11 @@ function backup_migrate_crud_delete_confirm_form_submit($form, &$form_state) {
  * Export an item.
  */
 function backup_migrate_crud_ui_export($item_id = NULL) {
-  if ($type = backup_migrate_crud_type_load(arg(3))) {
+  if ($type = backup_migrate_crud_type_load(arg(BACKUP_MIGRATE_MENU_DEPTH))) {
     if ($item_id && $item = $type->item($item_id)) {
       return drupal_get_form('backup_migrate_crud_export_form', $item->export());
     }
-    drupal_goto(BACKUP_MIGRATE_MENU_PATH . '/' . arg(3));
+    drupal_goto(BACKUP_MIGRATE_MENU_PATH . '/' . arg(BACKUP_MIGRATE_MENU_DEPTH));
   }
 }
 

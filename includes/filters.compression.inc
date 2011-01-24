@@ -52,13 +52,6 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
   }
 
   /**
-   * Submit the settings form. Any values returned will be saved.
-   */
-  function backup_settings_form_submit($form_values) {
-    return $form_values;
-  }
-
-  /**
    * Return a list of backup filetypes.
    */
   function file_types() {

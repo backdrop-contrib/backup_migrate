@@ -52,7 +52,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  function backup_settings_form_submit($form, $form_state) {
+  function backup_settings_form_submit($form, &$form_state) {
     foreach ($this->_get_destination_types() as $destination) {
       $destination->backup_settings_form_submit($form, $form_state);
     }

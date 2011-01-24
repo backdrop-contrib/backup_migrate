@@ -8,7 +8,8 @@
  * database with an option to exclude table data (e.g. cache_*)
  */
 
-define('BACKUP_MIGRATE_MENU_PATH', 'admin/structure/backup_migrate');
+define('BACKUP_MIGRATE_MENU_PATH', 'admin/config/system/backup_migrate');
+define('BACKUP_MIGRATE_MENU_DEPTH', 4);
 
 /* Drupal Hooks */
 

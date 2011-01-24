@@ -204,7 +204,6 @@ class backup_migrate_schedule extends backup_migrate_item {
     $form['enabled'] = array(
       "#type" => "checkbox",
       "#title" => t("Enabled"),
-      "#field_suffix" => t("Hour(s)"),
       "#default_value" => $this->get('enabled'),
     );
     $form['name'] = array(

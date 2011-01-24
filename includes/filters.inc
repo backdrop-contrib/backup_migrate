@@ -208,14 +208,14 @@ class backup_migrate_filter {
   /**
    * Get the form for the settings for this filter.
    */
-  function backup_settings_form_validate($form_values) {
+  function backup_settings_form_validate($form, &$form_state) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  function backup_settings_form_submit($form_values) {
-    return $form_values;
+  function backup_settings_form_submit($form, &$form_state) {
+    return $form_state['values'];
   }
 
   /**
@@ -235,14 +235,14 @@ class backup_migrate_filter {
   /**
    * Get the form for the settings for this filter.
    */
-  function restore_settings_form_validate($form_values) {
+  function restore_settings_form_validate($form, &$form_state) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  function restore_settings_form_submit($form_values) {
-    return $form_values;
+  function restore_settings_form_submit($form, &$form_state) {
+    return $form_state['values'];
   }
 
   /**
