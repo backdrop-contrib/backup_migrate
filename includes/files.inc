@@ -26,6 +26,7 @@ function backup_migrate_temp_files_add($filepath = NULL) {
 function _backup_migrate_temp_files_delete() {
   // Delete the temp files created during this run.
   foreach (backup_migrate_temp_files_add() as $file) {
+    $file = drupal_realpath($file);
     if (file_exists($file) && is_writable($file)) {
       unlink($file);
     }
@@ -414,8 +415,14 @@ class backup_file {
    */
   function temporary_file() {
     $file = drupal_tempnam('temporary://', 'backup_migrate_');
-    $file .= '.'. $this->extension();
+    // Add the version without the extension. The tempnam function creates this for us.
     backup_migrate_temp_files_add($file);
+
+    if ($this->extension()) {
+      $file .= '.'. $this->extension();
+      // Add the version with the extension. This is the one we will actually use.
+      backup_migrate_temp_files_add($file);
+    }
     $this->path = $file;
   }
 }
