@@ -714,10 +714,10 @@ class backup_migrate_destination extends backup_migrate_item {
       $out['download'] = l(t("download"), BACKUP_MIGRATE_MENU_PATH . "/destination/downloadfile/". $destination_id .'/'. $file_id);
     }
     if ($can_read && user_access("restore from backup")) {
-      $out['restore'] = l(t("restore"), BACKUP_MIGRATE_MENU_PATH . "/destination/list/restorefile/". $destination_id .'/'. $file_id);
+      $out['restore'] = l(t("restore"), BACKUP_MIGRATE_MENU_PATH . "/destination/restorefile/". $destination_id .'/'. $file_id);
     }
     if ($can_delete && user_access("delete backup files")) {
-      $out['delete'] = l(t("delete"), BACKUP_MIGRATE_MENU_PATH . "/destination/list/deletefile/". $destination_id .'/'. $file_id);
+      $out['delete'] = l(t("delete"), BACKUP_MIGRATE_MENU_PATH . "/destination/deletefile/". $destination_id .'/'. $file_id);
     }
     return $out;
   }
@@ -773,7 +773,7 @@ class backup_migrate_destination extends backup_migrate_item {
 
     // Get the type passed in in the params, or if none, check the url for a valid type name.
     // This is to allow new destination type to be specified in the path.
-    $destination_type = !empty($params['type']) ? $params['type'] : arg(6);
+    $destination_type = !empty($params['type']) ? $params['type'] : arg(BACKUP_MIGRATE_MENU_DEPTH + 3);
 
     if ($destination_type && ($type = @$types[$destination_type])) {
       // Include the necessary file if specified by the type.
@@ -800,7 +800,7 @@ class backup_migrate_destination extends backup_migrate_item {
       'access arguments' => array('access backup files'),
       'type' => MENU_LOCAL_TASK,
     );
-    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/list/deletefile'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/deletefile'] = array(
       'title' => 'Delete File',
       'description' => 'Delete a backup file',
       'page callback' => 'backup_migrate_menu_callback',
@@ -808,7 +808,7 @@ class backup_migrate_destination extends backup_migrate_item {
       'access arguments' => array('delete backup files'),
       'type' => MENU_CALLBACK,
     );
-    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/list/restorefile'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/restorefile'] = array(
       'title' => 'Restore from backup',
       'description' => 'Restore database from a backup file on the server',
       'page callback' => 'backup_migrate_menu_callback',
