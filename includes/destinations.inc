@@ -251,9 +251,9 @@ function _backup_migrate_destination_get_file_links($destination_id, $file_id) {
  * List the backup files in the given destination.
  */
 function backup_migrate_ui_destination_display_files($destination_id = NULL) {
-  // Refresh the file listing cache if requested.
   $rows = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
+    // Refresh the file listing cache if requested.
     if (isset($_GET['refresh'])) {
       $destination->file_cache_clear();
       drupal_goto($_GET['q']);
@@ -294,17 +294,15 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
     array_multisort($sort, $sort_dir, $rows);
 
     if ($files) {
-      drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
-      $out = '';
-      $out .= theme("table", $headers, $rows);
-      if ($destination->cache_files && $destination->fetch_time) {
-        $out .= '<div class="backup-migrate-cache-time description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
-      }
-      return $out;
+      $out = theme("table", $headers, $rows);
     }
     else {
-      return t('There are no backup files to display.');
+      $out = t('There are no backup files to display.');
     }
+    if ($destination->cache_files && $destination->fetch_time) {
+      $out .= '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
+    }
+    return $out;
   }
   drupal_goto("admin/content/backup_migrate/destination");
 }
@@ -608,12 +606,12 @@ class backup_migrate_destination extends backup_migrate_item {
   /**
    * List all the available files in the given destination with their destination specific id.
    */
-  function list_files($refresh = FALSE) {
+  function list_files() {
     $out = NULL;
-    if ($this->cache_files && !$refresh) {
+    if ($this->cache_files) {
       $out = $this->file_cache_get();
     }
-    if ($out === NULL || $refresh) {
+    if ($out === NULL) {
       $out = $this->_list_files();
       if ($this->cache_files) {
         $this->file_cache_set($out);
