@@ -908,7 +908,8 @@ class backup_migrate_destination extends backup_migrate_item {
   /**
    * Get the form for the settings for this filter.
    */
-  function backup_settings_form(&$form, $settings) {
+  function backup_settings_form($settings) {
+    return array();
   }
 
   /**

@@ -232,7 +232,24 @@ class backup_migrate_item {
    * Constructor, set the basic info pulled from the db or generated programatically.
    */
   function __construct($params = array()) {
-    $this->from_array((array)$params + (array)$this->get_default_values());
+    $this->from_array($this->_merge_defaults((array)$params, (array)$this->get_default_values()));
+  }
+
+  /**
+   * Merge parameters with the given defaults.
+   *
+   * Works like array_merge_recursive, but it doesn't turn scalar values into arrays.
+   */
+  function _merge_defaults($params, $defaults) {
+    foreach ($defaults as $key => $val) {
+      if (!isset($params[$key])) {
+        $params[$key] = $val;
+      }
+      else if (is_array($params[$key])) {
+        $params[$key] = $this->_merge_defaults($params[$key], $val);
+      }
+    }
+    return $params;
   }
 
   /**
@@ -313,6 +330,20 @@ class backup_migrate_item {
       $params[$field] = empty($info['serialize']) ? $data[$field] : unserialize(db_decode_blob($data[$field]));
     }
     $this->from_array($params);
+  }
+
+
+  /**
+   * Decode a loaded db row (unserialize necessary fields).
+   */
+  function decode_db_row($data) {
+    $params = array();
+    $schema = $this->get_schema();
+    // Load fields as specified in the schema.
+    foreach ($schema['fields'] as $field => $info) {
+      $params[$field] = empty($info['serialize']) ? $data[$field] : unserialize(db_decode_blob($data[$field]));
+    }
+    return $params;
   }
 
   /**
@@ -619,8 +650,8 @@ class backup_migrate_item {
     // Get the items from the db.
     $result = db_query("SELECT * FROM {{$this->db_table}}");
     while ($info = db_fetch_array($result)) {
+      $info = $this->decode_db_row($info);
       if ($item = $this->create($info)) {
-        $item->load_row($info);
         $item->storage = empty($items[$item->get_id()]) ? BACKUP_MIGRATE_STORAGE_DB : BACKUP_MIGRATE_STORAGE_OVERRIDEN;
         $items[$item->get_id()] = $item;
       }

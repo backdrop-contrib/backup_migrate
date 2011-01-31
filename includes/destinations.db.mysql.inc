@@ -143,7 +143,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   /**
    * Get a list of tables in the database.
    */
-  function get_table_names() {
+  function _get_table_names() {
     $out = array();
     foreach ($this->_get_tables() as $table) {
       $out[$table['Name']] = $table['Name'];

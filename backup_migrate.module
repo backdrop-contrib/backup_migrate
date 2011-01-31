@@ -622,6 +622,7 @@ function backup_migrate_perform_backup(&$settings) {
     set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
 
+
   if ($settings->append_timestamp && $settings->timestamp_format) {
     $settings->filename .= "-". date($settings->timestamp_format);
   }
