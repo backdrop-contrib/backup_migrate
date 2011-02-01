@@ -317,6 +317,20 @@ class backup_migrate_item {
     $this->from_array($params);
   }
 
+
+  /**
+   * Decode a loaded db row (unserialize necessary fields).
+   */
+  function decode_db_row($data) {
+    $params = array();
+    $schema = $this->get_schema();
+    // Load fields as specified in the schema.
+    foreach ($schema['fields'] as $field => $info) {
+      $params[$field] = empty($info['serialize']) ? $data[$field] : unserialize($data[$field]);
+    }
+    return $params;
+  }
+
   /**
    * Return the fields which must be serialized before saving to the db.
    */
@@ -618,8 +632,8 @@ class backup_migrate_item {
     // Get the items from the db.
     $result = db_query("SELECT * FROM {{$this->db_table}}", array(), array('fetch' => PDO::FETCH_ASSOC));
     foreach ($result as $info) {
+      $info = $this->decode_db_row($info);
       if ($item = $this->create($info)) {
-        $item->load_row($info);
         $item->storage = empty($items[$item->get_id()]) ? BACKUP_MIGRATE_STORAGE_DB : BACKUP_MIGRATE_STORAGE_OVERRIDEN;
         $items[$item->get_id()] = $item;
       }

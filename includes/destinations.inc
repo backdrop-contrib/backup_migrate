@@ -260,7 +260,7 @@ function _backup_migrate_destination_get_file_links($destination_id, $file_id) {
 function backup_migrate_ui_destination_display_files($destination_id = NULL) {
   $rows = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
-   // Refresh the file listing cache if requested.
+    // Refresh the file listing cache if requested.
     if (isset($_GET['refresh'])) {
       $destination->file_cache_clear();
       drupal_goto($_GET['q']);
@@ -318,7 +318,7 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
       drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
       $out .= '<div class="backup-migrate-cache-time">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => array('refresh' => 'true'))))) .'</div>';
     }
-   return $out;
+    return $out;
   }
   drupal_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
 }
@@ -916,20 +916,20 @@ class backup_migrate_destination extends backup_migrate_item {
   /**
    * Get the form for the settings for this filter.
    */
-  function backup_settings_form(&$form, $settings) {
+  function backup_settings_form($settings) {
+    return array();
   }
 
   /**
    * Get the form for the settings for this filter.
    */
-  function backup_settings_form_validate($form_values) {
+  function backup_settings_form_validate($form, &$form_state) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  function backup_settings_form_submit($form_values) {
-    return $form_values;
+  function backup_settings_form_submit($form, &$form_state) {
   }
 
   /**
