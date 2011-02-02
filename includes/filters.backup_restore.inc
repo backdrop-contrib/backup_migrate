@@ -165,5 +165,4 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     }
     return $destinations;
   }
-
 }

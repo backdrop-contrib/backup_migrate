@@ -135,7 +135,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     }
     return $form;
   }
- 
+
   /**
    * Validate the form for the settings for the files destination.
    */
@@ -260,7 +260,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function test_file_readable_remotely($path, $contents) {
     $url = $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
     $result = drupal_http_request($url);
-    if (strpos($result->data, $contents) !== FALSE) {
+    if (!empty($result->data) && strpos($result->data, $contents) !== FALSE) {
       return TRUE;
     }
     return FALSE;

@@ -101,7 +101,6 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    */
   function backup_settings_form($settings) {
     $tables  = $this->get_table_names();
-    $form_key = $this->get_id();
     $form['#description'] = t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Drupal install, so <strong>do not change these settings unless you know what you're doing</strong>.");
     $form['exclude_tables'] = array(
       "#type" => "select",
