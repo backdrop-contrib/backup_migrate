@@ -64,6 +64,17 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   }
 
   /**
+   * Get the file object for the given file.
+   */
+  function get_file($file_id) {
+    $files = $this->list_files();
+    if (isset($files[$file_id])) {
+      isset($files[$file_id]);
+    }
+    return NULL;
+  }
+
+  /**
    * File list destination callback.
    */
   function list_files() {

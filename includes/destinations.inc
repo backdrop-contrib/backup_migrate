@@ -539,6 +539,10 @@ class backup_migrate_destination extends backup_migrate_item {
     $this->type = $type;
   }
 
+  function set_location($location) {
+    $this->location = $location;
+  }
+
   function get_location() {
     return @$this->location;
   }
