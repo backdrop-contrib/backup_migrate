@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 backup_migrate_include('destinations.db');
 
