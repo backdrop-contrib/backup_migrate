@@ -1,4 +1,3 @@
-// $Id$
 
 Drupal.backup_migrate = {
   callbackURL : "",  

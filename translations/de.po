@@ -1,4 +1,3 @@
-# $Id$
 #
 # German translation of Drupal (general)
 # Copyright 2010 Fleshgrinder <fleshgrinder@gmx.at>
