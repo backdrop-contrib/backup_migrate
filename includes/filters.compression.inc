@@ -32,7 +32,8 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
    * Get the form for the settings for this filter.
    */
   function backup_settings_default() {
-    return array('compression' => 'none');
+    $options = $this->_backup_migrate_get_compression_form_item_options();
+    return array('compression' => isset($options['gzip']) ? 'gzip' : 'none');
   }
 
   /**
