@@ -136,8 +136,10 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
    */
   function restore($file, &$settings) {
     if ($source = $settings->get_source()) {
-      $source_settings = (array)(@$settings['destinations'][$source->get_id()]) + $settings;
-      $num = $source->restore_from_file($file, $source_settings);
+      if (!empty($settings->filters['destinations'][$source->get_id()])) {
+        $settings->filters = (array)($settings->filters['destinations'][$source->get_id()]) + $settings->filters;
+      }
+      $num = $source->restore_from_file($file, $settings);
       return $num ? $file : FALSE;
     }
     backup_migrate_restore_fail("Could not run restore because the source '%source' is missing.", array('%source' => $settings->source_id), $settings);
