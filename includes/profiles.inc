@@ -159,7 +159,6 @@ function _backup_migrate_profile_default_profile() {
     'filename' => _backup_migrate_default_filename(),
     'append_timestamp' => 1,
     'timestamp_format' => 'Y-m-d\TH-i-s',
-    'compression' => "none",
     'filters' => backup_migrate_filters_settings_default('backup'),
   );
 }
