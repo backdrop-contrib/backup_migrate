@@ -1,12 +1,14 @@
 <?php
 
 
+
 /**
  * @file
  * Create (manually or scheduled) and restore backups of your Drupal MySQL
  * database with an option to exclude table data (e.g. cache_*)
  */
 
+define('BACKUP_MIGRATE_VERSION', '7.x-2.x');
 define('BACKUP_MIGRATE_MENU_PATH', 'admin/config/system/backup_migrate');
 define('BACKUP_MIGRATE_MENU_DEPTH', 4);
 
@@ -986,3 +988,21 @@ function _backup_migrate_check_timeout() {
   return (time() > $timeout);
 }
 
+/**
+ * Convert an associated array to an ini format string.
+ */
+function _backup_migrate_array_to_ini($data, $prefix = '') {
+  $content = ""; 
+  foreach ($data as $key => $val) {
+    if ($prefix) {
+      $key = $prefix . '[' . $key .']';
+    }
+    if (is_array($val)) {
+      $content .= _backup_migrate_array_to_ini($val, $key);
+    }
+    else {
+      $content .= $key . " = \"". $val ."\"\n";
+    }
+  }
+  return $content;
+}
