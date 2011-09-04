@@ -656,9 +656,10 @@ class backup_migrate_destination extends backup_migrate_item {
    */
   function load_files_info($files) {
     foreach ($files as $key => $file) {
+      // See if there is an info file with the same name as the backup.
       if (isset($files[$key . '.info'])) {
-        // See if there is an info file with the same name as the backup.
-        $info = drupal_parse_info_file($files[$key . '.info']->filepath());
+        $info_file = $this->load_file($files[$key . '.info']->file_id());
+        $info = drupal_parse_info_file($info_file->filepath());
         // Allow the stored metadata to override the detected metadata.
         $file->file_info = $info + $file->file_info;
         // Remove the metadata file from the list
@@ -669,6 +670,9 @@ class backup_migrate_destination extends backup_migrate_item {
     return $files;
   }
 
+  /**
+   * Create an ini file which stores the file metadata.
+   */
   function create_info_file($file) {
     $info = new backup_file(array('filename' => $file->filename() .'.info'));
     $data = _backup_migrate_array_to_ini($file->file_info);
