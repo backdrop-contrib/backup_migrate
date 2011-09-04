@@ -136,7 +136,9 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
    */
   function restore($file, &$settings) {
     if ($source = $settings->get_source()) {
-      $settings->filters = (array)($settings->filters['destinations'][$source->get_id()]) + $settings->filters;
+      if (!empty($settings->filters['destinations'][$source->get_id()])) {
+        $settings->filters = (array)($settings->filters['destinations'][$source->get_id()]) + $settings->filters;
+      }
       $num = $source->restore_from_file($file, $settings);
       return $num ? $file : FALSE;
     }
