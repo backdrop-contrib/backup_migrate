@@ -978,3 +978,25 @@ function _backup_migrate_array_to_ini($data, $prefix = '') {
   }
   return $content;
 }
+
+/**
+ * Execute a command line command. Returns false if the function failed.
+ */
+function backup_migrate_exec($command, $args = array()) {
+  if (!function_exists('exec') || ini_get('safe_mode')) {
+    return FALSE;
+  }
+
+  // Escape the arguments
+  foreach ($args as $key => $arg) {
+    $args[$key] = escapeshellarg($arg);
+  }
+  $command = strtr($command, $args);
+  $output = $result = NULL;
+
+  // Run the command.
+  exec($command . ' 2>&1', $output, $result);
+
+  return $result == 0;
+}
+
