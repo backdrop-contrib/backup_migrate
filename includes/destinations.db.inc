@@ -132,8 +132,6 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
   function backup_to_file($file, $settings) {
     $file->push_type($this->get_file_type_id());
 
-    backup_migrate_filters_invoke_all('pre_backup', $this, $file, $settings);
-
     // Switch to a different db if specified.
     $this->switch_db();
 
@@ -143,8 +141,6 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
 
     // Switch back to the previous db.
     $this->switch_db(TRUE);
-
-    backup_migrate_filters_invoke_all('post_backup', $this, $file, $settings, $success);
 
     return $success ? $file : FALSE;
   }

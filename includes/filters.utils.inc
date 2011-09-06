@@ -66,6 +66,12 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       '#default_value' => !empty($settings['utils_description']) ? $settings['utils_description'] : NULL,
       '#description' => t('Add a short description to the backup file.'),
     );
+    $form['advanced']['use_cli'] = array(
+      "#type" => "checkbox",
+      "#title" => t("Use cli commands"),
+      "#default_value" => !empty($settings['use_cli']),
+      "#description" => t("Use the command line tools (mysqldump, tar, gzip etc.) if available. This can be faster for large sites but will not work on all servers. EXPERIMENTAL"),
+    );
 
     return $form;
   }
@@ -95,6 +101,12 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
       '#description' => t('Message to show visitors when the site is in off-line mode.')
     );
+    $form['advanced']['use_cli'] = array(
+      "#type" => "checkbox",
+      "#title" => t("Use cli commands"),
+      "#default_value" => !empty($settings['use_cli']),
+      "#description" => t("Use the command line tools (mysqldump, tar, gzip etc.) if available. This can be faster for large sites but will not work on all servers. EXPERIMENTAL"),
+    );
     return $form;
   }
 
@@ -106,7 +118,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function post_backup($source, $file, $settings) {
     $this->enable_devel_query($settings);
     $this->take_site_online($settings);
-    $this->add_file_info($file, $settings);
+    $this->add_file_info($source, $file, $settings);
   }
 
   function pre_restore($file, $settings) {
@@ -141,19 +153,18 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   /**
    * Add the backup metadata to the file.
    */
-  function add_file_info($file, $settings) {
+  function add_file_info($source, $file, $settings) {
     $file->file_info['description']       = $settings->filters['utils_description'];
     $file->file_info['datestamp']         = time();
     $file->file_info['generator']         = 'Backup and Migrate (http://drupal.org/project/backup_migrate)';
     $file->file_info['generatorversion']  = BACKUP_MIGRATE_VERSION;
-    $file->file_info['sites'] = array(
-        '0' => array(
-          'version' => VERSION,
-          'name' => variable_get('site_name', ''),
-          'url' => url('', array('absolute' => TRUE)),
-        ),
-      );
-    
+    $file->file_info['siteurl']           = url('', array('absolute' => TRUE));
+    $file->file_info['sitename']          = variable_get('site_name', '');
+    $file->file_info['drupalversion']     = VERSION;
+
+    $file->file_info['bam_sourceid']      = $source->destination_id;
+    $file->file_info['bam_sourcename']    = $source->name;
+    $file->file_info['drupalversion']     = VERSION;
   }
 
   /**

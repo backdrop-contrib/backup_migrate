@@ -23,27 +23,89 @@ function backup_migrate_temp_files_add($filepath = NULL) {
  * Delete all temporary files.
  */
 function _backup_migrate_temp_files_delete() {
-  // Delete the temp files created during this run.
-  foreach (backup_migrate_temp_files_add() as $file) {
-    if (file_exists($file) && is_writable($file)) {
+  if (variable_get('backup_migrate_cleanup_temp_files', TRUE)) {
+    // Delete the temp files created during this run.
+    foreach (backup_migrate_temp_files_add() as $file) {
+      if (file_exists($file) && is_writable($file)) {
+        _backup_migrate_temp_files_delete_file($file);
+      }
+    }
+  
+    // Delete temp files abandoned for 6 or more hours.
+    $dir = file_directory_temp();
+    $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
+    if (file_exists($dir) && is_dir($dir) && is_readable($dir) && $handle = opendir($dir)) {
+      while (FALSE !== ($file = @readdir($handle))) {
+        // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
+        // We should only attempt to delete writable files to prevent errors in shared environments.
+        // This could still cause issues in shared environments with poorly configured file permissions.
+        if (strpos($file, 'backup_migrate_') === 0 && is_writable("$dir/$file") && @filectime("$dir/$file") < $expire) {
+          _backup_migrate_temp_files_delete_file("$dir/$file");
+        }
+      }
+      closedir($handle);
+    }
+  }
+}
+
+/**
+ * Delete a temporary file or folder
+ */
+function _backup_migrate_temp_files_delete_file($file) {
+  if (file_exists($file) && is_writable($file)) {
+    if (is_dir($file) && is_readable($file) && $handle = opendir($file)) {
+      $dir = $file;
+      while (FALSE !== ($file = @readdir($handle))) {
+        if ($file != '..' && $file != '.') {
+          _backup_migrate_temp_files_delete_file("$dir/$file");
+        }
+      }
+    }
+    else {
       unlink($file);
     }
   }
+}
 
-  // Delete temp files abandoned for 6 or more hours.
-  $dir = file_directory_temp();
-  $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
-  if (file_exists($dir) && is_dir($dir) && is_readable($dir) && $handle = opendir($dir)) {
-    while (FALSE !== ($file = @readdir($handle))) {
-      // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
-      // We should only attempt to delete writable files to prevent errors in shared environments.
-      // This could still cause issues in shared environments with poorly configured file permissions.
-      if (strpos($file, 'backup_migrate_') === 0 && is_writable("$dir/$file") && @filectime("$dir/$file") < $expire) {
-        unlink("$dir/$file");
+/**
+ * Move files recursively.
+ */
+function _backup_migrate_move_files($from, $to) {
+  if (is_readable($from)) {
+    if (is_dir($from) && is_readable($from) && $handle = opendir($from)) {
+      if (!file_exists($to)) {
+        mkdir($to);
+      }
+      while (FALSE !== ($file = @readdir($handle))) {
+        if ($file != '..' && $file != '.') {
+          _backup_migrate_move_files("$from/$file", "$to/$file");
+        }
       }
     }
-    closedir($handle);
+    else {
+      rename($from, $to);
+    }
   }
+  return FALSE;
+}
+
+
+
+/**
+ * Create a temporary directory.
+ */
+function backup_migrate_temp_directory() {
+  $tmp = realpath(file_directory_temp());
+  // Check the writability of the temp directory.
+  if (!is_writable(realpath(file_directory_temp()))) {
+    _backup_migrate_message('Your temporary directory %tmp is not writable. Backup and migrate needs to be able to create temporary files.', array('%tmp' => $tmp), 'error');
+  }
+
+  // Use a full path so that the files can be deleted during the shutdown function if needed.
+  $file = $tmp .'/'. uniqid('backup_migrate_');
+  mkdir($file);
+  backup_migrate_temp_files_add($file);
+  return $file;
 }
 
 /**

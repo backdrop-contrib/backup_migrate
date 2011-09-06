@@ -279,7 +279,10 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
     $i          = 0;
     foreach ((array)$files as $file) {
       $info = $file->info();
-      
+
+      // If there's a datestamp, it should override the filetime as it's probably more reliable.
+      $info['filetime'] = !empty($info['datestamp']) ? $info['datestamp'] : $info['filetime'];
+
       $description = '';
       // Add the description as a new row.
       if (!empty($info['description'])) {
@@ -661,7 +664,7 @@ class backup_migrate_destination extends backup_migrate_item {
         $info_file = $this->load_file($files[$key . '.info']->file_id());
         $info = drupal_parse_info_file($info_file->filepath());
         // Allow the stored metadata to override the detected metadata.
-        $file->file_info = $info + $file->file_info;
+        $file->file_info = $file->file_info + $info;
         // Remove the metadata file from the list
         unset($files[$key . '.info']);
       }

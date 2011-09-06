@@ -76,23 +76,6 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   }
 
   /**
-   * Get the form for the backup settings for this destination.
-   */
-  function backup_settings_form($settings) {
-    $form = parent::backup_settings_form($settings);
-
-    $form['use_mysqldump'] = array(
-      "#type" => "checkbox",
-      "#title" => t("Use mysqldump command"),
-      "#default_value" => !empty($settings['use_mysqldump']),
-      "#description" => t("Use the mysqldump command line tool if available. This can be faster for large databases but will not work on all servers. EXPERIMENTAL"),
-    );
-
-    return $form;
-  }
-
-
-  /**
    * Backup the databases to a file.
    *
    *  Returns a list of sql commands, one command per line.
@@ -100,7 +83,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    *  The files are a little harder to read, but human-readability is not a priority
    */
   function _backup_db_to_file($file, $settings) {
-    if (!empty($settings->filters['use_mysqldump']) && $this->_backup_db_to_file_mysqldump($file, $settings)) {
+    if (!empty($settings->filters['use_cli']) && $this->_backup_db_to_file_mysqldump($file, $settings)) {
       return TRUE;
     }
 

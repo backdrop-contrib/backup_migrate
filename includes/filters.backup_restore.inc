@@ -124,7 +124,11 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
       if (!empty($settings->filters['destinations'][$source->get_id()])) {
         $settings->filters = (array)($settings->filters['destinations'][$source->get_id()]) + $settings->filters;
       }
+
+      backup_migrate_filters_invoke_all('pre_backup', $source, $file, $settings);
       $file = $source->backup_to_file($file, $settings);
+      backup_migrate_filters_invoke_all('post_backup', $source, $file, $settings, !empty($file));
+
       return $file;
     }
     backup_migrate_backup_fail("Could not run backup because the source '%source' is missing.", array('%source' => $settings->source_id), $settings);
