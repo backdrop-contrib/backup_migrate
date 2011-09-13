@@ -379,3 +379,18 @@ function backup_migrate_update_2005() {
 
   return $ret;
 }
+
+/**
+ * Uninstall backup migrate files if it's installed
+ */
+function backup_migrate_update_3000() {
+  $ret = array();
+  if (module_exists('backup_migrate_files')) {
+    module_disable(array('backup_migrate_files'));
+    $ret[] = array(
+      'success' => true,
+      'query' => 'Disabled the Backup and Migrate Files module',
+    );
+  }
+  return $ret;
+}

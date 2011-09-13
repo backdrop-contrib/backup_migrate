@@ -12,7 +12,19 @@ backup_migrate_include('crud');
  * Get the available destination types.
  */
 function backup_migrate_get_destination_types() {
-  return module_invoke_all('backup_migrate_destination_types');
+  // We don't use module_invoke_all so we can avoid the side-effects of array_merge_recursive.
+  $out = array();
+  foreach (module_implements('backup_migrate_destination_types') as $module) {
+    $function =  $module . '_backup_migrate_destination_types';
+    $result = $function();
+    if (isset($result) && is_array($result)) {
+      foreach ($result as $key => $val) {
+        $out[$key] = $val;
+      }
+    }
+  }
+
+  return $out;
 }
 
 /**
@@ -87,6 +99,14 @@ function backup_migrate_backup_migrate_destination_types() {
       'class' => 'backup_migrate_destination_email',
       'can_create' => TRUE,
     ),
+    'filesource' => array(
+      'description' => t('A files directory which can be backed up from.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.filesource.inc',
+      'class' => 'backup_migrate_destination_filesource',
+      'type_name' => t('File Directory'),
+      'can_create' => TRUE,
+    ),
+
   );
 
   return $out;
