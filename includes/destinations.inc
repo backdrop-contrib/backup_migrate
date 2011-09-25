@@ -106,6 +106,13 @@ function backup_migrate_backup_migrate_destination_types() {
       'type_name' => t('File Directory'),
       'can_create' => TRUE,
     ),
+    'archive' => array(
+      'description' => t('Create an archive of your entire site.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.archivesource.inc',
+      'class' => 'backup_migrate_files_destination_archivesource',
+      'type_name' => t('Site Archive'),
+      'can_create' => FALSE,
+    ),
 
   );
 

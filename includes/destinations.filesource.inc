@@ -60,10 +60,9 @@ class backup_migrate_destination_filesource extends backup_migrate_destination {
   /**
    * Get the form for the settings for this destination.
    *
-   * Return the default tables whose data can be ignored. These tables mostly contain
-   *  info which can be easily reproducted (such as cache or search index)
-   *  but also tables which can become quite bloated but are not necessarily extremely
-   *  important to back up or migrate during development (such ass access log and watchdog)
+   * Return the default directories whose data can be ignored. These directories contain
+   *  info which can be easily reproducted. Also exclude the backup and migrate folder 
+   *  to prevent exponential bloat.
    */
   function backup_settings_default() {
      return array(
@@ -132,8 +131,8 @@ class backup_migrate_destination_filesource extends backup_migrate_destination {
       $temp = backup_migrate_temp_directory();
 
       $file->push_type('tar'); 
-      backup_migrate_exec("tar --dereference -C %input -rf %output $exclude .", array('%output' => $file->filepath(), '%input' => $this->get_location(), '%temp' => $temp, '%link' => $link));
-  
+      backup_migrate_exec("tar --dereference -C %input -rf %output $exclude .", array('%output' => $file->filepath(), '%input' => $this->get_location(), '%temp' => $temp));
+
       return $file;
     }
     return FALSE;
@@ -214,27 +213,31 @@ class backup_migrate_destination_filesource extends backup_migrate_destination {
       while (($file = readdir($handle)) !== FALSE) {
         if ($file != '.' && $file != '..' && !in_array($file, $exclude)) {
           $file = realpath($dir . '/' . $file);
-          if (is_dir($file)) {
-            $subdir = $this->get_files_to_backup($file, $settings, $exclude, $base_dir);
-            // If there was an error reading the subdirectory then abort the backup.
-            if ($subdir === FALSE) {
-              closedir($handle);
-              return FALSE;
-            }
-            // If the directory is empty, add an empty directory.
-            if (count($subdir) == 0) {
-              $out[] = str_replace($base_dir, '', $file);
-            }
-            $out = array_merge($out, $subdir);
-          }
-          else {
-            if (is_readable($file)) {
-              $out[] = str_replace($base_dir, '', $file);
+          $path = str_replace($base_dir, '', $file);
+          // If the path is not excluded.
+          if (!in_array($path, $exclude)) {
+            if (is_dir($file)) {
+              $subdir = $this->get_files_to_backup($file, $settings, $exclude, $base_dir);
+              // If there was an error reading the subdirectory then abort the backup.
+              if ($subdir === FALSE) {
+                closedir($handle);
+                return FALSE;
+              }
+              // If the directory is empty, add an empty directory.
+              if (count($subdir) == 0) {
+                $out[] = $path;
+              }
+              $out = array_merge($out, $subdir);
             }
             else {
-              backup_migrate_backup_fail('The directory cannot be backed up because the file %file cannot be read by the web server.', array('%file' => str_replace($base_dir, '', $file)), $settings);
-              closedir($handle);
-              return FALSE;
+              if (is_readable($file)) {
+                $out[] = $path;
+              }
+              else {
+                backup_migrate_backup_fail('The directory cannot be backed up because the file %file cannot be read by the web server.', array('%file' => str_replace($base_dir, '', $file)), $settings);
+                closedir($handle);
+                return FALSE;
+              }
             }
           }
         }
