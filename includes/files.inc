@@ -30,7 +30,7 @@ function _backup_migrate_temp_files_delete() {
         _backup_migrate_temp_files_delete_file($file);
       }
     }
-  
+
     // Delete temp files abandoned for 6 or more hours.
     $dir = file_directory_temp();
     $expire = time() - variable_get('backup_migrate_cleanup_time', 21600);
@@ -52,14 +52,15 @@ function _backup_migrate_temp_files_delete() {
  * Delete a temporary file or folder
  */
 function _backup_migrate_temp_files_delete_file($file) {
-  if (file_exists($file) && is_writable($file)) {
-    if (is_dir($file) && is_readable($file) && $handle = opendir($file)) {
+  if (file_exists($file) && (is_writable($file) || is_link($file))) {
+    if (!is_link($file) && is_dir($file) && is_readable($file) && $handle = opendir($file)) {
       $dir = $file;
       while (FALSE !== ($file = @readdir($handle))) {
         if ($file != '..' && $file != '.') {
           _backup_migrate_temp_files_delete_file("$dir/$file");
         }
       }
+      rmdir($dir);
     }
     else {
       unlink($file);

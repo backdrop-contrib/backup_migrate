@@ -24,7 +24,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
    */
   function destinations() {
     $out  = array();
-    $out['archive'] = backup_migrate_create_destination('archive', array('destination_id' => 'archive', 'location' => '.', 'name' => t('Site Archive')));
+    $out['archive'] = backup_migrate_create_destination('archive', array('destination_id' => 'archive', 'location' => '.', 'name' => t('Entire Site')));
     return $out;
   }
 
@@ -151,8 +151,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
     }
     $ini = $this->_array_to_ini($info);
 
-    $tmpdir = realpath(file_directory_temp()) .'/'. uniqid('backup_migrate_');
-    mkdir($tmpdir);
+    $tmpdir = backup_migrate_temp_directory();
     $filepath = $tmpdir . '/MANIFEST.ini';
     file_put_contents($filepath, $ini);
     return $filepath;
@@ -171,8 +170,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
     $file = backup_migrate_filters_backup($file, $settings);
 
     // Generate a tmp file with the correct final title (because ArchiveTar doesn't seem to allow renaming).
-    $tmpdir = realpath(file_directory_temp()) .'/'. uniqid('backup_migrate_');
-    mkdir($tmpdir);
+    $tmpdir = backup_migrate_temp_directory();
     $filepath = $tmpdir . '/database.sql';
     rename($file->filepath(), $filepath);
 
