@@ -444,7 +444,7 @@ class backup_migrate_item {
     }
 
     // Export link disabled until we have an import function.
-    //$out['export'] = l(t("export"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/export/$item_id");
+    $out['export'] = l(t("export"), BACKUP_MIGRATE_MENU_PATH . "/$this->type_name/list/export/$item_id");
 
     return $out;
   }
