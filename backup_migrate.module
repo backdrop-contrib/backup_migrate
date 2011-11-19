@@ -654,7 +654,7 @@ function backup_migrate_perform_backup(&$settings) {
   }
 
   if ($settings->append_timestamp && $settings->timestamp_format) {
-    $settings->filename .= "-". date($settings->timestamp_format);
+    $settings->filename .= "-". format_date(time(), 'custom', $settings->timestamp_format);
   }
   $settings->filename = _backup_migrate_clean_filename($settings->filename);
 
