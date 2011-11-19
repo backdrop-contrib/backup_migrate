@@ -1,6 +1,6 @@
 
 -------------------------------------------------------------------------------
-Backup and Migrate 2 for Drupal 6.x
+Backup and Migrate 2 for Drupal 7.x
   by Ronan Dowling, Gorton Studios - ronan (at) gortonstudios (dot) com
 -------------------------------------------------------------------------------
 
@@ -29,6 +29,10 @@ INSTALLATION:
 
 OPTIONAL:
 * Enable token.module to allow token replacement in backup file names.
+* To Backup to Amazon S3:
+    - Download the S3 library from http://undesigned.org.za/2007/10/22/amazon-s3-php-class
+      and place the file 'S3.php' in the includes directory in this module.
+      The stable version (0.4.0 – 20th Jul 2009) works best with Backup and Migrate.
 
 LIGHTTPD USERS:
 Add the following code to your lighttp.conf to secure your backup directories:
