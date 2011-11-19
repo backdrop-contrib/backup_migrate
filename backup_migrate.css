@@ -1,4 +1,5 @@
-.schedule-list-disabled {
+.schedule-list-disabled
+{
   filter:alpha(opacity=50);
   -moz-opacity: .50;
   opacity: .50;
@@ -33,3 +34,9 @@ div.row-error {
   font-weight: bold;
 }
 
+.backup-migrate-listing {
+  margin-bottom: 2em;
+}
+.backup-migrate-actions {
+  text-align: right;
+}

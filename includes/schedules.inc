@@ -98,7 +98,15 @@ class backup_migrate_schedule extends backup_migrate_item {
     $row = parent::get_list_row();
     if (!$this->is_enabled()) {
       foreach ($row as $key => $field) {
-        $row[$key] = array('data' => $field, 'class' => 'schedule-list-disabled');
+        if (!is_array($field)) {
+          $row[$key] = array('data' => $field, 'class' => 'schedule-list-disabled');
+        }
+        else if (isset($row[$key]['class'])) {
+          $row[$key]['class'] .= ' schedule-list-disabled';
+        }
+        else {
+          $row[$key]['class'] = 'schedule-list-disabled';
+        }
       }
     }
     return $row;
@@ -198,7 +206,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function edit_form() {
     $form = parent::edit_form();
-    backup_migrate_include('destinations', 'profiles');
+    backup_migrate_include('destinations', 'sources', 'profiles');
 
     $form['enabled'] = array(
       "#type" => "checkbox",
@@ -321,7 +329,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Get the message to send to the user when confirming the deletion of the item.
    */
   function delete_confirm_message() {
-    return t('Are you sure you want to delete the profile %name? Any schedules using this profile will be disabled.', array('%name' => $this->get('name')));
+    return t('Are you sure you want to delete the schedule %name? Backups made with this schedule will not be deleted.', array('%name' => $this->get('name')));
   }
 
   /**

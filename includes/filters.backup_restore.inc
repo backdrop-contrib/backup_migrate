@@ -27,15 +27,27 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     return $out;
   }
 
+  /**
+   * Get the default destinations for this filter.
+   */
+  function sources() {
+    $out = array();
+    foreach ($this->_get_source_types() as $type) {
+      if (method_exists($type, 'sources')) {
+        $out += $type->sources();
+      }
+    }
+    return $out;
+  }
 
   /**
    * Get the default backup settings for this filter.
    */
   function backup_settings_default() {
-    backup_migrate_include('destinations');
+    backup_migrate_include('sources');
     $out = array();
-    foreach (backup_migrate_get_destinations('source') as $destination) {
-      $out['destinations'][$destination->get_id()] = $destination->backup_settings_default();
+    foreach (backup_migrate_get_sources() as $source) {
+      $out['destinations'][$source->get_id()] = $source->backup_settings_default();
     }
     return $out;
   }
@@ -73,21 +85,20 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
    * Get the form for the backup settings for this filter.
    */
   function backup_settings_form($settings) {
-    backup_migrate_include('destinations');
+    backup_migrate_include('sources');
     $out = array('destinations' => array(
       '#tree' => TRUE,
-      
     ));
-    foreach (backup_migrate_get_destinations('source') as $destination) {
-      $destination_settings = (array)(@$settings['destinations'][$destination->get_id()]) + $settings;
-      if ($form = $destination->backup_settings_form($destination_settings)) {
-        $out['destinations'][$destination->get_id()] = array(
+    foreach (backup_migrate_get_sources()  as $source) {
+      $source_settings = (array)(@$settings['destinations'][$source->get_id()]) + $settings;
+      if ($form = $source->backup_settings_form($source_settings)) {
+        $out['destinations'][$source->get_id()] = array(
           '#type' => 'fieldset',
-          '#title' => t('!name Backup Options', array('!name' => $destination->get('name'))),
+          '#title' => t('!name Backup Options', array('!name' => $source->get('name'))),
           "#collapsible" => TRUE,
           "#collapsed" => TRUE,
           '#tree' => TRUE,
-          '#parents' => array('filters', 'destinations', $destination->get_id()),
+          '#parents' => array('filters', 'sources', $source->get_id()),
         ) + $form;
       }
     }
@@ -170,4 +181,26 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     }
     return $destinations;
   }
+
+  /**
+   * Get a list of dummy destinations representing each of the available source types.
+   */
+  function _get_source_types() {
+    backup_migrate_include('sources');
+    static $sources = NULL;
+    if (!is_array($sources)) {
+      $sources = array();
+      $types = backup_migrate_get_source_types();
+      // If no (valid) node type has been provided, display a node type overview.
+      foreach ($types as $key => $type) {
+        // Include the necessary file if specified by the type.
+        if (!empty($type['file'])) {
+          require_once './'. $type['file'];
+        }
+        $sources[] = new $type['class'](array());
+      }
+    }
+    return $sources;
+  }
+
 }

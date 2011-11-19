@@ -41,14 +41,14 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   /**
    * Declare any mysql databases defined in the settings.php file as a possible destination.
    */
-  function destinations() {
+  function sources() {
     $out = array();
     global $db_url;
     $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
     foreach ((array)$urls as $key => $url) {
       // Only mysql/mysqli supported by this destination.
       if (strpos($url, 'mysql') === 0) {
-        if ($destination = backup_migrate_create_destination('mysql', array('url' => $url))) {
+        if ($destination = backup_migrate_create_destination('mysql', array('url' => $url, 'show_in_list' => TRUE))) {
           // Treat the default database differently because it is probably the only one available.
           if ($key == 'default') {
             $destination->set_id('db');

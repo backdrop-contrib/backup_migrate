@@ -281,14 +281,26 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
 
   $rows = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
+    drupal_set_title(t('%title Files', array('%title' => $destination->get_name())));
+    return _backup_migrate_ui_destination_display_files($destination);
+  }
+  drupal_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
+}
+
+/**
+ * List the backup files in the given destination.
+ */
+function _backup_migrate_ui_destination_display_files($destination = NULL, $limit = NULL) {
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+  $rows = $sort = array();
+  if ($destination) {
     // Refresh the file listing cache if requested.
     if (isset($_GET['refresh'])) {
       $destination->file_cache_clear();
       drupal_goto($_GET['q']);
     }
 
-
-    drupal_set_title(t('%title Files', array('%title' => $destination->get_name())));
     $headers = array(
       array('data' => 'Filename', 'field' => 'filename'),
       array('data' => 'Date', 'field' => 'filetime'),
@@ -331,6 +343,11 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
 
     array_multisort($sort, $sort_dir, $rows);
 
+    // Show only some of them if it's limited.
+    if ($limit) {
+      $rows = array_slice($rows, 0, $limit, TRUE);
+    }
+
     if ($files) {
       $out = theme("table", $headers, $rows);
     }
@@ -342,7 +359,6 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
     }
     return $out;
   }
-  drupal_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
 }
 
 /**
@@ -460,50 +476,7 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
 
 /* Utilities */
 
-/**
- * Get the source options as a form element.
- */
-function _backup_migrate_get_source_form($source_id = 'db') {
-  backup_migrate_include('destinations');
 
-  $form = array();
-  $sources = _backup_migrate_get_source_pulldown($source_id);
-  if (count($sources['#options']) > 1) {
-    $form['source'] = array(
-      "#type" => "fieldset",
-      "#title" => t("Backup Source"),
-      "#collapsible" => TRUE,
-      "#collapsed" => FALSE,
-      "#tree" => FALSE,
-    );
-    $sources['#description'] = t("Choose the database to backup. Any database destinations you have created and any databases specified in your settings.php can be backed up.");
-
-    $form['source']['source_id'] = $sources;
-  }
-  else {
-    $form = array();
-    $form['source']['source_id'] = array(
-      "#type" => "value",
-      "#value" => $source_id,
-    );
-  }
-  return $form;
-}
-
-/**
- * Get pulldown to select existing source options.
- */
-function _backup_migrate_get_source_pulldown($source_id = NULL) {
-  backup_migrate_include('destinations');
-  $sources = _backup_migrate_get_destination_form_item_options('source');
-  $form = array(
-    "#type" => "select",
-    "#title" => t("Backup Source"),
-    "#options" => _backup_migrate_get_destination_form_item_options('source'),
-    "#default_value" => $source_id,
-  );
-  return $form;
-}
 
 /**
  * Get the destination options as an options array for a form item.
@@ -677,6 +650,14 @@ class backup_migrate_destination extends backup_migrate_item {
   /**
    * List all the available files in the given destination with their destination specific id.
    */
+  function count_files() {
+    return count($this->list_files());
+  }
+
+
+  /**
+   * List all the available files in the given destination with their destination specific id.
+   */
   function _list_files() {
     return array();
   }
@@ -833,6 +814,7 @@ class backup_migrate_destination extends backup_migrate_item {
     if (empty($out['actions'])) {
       return NULL;
     }
+
     return $out;
   }
 
@@ -947,14 +929,14 @@ class backup_migrate_destination extends backup_migrate_item {
    */
   function get_menu_items() {
     $items = parent::get_menu_items();
-    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/list/files'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files'] = array(
       'title' => 'Destination Files',
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('destinations', 'backup_migrate_ui_destination_display_files', TRUE),
       'access arguments' => array('access backup files'),
       'type' => MENU_LOCAL_TASK,
     );
-    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/list/deletefile'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/deletefile'] = array(
       'title' => 'Delete File',
       'description' => 'Delete a backup file',
       'page callback' => 'backup_migrate_menu_callback',
@@ -962,7 +944,7 @@ class backup_migrate_destination extends backup_migrate_item {
       'access arguments' => array('delete backup files'),
       'type' => MENU_LOCAL_TASK,
     );
-    $items['admin/content/backup_migrate/destination/list/restorefile'] = array(
+    $items['admin/content/backup_migrate/settings/destination/list/restorefile'] = array(
       'title' => 'Restore from backup',
       'description' => 'Restore database from a backup file on the server',
       'page callback' => 'backup_migrate_menu_callback',
@@ -970,7 +952,7 @@ class backup_migrate_destination extends backup_migrate_item {
       'access arguments' => array('restore from backup'),
       'type' => MENU_LOCAL_TASK,
     );
-    $items[BACKUP_MIGRATE_MENU_PATH . '/destination/downloadfile'] = array(
+    $items[BACKUP_MIGRATE_MENU_PATH . '/settings/destination/downloadfile'] = array(
       'title' => 'Download File',
       'description' => 'Download a backup file',
       'page callback' => 'backup_migrate_menu_callback',

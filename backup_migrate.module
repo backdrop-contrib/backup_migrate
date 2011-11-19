@@ -124,6 +124,24 @@ function backup_migrate_menu() {
     'weight' => 1,
     'type' => MENU_LOCAL_TASK,
   );
+  $items[BACKUP_MIGRATE_MENU_PATH . '/backups'] = array(
+    'title' => 'Saved Backups',
+    'description' => 'Previously created backups',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('', 'backup_migrate_ui_saved_backups', TRUE),
+    'access arguments' => array('access backup and migrate'),
+    'weight' => 1,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items[BACKUP_MIGRATE_MENU_PATH . '/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Module settings.',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('crud', 'backup_migrate_crud_ui_list_all', TRUE),
+    'access arguments' => array('administer backup and migrate'),
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
   $items[BACKUP_MIGRATE_MENU_PATH . '/restore'] = array(
     'title' => 'Restore',
     'description' => 'Restore the database from a previous backup',
@@ -295,7 +313,7 @@ function backup_migrate_ui_manual_backup_load_profile_form_submit($form, &$form_
  * The quick backup form.
  */
 function backup_migrate_ui_manual_quick_backup_form(&$form_state) {
-  backup_migrate_include('profiles', 'destinations');
+  backup_migrate_include('profiles', 'destinations', 'sources');
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
 
   $form = array();
@@ -614,6 +632,24 @@ function backup_migrate_ui_export_form(&$form_state, $item) {
 }
 
 /**
+ * List the previously created backups from accross multiple destinations.
+ */
+function backup_migrate_ui_saved_backups() {
+  backup_migrate_include('profiles', 'destinations', 'sources');
+
+  $out = '';
+  foreach (backup_migrate_get_destinations('list files') as $destination) {
+    $out .= '<div class="backup-migrate-listing"><h3>' . $destination->get_name() . '</h3>';
+    $out .= _backup_migrate_ui_destination_display_files($destination, 5);
+    if ($destination->count_files() > 5) {
+      $out .= '<div class="more-backups-link">' . l(t('See all'), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id()) . '</div>';
+    }
+    $out .= '</div>';
+  }
+  return $out;
+}
+
+/**
  * Perform a backup with the given settings.
  */
 function backup_migrate_perform_backup(&$settings) {
@@ -626,7 +662,7 @@ function backup_migrate_perform_backup(&$settings) {
   }
 
   if ($settings->append_timestamp && $settings->timestamp_format) {
-    $settings->filename .= "-". date($settings->timestamp_format);
+    $settings->filename .= "-". format_date(time(), 'custom', $settings->timestamp_format);
   }
   $settings->filename = _backup_migrate_clean_filename($settings->filename);
 

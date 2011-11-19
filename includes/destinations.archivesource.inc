@@ -22,9 +22,9 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
   /**
    * Declare the current files directory as a backup source..
    */
-  function destinations() {
+  function sources() {
     $out  = array();
-    $out['archive'] = backup_migrate_create_destination('archive', array('destination_id' => 'archive', 'location' => '.', 'name' => t('Entire Site')));
+    $out['archive'] = backup_migrate_create_destination('archive', array('destination_id' => 'archive', 'location' => '.', 'name' => t('Entire Site'), 'show_in_list' => FALSE));
     return $out;
   }
 

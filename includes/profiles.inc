@@ -227,19 +227,6 @@ class backup_migrate_profile extends backup_migrate_item {
   }
 
   /**
-   * Get a row of data to be used in a list of items of this type.
-   */  
-  function get_list_row() {
-    $row = parent::get_list_row();
-    if (empty($this->enabled)) {
-      foreach ($row as $key => $field) {
-        $row[$key] = array('data' => $field, 'class' => 'profile-list-disabled');
-      }
-    }
-    return $row;
-  }
-
-  /**
    * Set the source of this setings profile. Takes either a source object or source id.
    */
   function set_source($source) {
@@ -257,9 +244,9 @@ class backup_migrate_profile extends backup_migrate_item {
    * Get the source of the profile.
    */
   function get_source() {
-    backup_migrate_include('destinations');
+    backup_migrate_include('locations');
     if (!empty($this->source_id) && (empty($this->source) || $this->source->destination_id !== $this->source_id)) {
-      $this->source = backup_migrate_get_destination($this->source_id);
+      $this->source = backup_migrate_get_source($this->source_id);
     }
     return empty($this->source) ? NULL : $this->source;
   }
