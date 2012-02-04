@@ -342,6 +342,19 @@ function backup_migrate_ui_manual_quick_backup_form(&$form_state) {
     "#options" => $profile_options,
   );
 
+  $form['quickbackup']['description'] = array(
+    '#type' => 'fieldset',
+    "#title" => t("Add a note to the backup"),
+    "#collapsible" => TRUE,
+    "#collapsed" => TRUE,
+    "#tree" => FALSE,
+  );
+  $form['quickbackup']['description']['description'] = array(
+    '#type' => 'textarea',
+    "#title" => t("Description"),
+    '#description' => t('This note will be saved with the backup file and shown on the listing page.'),
+  );
+
   $form['quickbackup']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Backup now'),
@@ -378,6 +391,10 @@ function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) 
     // Set the destination to the one chosen in the pulldown.
     $settings->destination_id = $form_state['values']['destination_id'];
     $settings->source_id = $form_state['values']['source_id'];
+
+    // Add the note
+    $settings->filters['utils_description'] = $form_state['values']['description'];
+
 
     // Save the settings for next time.
     variable_set("backup_migrate_source_id", $form_state['values']['source_id']);
@@ -557,16 +574,16 @@ function backup_migrate_ui_manual_restore() {
  * The restore/import upload form.
  */
 function backup_migrate_ui_manual_restore_form() {
-  backup_migrate_include('filters', 'destinations');
+  backup_migrate_include('filters', 'destinations', 'sources');
 
   $form = array();
 
-  $sources = _backup_migrate_get_destination_form_item_options('source');
+  $sources = _backup_migrate_get_source_form_item_options();
   if (count($sources) > 1) {
     $form['source_id'] = array(
       "#type" => "select",
       "#title" => t("Restore to"),
-      "#options" => _backup_migrate_get_destination_form_item_options('source'),
+      "#options" => $sources,
       "#description" => t("Choose the database to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to."),
       "#default_value" => 'db',
     );
@@ -601,7 +618,7 @@ function backup_migrate_ui_manual_restore_form() {
   if (user_access('access backup files')) {
     $form[] = array(
       '#type' => 'markup',
-      '#value' => t('<p>Or you can restore one of the files in your <a href="!url">saved backup destinations.</a></p>', array("!url" => url("admin/content/backup_migrate/destination"))),
+      '#value' => t('<p>Or you can restore one of the files in your <a href="!url">saved backup destinations.</a></p>', array("!url" => url("admin/content/backup_migrate/backups"))),
     );
   }
   $form['#attributes'] = array('enctype' => 'multipart/form-data');
@@ -637,15 +654,44 @@ function backup_migrate_ui_export_form(&$form_state, $item) {
 function backup_migrate_ui_saved_backups() {
   backup_migrate_include('profiles', 'destinations', 'sources');
 
+  $now = $fetch_time = time();
   $out = '';
+  $files = array();
   foreach (backup_migrate_get_destinations('list files') as $destination) {
-    $out .= '<div class="backup-migrate-listing"><h3>' . $destination->get_name() . '</h3>';
-    $out .= _backup_migrate_ui_destination_display_files($destination, 5);
-    if ($destination->count_files() > 5) {
-      $out .= '<div class="more-backups-link">' . l(t('See all'), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id()) . '</div>';
+    $label = l($destination->get_name(), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id());
+    $label = '<div class="backup-migrate-destination"><span class="backup-migrate-label">' . t('Location') . ':</span> ' . $label . '</div>';
+    $dest_files = $destination->list_files();
+
+    // Refresh the destination
+    if (isset($_GET['refresh'])) {
+      $destination->file_cache_clear();
     }
-    $out .= '</div>';
+
+    // Get the file fetch time.
+    if ($destination->cache_files && $destination->fetch_time) {
+      $fetch_time = min($destination->fetch_time, $fetch_time);
+    }
+
+    // Add the files from this destination to the full list.
+    foreach ($dest_files as $id => $file) {
+      $dest_files[$id]->file_info['description'] =  $file->info('description') . $label;
+    }
+    $files += $dest_files;
   }
+
+  // Redirect if refreshing instead of displaying.
+  if (isset($_GET['refresh'])) {
+    drupal_goto($_GET['q']);
+  }
+
+  // Render the list.
+  $out = _backup_migrate_ui_destination_display_file_list($files, 10);
+
+  // Add the refesh link if needed.
+  if ($fetch_time < $now) {
+    $out .= '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval($now - $fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
+  }
+
   return $out;
 }
 

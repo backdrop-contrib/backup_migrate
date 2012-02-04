@@ -184,18 +184,18 @@ function _backup_migrate_profile_saved_default_profile($profile_id = NULL) {
 class backup_migrate_profile extends backup_migrate_item {
   var $db_table = "backup_migrate_profiles";
   var $type_name = "profile";
-  var $singular = 'profile';
-  var $plural = 'profiles';
+  var $singular = 'settings profile';
+  var $plural = 'settings profiles';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.
    */
   function strings() {
     // Help the pot extractor find these strings.
-    t('Profile');
-    t('Profiles');
-    t('profile');
-    t('profiles');
+    t('Settings Profile');
+    t('Settings Profiles');
+    t('settings profile');
+    t('settings profiles');
   }
 
   /**
@@ -245,7 +245,7 @@ class backup_migrate_profile extends backup_migrate_item {
    */
   function get_source() {
     backup_migrate_include('locations');
-    if (!empty($this->source_id) && (empty($this->source) || $this->source->destination_id !== $this->source_id)) {
+    if (!empty($this->source_id) && (empty($this->source) || $this->source->source_id !== $this->source_id)) {
       $this->source = backup_migrate_get_source($this->source_id);
     }
     return empty($this->source) ? NULL : $this->source;

@@ -162,7 +162,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $file->file_info['sitename']          = variable_get('site_name', '');
     $file->file_info['drupalversion']     = VERSION;
 
-    $file->file_info['bam_sourceid']      = $source->destination_id;
+    $file->file_info['bam_sourceid']      = $source->source_id;
     $file->file_info['bam_sourcename']    = $source->name;
     $file->file_info['drupalversion']     = VERSION;
   }

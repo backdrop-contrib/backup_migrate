@@ -134,7 +134,7 @@ function _backup_migrate_get_source_form($source_id = 'db') {
  */
 function _backup_migrate_get_source_pulldown($source_id = NULL) {
   backup_migrate_include('sources');
-  $sources = _backup_migrate_get_location_form_item_options('source');
+  $sources = _backup_migrate_get_source_form_item_options();
   $form = array(
     "#type" => "select",
     "#title" => t("Backup Source"),
@@ -160,7 +160,7 @@ function _backup_migrate_get_source_form_item_options() {
  */
 class backup_migrate_source extends backup_migrate_location {
   var $db_table = "backup_migrate_sources";
-  var $type_name = "source";
+  var $type_name = 'source';
   var $singular = 'source';
   var $plural = 'sources';
 
@@ -175,62 +175,13 @@ class backup_migrate_source extends backup_migrate_location {
     t('Source');
   }
 
-  function file_types() {
-    return array();
+  /**
+   * Get the available location types.
+   */
+  function location_types() {
+    return backup_migrate_get_source_types();
   }
 
-  /**
-   * Get the form for the settings for this filter.
-   */
-  function backup_settings_default() {
-    return array();
-  }
-
-  /**
-   * Get the form for the settings for this filter.
-   */
-  function backup_settings_form($settings) {
-    return array();
-  }
-
-  /**
-   * Get the form for the settings for this filter.
-   */
-  function backup_settings_form_validate($form, &$form_state) {
-  }
-
-  /**
-   * Submit the settings form. Any values returned will be saved.
-   */
-  function backup_settings_form_submit($form, &$form_state) {
-  }
-
-  /**
-   * Get the form for the settings for this filter.
-   */
-  function restore_settings_default() {
-    return array();
-  }
-
-  /**
-   * Get the form for the settings for this filter.
-   */
-  function restore_settings_form($settings) {
-    return array();
-  }
-
-  /**
-   * Get the form for the settings for this filter.
-   */
-  function restore_settings_form_validate($form_values) {
-  }
-
-  /**
-   * Submit the settings form. Any values returned will be saved.
-   */
-  function restore_settings_form_submit($form_values) {
-    return $form_values;
-  }
 }
 
 /**
@@ -257,44 +208,6 @@ class backup_migrate_source_remote extends backup_migrate_source {
   function set_location($location) {
     $this->location = $location;
     $this->set_url($location);
-  }
-
-  /**
-   * Get a url from the parts.
-   */
-  function url($hide_password = TRUE) {
-    return $this->glue_url($this->dest_url, $hide_password);
-  }
-
-  /**
-   * Glue a URLs component parts back into a URL.
-   */
-  function glue_url($parts, $hide_password = TRUE) {
-    // Obscure the password if we need to.
-    $parts['pass'] = $hide_password ? "" : $parts['pass'];
-
-    // Assemble the URL.
-    $out = "";
-    $out .= $parts['scheme'] .'://';
-    $out .= $parts['user'] ? urlencode($parts['user']) : '';
-    $out .= ($parts['user'] && $parts['pass']) ? ":". urlencode($parts['pass']) : '';
-    $out .= ($parts['user'] || $parts['pass']) ? "@" : "";
-    $out .= $parts['host'];
-    $out .= !empty($parts['port']) ? ':'. $parts['port'] : '';
-    $out .= "/". $parts['path'];
-    return $out;
-  }
-
-  /**
-   * Break a URL into it's component parts.
-   */
-  function set_url($url) {
-    $parts          = (array)parse_url($url);
-    $parts['user'] = urldecode(@$parts['user']);
-    $parts['pass'] = urldecode(@$parts['pass']);
-    $parts['path'] = urldecode(@$parts['path']);
-    $parts['path']  = ltrim(@$parts['path'], "/");
-    $this->dest_url = $parts;
   }
 
   /**

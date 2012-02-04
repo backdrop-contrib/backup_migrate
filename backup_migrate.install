@@ -71,10 +71,10 @@ function backup_migrate_schema() {
         'length' => 32,
         'not null' => TRUE,
         'default' => '0',
-        'description' => t('The primary identifier for a profile.'),
+        'description' => t('The primary identifier for a destination.'),
       ),
       'name' => array(
-        'description' => t('The name of the profile.'),
+        'description' => t('The name of the destination.'),
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE
@@ -100,6 +100,43 @@ function backup_migrate_schema() {
     ),
     'primary key' => array('destination_id'),
   );
+  $schema['backup_migrate_sources'] = array(
+    'fields' => array(
+      'source_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '0',
+        'description' => t('The primary identifier for a source.'),
+      ),
+      'name' => array(
+        'description' => t('The name of the source.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE
+      ),
+      'type' => array(
+        'description' => t('The type of the source.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE
+      ),
+      'location' => array(
+        'description' => t('The the location string of the source.'),
+        'type' => 'text',
+        'not null' => TRUE
+      ),
+      'settings' => array(
+        'description' => t('Other settings for the source.'),
+        'type' => 'text',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+        'serialized default' => 'a:0:{}',
+     ),
+    ),
+    'primary key' => array('source_id'),
+  );
+
   $schema['backup_migrate_schedules'] = array(
     'fields' => array(
       'schedule_id' => array(
@@ -392,5 +429,46 @@ function backup_migrate_update_3000() {
       'query' => 'Disabled the Backup and Migrate Files module',
     );
   }
+
+  $schema['backup_migrate_sources'] = array(
+    'fields' => array(
+      'source_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '0',
+        'description' => t('The primary identifier for a source.'),
+      ),
+      'name' => array(
+        'description' => t('The name of the source.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE
+      ),
+      'type' => array(
+        'description' => t('The type of the source.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE
+      ),
+      'location' => array(
+        'description' => t('The the location string of the source.'),
+        'type' => 'text',
+        'not null' => TRUE
+      ),
+      'settings' => array(
+        'description' => t('Other settings for the source.'),
+        'type' => 'text',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+        'serialized default' => 'a:0:{}',
+     ),
+    ),
+    'primary key' => array('source_id'),
+  );
+
+  $ret = array();
+  db_create_table($ret, 'backup_migrate_sources', $schema['backup_migrate_sources']);
+
   return $ret;
 }

@@ -47,6 +47,7 @@ class backup_migrate_schedule extends backup_migrate_item {
   var $singular = 'schedule';
   var $plural = 'schedules';
   var $default_values = array();
+  var $settings_path = '/';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.
@@ -71,6 +72,15 @@ class backup_migrate_schedule extends backup_migrate_item {
         'period' => 60 * 60 * 24,
         'storage' => BACKUP_MIGRATE_STORAGE_NONE
       );
+  }
+
+  /**
+   * Return as an array of values.
+   */
+  function to_array() {
+    $out = parent::to_array();
+    unset($out['last_run']);
+    return $out;
   }
 
   /**
@@ -404,4 +414,6 @@ class backup_migrate_schedule extends backup_migrate_item {
       }
     }
   }
+
 }
+

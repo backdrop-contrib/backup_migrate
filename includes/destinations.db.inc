@@ -11,8 +11,8 @@
  *
  * @ingroup backup_migrate_destinations
  */
-class backup_migrate_destination_db extends backup_migrate_destination_remote {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'configure', 'source');
+class backup_migrate_destination_db extends backup_migrate_source_remote {
+  var $supported_ops = array('configure', 'source');
 
   function type_name() {
     return t("Database");

@@ -24,7 +24,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
    */
   function sources() {
     $out  = array();
-    $out['archive'] = backup_migrate_create_destination('archive', array('destination_id' => 'archive', 'location' => '.', 'name' => t('Entire Site'), 'show_in_list' => FALSE));
+    $out['archive'] = backup_migrate_create_destination('archive', array('source_id' => 'archive', 'location' => '.', 'name' => t('Entire Site'), 'show_in_list' => FALSE));
     return $out;
   }
 
@@ -33,7 +33,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
    */
   function file_types() {
     return array(
-      "sitearchve" => array(
+      "sitearchive" => array(
         "extension" => "sitearchive.tar",
         "filemime" => "application/x-tar",
         "backup" => TRUE,
@@ -111,7 +111,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       rename($db, $temp . '/database.sql');
       rename($manifest, $temp . '/MANIFEST.ini');
 
-      $file->push_type('tar'); 
+      $file->push_type('sitearchive');
       $link = $temp . '/docroot';
       $input = realpath($this->get_location());
       backup_migrate_exec("ln -s %input %link; tar --dereference -C %temp -rf %output $exclude .", array('%output' => $file->filepath(), '%input' => $input, '%temp' => $temp, '%link' => $link));
@@ -142,12 +142,12 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       ),
     );
     if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE) {
-      $sites['files']['private'] = file_directory_path();
-      $sites['files']['mode'] = 'private';
+      $info['Site 0']['files-private'] = 'docroot/' . file_directory_path();
+      $info['Site 0']['files-mode'] = 'private';
     }
     else {
-      $sites['files']['public'] = file_directory_path();
-      $sites['files']['mode'] = 'public';
+      $info['Site 0']['files-public'] = 'docroot/' . file_directory_path();
+      $info['Site 0']['files-mode'] = 'public';
     }
     $ini = $this->_array_to_ini($info);
 
@@ -178,6 +178,91 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
   }
 
   /**
+   * Restore to this source.
+   */
+  function _restore_from_file_php($file, &$settings) {
+    $success = false;
+    if ($this->check_libs()) {
+      $from = $file->pop_type();
+      $temp = backup_migrate_temp_directory();
+
+      $tar = new Archive_Tar($from->filepath());
+      $tar->extractModify($temp, $file->name);
+
+      // Parse the manifest
+      $manifest = $this->read_manifest($temp);
+
+      // Currently only the first site in the archive is supported.
+      $site = $manifest['Site 0'];
+
+      $docroot  = $temp . '/' . $site['docroot'];
+      $sqlfile  = $temp . '/' . $site['database-file-default'];
+      $filepath = NULL;
+      if (isset($site['files-private'])) {
+        $filepath = $temp . '/' . $site['files-private'];
+      }
+      else if (isset($site['files-public'])) {
+        $filepath = $temp . '/' . $site['files-public'];
+      }
+
+      // Move the files from the temp directory.
+      if ($filepath && file_exists($filepath)) {
+        _backup_migrate_move_files($filepath, file_directory_path());
+      }
+      else {
+        _backup_migrate_message('Files were not restored because the archive did not seem to contain a files directory or was in a format that Backup and Migrate couldn\'t read', array(), 'warning');
+      }
+
+      // Restore the sql db.
+      if ($sqlfile && file_exists($sqlfile)) {
+        $db_settings = drupal_clone($settings);
+        $db_settings->source_id = 'db';
+        $file = new backup_file(array('filepath' => $sqlfile));
+        $success = backup_migrate_filters_restore($file, $db_settings);
+      }
+      else {
+        _backup_migrate_message('The database was not restored because the archive did not seem to contain a database backup or was in a format that Backup and Migrate couldn\'t read', array(), 'warning');
+      }
+
+      if ($docroot) {
+        _backup_migrate_message('Backup and Migrate cannot restore the php code of the site for security reasons. You will have to copy the code to the server by hand if you wish to restore the full site.', array(), 'warning');
+      }
+
+      return $success && $file;
+    }
+    return FALSE;
+  }
+
+  /**
+   * Restore to this source.
+   */
+  function _restore_from_file_cli($file, &$settings) {
+    // @TODO: implement the cli version of the restore.
+    return FALSE;
+  }
+
+  /**
+   * Generate a manifest file.
+   */
+  function read_manifest($directory) {
+    // Assume some defaults if values ore the manifest is missing.
+    $defaults = array(
+      'docroot' => 'docroot',
+      'database-file-default' => 'database.sql',
+      'database-file-driver' => 'mysql',
+    );
+
+    $out = $this->_ini_to_array($directory . '/MANIFEST.ini');
+
+    // Set the defaults.
+    $out['Site 0'] = isset($out['Site 0']) ? $out['Site 0'] : array();
+    $out['Site 0'] += $defaults;
+
+    return $out;
+  }
+
+
+  /**
    * Convert an associated array to an ini format string. Only allows 2 levels of depth to allow parse_ini_file to parse.
    */
   function _array_to_ini($sections) {
@@ -190,6 +275,13 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       $content .= "\n";
     }
     return $content;
+  }
+
+  /**
+   * Convert an associated array to an ini format string. Only allows 2 levels of depth to allow parse_ini_file to parse.
+   */
+  function _ini_to_array($path) {
+    return parse_ini_file($path, TRUE);
   }
 }
 

@@ -33,89 +33,11 @@ function backup_migrate_get_location_types() {
  * Get the built in Backup and Migrate location types.
  */
 function backup_migrate_backup_migrate_location_types() {
+  backup_migrate_include('crud', 'destinations', 'sources');
+
   $out = array();
-  if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
-    $out += array(
-      'file' => array(
-        'description' => t('Save the backup files to any directory on the server which the web-server can write to.'),
-        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.file.inc',
-        'class' => 'backup_migrate_location_files',
-        'type_name' => t('Server Directory'),
-        'can_create' => TRUE,
-      ),
-      'file_manual' => array(
-        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.file.inc',
-        'type_name' => t('Server Directory'),
-        'class' => 'backup_migrate_location_files_manual',
-      ),
-      'file_scheduled' => array(
-        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.file.inc',
-        'type_name' => t('Server Directory'),
-        'class' => 'backup_migrate_location_files_scheduled',
-      ),
-    );
-  }
-  $out += array(
-    'browser_download' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.browser.inc',
-      'class' => 'backup_migrate_location_browser_download',
-    ),
-    'browser_upload' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.browser.inc',
-      'class' => 'backup_migrate_location_browser_upload',
-    ),
-    'db' => array(
-      'type_name' => t('Database'),
-      'description' => t('Import the backup directly into another database. Database locations can also be used as a source to backup from.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.db.inc',
-      'class' => 'backup_migrate_location_db',
-      'can_create' => FALSE,
-    ),
-    'mysql' => array(
-      'type_name' => t('MySQL Database'),
-      'description' => t('Import the backup directly into another MySQL database. Database locations can also be used as a source to backup from.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.db.mysql.inc',
-      'class' => 'backup_migrate_location_db_mysql',
-      'can_create' => TRUE,
-    ),
-    'ftp' => array(
-      'description' => t('Save the backup files to any a directory on an FTP server.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.ftp.inc',
-      'class' => 'backup_migrate_location_ftp',
-      'type_name' => t('FTP Directory'),
-      'can_create' => TRUE,
-    ),
-    's3' => array(
-      'description' => t('Save the backup files to a bucket on your !link.', array('!link' => l(t('Amazon S3 account'), 'http://aws.amazon.com/s3/'))),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.s3.inc',
-      'class' => 'backup_migrate_location_s3',
-      'type_name' => t('Amazon S3 Bucket'),
-      'can_create' => TRUE,
-    ),
-    'email' => array(
-      'type_name' => t('Email'),
-      'description' => t('Send the backup as an email attachment to the specified email address.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.email.inc',
-      'class' => 'backup_migrate_location_email',
-      'can_create' => TRUE,
-    ),
-    'filesource' => array(
-      'description' => t('A files directory which can be backed up from.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.filesource.inc',
-      'class' => 'backup_migrate_location_filesource',
-      'type_name' => t('File Directory'),
-      'can_create' => TRUE,
-    ),
-    'archive' => array(
-      'description' => t('Create an archive of your entire site.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/locations.archivesource.inc',
-      'class' => 'backup_migrate_files_location_archivesource',
-      'type_name' => t('Site Archive'),
-      'can_create' => FALSE,
-    ),
-
-  );
-
+  $out += backup_migrate_backup_migrate_source_types();
+  $out += backup_migrate_backup_migrate_destination_types();
   return $out;
 }
 
@@ -180,24 +102,6 @@ function backup_migrate_get_location($id) {
   return empty($locations[$id]) ? NULL : $locations[$id];
 }
 
-/**
- * Create a location object of the given type with the given params.
- */
-function backup_migrate_create_location($location_type, $params = array()) {
-  $params['type'] = $location_type;
-  return backup_migrate_location::create($params);
-}
-
-/**
- * Get the location options as an options array for a form item.
- */
-function _backup_migrate_get_location_form_item_options($op) {
-  $out = array();
-  foreach (backup_migrate_get_locations($op) as $key => $location) {
-    $out[$key] = $location->get_name();
-  }
-  return $out;
-}
 
 /**
  * A base class for creating locations.
@@ -257,6 +161,10 @@ class backup_migrate_location extends backup_migrate_item {
     $this->type = $type;
   }
 
+  function get_type() {
+    return @$this->location_type;
+  }
+
   function set_location($location) {
     $this->location = $location;
   }
@@ -282,7 +190,7 @@ class backup_migrate_location extends backup_migrate_item {
    */
   function get_location_type_name() {
     if ($type = $this->location_type) {
-      $types = backup_migrate_get_location_types();
+      $types = $this->location_types();
       return isset($types[$type]['type_name']) ? $types[$type]['type_name'] : $type;
     }
   }
@@ -291,7 +199,7 @@ class backup_migrate_location extends backup_migrate_item {
    * Get the edit form for the item.
    */
   function edit_form() {
-    if (get_class($this) !== 'backup_migrate_location') {
+    if (!empty($this->supported_ops)) {
       $form = parent::edit_form();
       $form['name'] = array(
         "#type" => "textfield",
@@ -305,13 +213,13 @@ class backup_migrate_location extends backup_migrate_item {
       );
     }
     else {
-      $types = backup_migrate_get_location_types();
+      $types = $this->location_types();
       $items = array();
       // If no (valid) node type has been provided, display a node type overview.
       foreach ($types as $key => $type) {
         if (@$type['can_create']) {
           $type_url_str = str_replace('_', '-', $key);
-          $out = '<dt>'. l($type['type_name'], BACKUP_MIGRATE_MENU_PATH . "/location/list/add/$type_url_str", array('attributes' => array('title' => t('Add a new @s location.', array('@s' => $type['type_name']))))) .'</dt>';
+          $out = '<dt>'. l($type['type_name'], BACKUP_MIGRATE_MENU_PATH . "/settings/$this->type_name/add/$type_url_str", array('attributes' => array('title' => t('Add a new @s location.', array('@s' => $type['type_name']))))) .'</dt>';
           $out .= '<dd>'. filter_xss_admin($type['description']) .'</dd>';
           $items[] = $out;
         }
@@ -328,6 +236,13 @@ class backup_migrate_location extends backup_migrate_item {
       );
     }
     return $form;
+  }
+
+  /**
+   * Get the available location types.
+   */
+  function location_types() {
+    return backup_migrate_get_location_types();
   }
 
   /**
@@ -419,15 +334,67 @@ class backup_migrate_location extends backup_migrate_item {
   }
 
   /**
+   * Get the form for the settings for this filter.
+   */
+  function backup_settings_default() {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function backup_settings_form($settings) {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function backup_settings_form_validate($form, &$form_state) {
+  }
+
+  /**
+   * Submit the settings form. Any values returned will be saved.
+   */
+  function backup_settings_form_submit($form, &$form_state) {
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_default() {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_form($settings) {
+    return array();
+  }
+
+  /**
+   * Get the form for the settings for this filter.
+   */
+  function restore_settings_form_validate($form_values) {
+  }
+
+  /**
+   * Submit the settings form. Any values returned will be saved.
+   */
+  function restore_settings_form_submit($form_values) {
+    return $form_values;
+  }
+
+  /**
    * Create a new location of the correct type.
    */
   function create($params = array()) {
     $out = NULL;
     $types = backup_migrate_get_location_types();
-
     // Get the type passed in in the params, or if none, check the url for a valid type name.
     // This is to allow new location type to be specified in the path.
-    $location_type = !empty($params['type']) ? $params['type'] : arg(BACKUP_MIGRATE_MENU_DEPTH + 3);
+    $location_type = !empty($params['type']) ? $params['type'] : NULL;
 
     if ($location_type && ($type = @$types[$location_type])) {
       // Include the necessary file if specified by the type.
@@ -436,11 +403,58 @@ class backup_migrate_location extends backup_migrate_item {
       }
       $out = new $type['class']($params + array('location_type' => $location_type));
     }
+
     if (empty($out)) {
-      $out = new backup_migrate_location();
+      $out = parent::create($params);
     }
     return $out;
   }
+
+   /**
+   * Get a url from the parts.
+   */
+  function url($hide_password = TRUE) {
+    return $this->glue_url($this->dest_url, $hide_password);
+  }
+
+  /**
+   * Glue a URLs component parts back into a URL.
+   */
+  function glue_url($parts, $hide_password = TRUE) {
+    // Obscure the password if we need to.
+    $parts['pass'] = $hide_password ? "" : $parts['pass'];
+
+    // Assemble the URL.
+    $out = "";
+    $out .= $parts['scheme'] .'://';
+    $out .= $parts['user'] ? urlencode($parts['user']) : '';
+    $out .= ($parts['user'] && $parts['pass']) ? ":". urlencode($parts['pass']) : '';
+    $out .= ($parts['user'] || $parts['pass']) ? "@" : "";
+    $out .= $parts['host'];
+    $out .= !empty($parts['port']) ? ':'. $parts['port'] : '';
+    $out .= "/". $parts['path'];
+    return $out;
+  }
+
+  /**
+   * Break a URL into it's component parts.
+   */
+  function set_url($url) {
+    $parts          = (array)parse_url($url);
+    $parts['user'] = urldecode(@$parts['user']);
+    $parts['pass'] = urldecode(@$parts['pass']);
+    $parts['path'] = urldecode(@$parts['path']);
+    $parts['path']  = ltrim(@$parts['path'], "/");
+    $this->dest_url = $parts;
+  }
+
+  /**
+   * Retrieve a list of filetypes supported by this source/destination.
+   */
+  function file_types() {
+    return array();
+  }
+
 }
 
 /**

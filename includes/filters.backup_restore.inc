@@ -124,6 +124,9 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     foreach ($this->_get_destination_types() as $destination) {
       $types += $destination->file_types();
     }
+    foreach ($this->_get_source_types() as $source) {
+      $types += $source->file_types();
+    }
     return $types;
   }
 
