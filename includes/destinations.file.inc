@@ -37,7 +37,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   
           // chmod, chown and chgrp the file if needed.
           if ($chmod = $this->settings('chmod')) {
-            if (!@chmod($filepath, octdec($chmod))) {
+            if (!@drupal_chmod($filepath, octdec($chmod))) {
               _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
             }
           }
