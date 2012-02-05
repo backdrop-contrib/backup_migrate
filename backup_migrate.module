@@ -829,9 +829,9 @@ function backup_migrate_perform_backup(&$settings) {
   if ($settings->append_timestamp && $settings->timestamp_format) {
     $timestamp = format_date(time(), 'custom', $settings->timestamp_format);
   }
-  $settings->filename = _backup_migrate_construct_filename($settings->filename, $timestamp);
+  $filename = _backup_migrate_construct_filename($settings->filename, $timestamp);
 
-  $file = new backup_file(array('filename' => $settings->filename));
+  $file = new backup_file(array('filename' => $filename));
   if (!$file) {
     backup_migrate_backup_fail("Could not run backup because a temporary file could not be created.", array(), $settings);
     return FALSE;
@@ -861,7 +861,7 @@ function backup_migrate_perform_backup(&$settings) {
   $time = timer_stop('backup_migrate_backup');
   $message = '%source backed up successfully to %file in destination %dest in !time. !action';
   $params = array(
-    '%file' => $settings->filename,
+    '%file' => $filename,
     '%dest' => $settings->get_destination_name(),
     '%source' => $settings->get_source_name(),
     '!time' => backup_migrate_format_elapsed_time($time['time']),
