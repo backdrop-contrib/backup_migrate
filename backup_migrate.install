@@ -185,8 +185,7 @@ function backup_migrate_install() {
 }
 
 function _backup_migrate_setup_database_defaults() {
-  backup_migrate_include('crud');
-
+  require_once DRUPAL_ROOT . '/'. drupal_get_path('module', 'backup_migrate') .'/includes/crud.inc';
   require_once DRUPAL_ROOT . '/'. drupal_get_path('module', 'backup_migrate') .'/backup_migrate.module';
   require_once DRUPAL_ROOT . '/'. drupal_get_path('module', 'backup_migrate') .'/includes/profiles.inc';
   require_once DRUPAL_ROOT . '/'. drupal_get_path('module', 'backup_migrate') .'/includes/db.inc';
