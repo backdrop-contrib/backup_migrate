@@ -308,12 +308,15 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
     array_multisort($sort, $sort_dir, $rows);
 
     // Show only some of them if it's limited.
+    $showing = '';
     if ($limit) {
+      $showing = t('Showing @limit of @total files.', array('@limit' => $limit, '@total' => count($rows)));
       $rows = array_slice($rows, 0, $limit, TRUE);
     }
 
     if ($files) {
       $out = theme("table", $headers, $rows, array('class' => 'backup-migrate-listing backup-migrate-listing-files'));
+      $out .= $showing;
     }
     else {
       $out = t('There are no backup files to display.');

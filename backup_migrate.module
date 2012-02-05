@@ -59,6 +59,11 @@ function backup_migrate_help($section, $arg) {
                   array('!cronurl' => 'http://drupal.org/cron')),
       'more' => t('Each schedule will run a maximum of once per cron run, so they will not run more frequently than your cron is configured to run. If you specify a number of backups to keep for a schedule, old backups will be deleted as new ones created. <strong>If specifiy a number of files to keep other backup files in that schedule\'s destination will get deleted</strong>.'),
     ),
+    BACKUP_MIGRATE_MENU_PATH . '/settings/import' => array(
+      'title' => t('Importing Settings'),
+      'body' => t('Import a settings profile, backup schedule, source or destination by pasting the export code into the textarea.', 
+                  array('!cronurl' => 'http://drupal.org/cron')),
+    ),
   );
 
   if (isset($help[$section])) {
@@ -140,6 +145,15 @@ function backup_migrate_menu() {
     'page arguments' => array('crud', 'backup_migrate_crud_ui_list_all', TRUE),
     'access arguments' => array('administer backup and migrate'),
     'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items[BACKUP_MIGRATE_MENU_PATH . '/settings/import'] = array(
+    'title' => 'Import Settings',
+    'description' => 'Import backup and migrate settings.',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('crud', 'backup_migrate_crud_ui_import', TRUE),
+    'access arguments' => array('administer backup and migrate'),
+    'weight' => 10,
     'type' => MENU_LOCAL_TASK,
   );
   $items[BACKUP_MIGRATE_MENU_PATH . '/restore'] = array(
@@ -684,6 +698,7 @@ function backup_migrate_ui_saved_backups() {
     drupal_goto($_GET['q']);
   }
 
+
   // Render the list.
   $out = _backup_migrate_ui_destination_display_file_list($files, 10);
 
@@ -740,12 +755,12 @@ function backup_migrate_perform_backup(&$settings) {
 
   // Backup succeeded, 
   $time = timer_stop('backup_migrate_backup');
-  $message = '%source backed up successfully to %file in destination %dest in !time ms. !action';
+  $message = '%source backed up successfully to %file in destination %dest in !time. !action';
   $params = array(
     '%file' => $settings->filename,
     '%dest' => $settings->get_destination_name(),
     '%source' => $settings->get_source_name(),
-    '!time' => $time['time'],
+    '!time' => backup_migrate_format_elapsed_time($time['time']),
     '!action' => !empty($settings->performed_action) ? $settings->performed_action : '',
   );
   if (($destination = $settings->get_destination()) && ($links = $destination->get_file_links($file->file_id()))) {
@@ -754,6 +769,18 @@ function backup_migrate_perform_backup(&$settings) {
 
   backup_migrate_backup_succeed($message, $params, $settings);
   return $file;
+}
+
+/**
+ * Format an elapsed time given in milleseconds.
+ */
+
+function backup_migrate_format_elapsed_time($time) {
+  $ms = t('!time ms', array('!time' => $time));
+  if ($time < 1000) {
+    return $ms;
+  }
+  return '<abbr title="' . $ms . '">' . format_interval($time / 1000) . '</abbr>';
 }
 
 /**

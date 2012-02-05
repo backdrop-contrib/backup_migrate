@@ -68,6 +68,12 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
         "backup" => TRUE,
         "restore" => TRUE,
       ),
+      "bzip2" => array(
+        "extension" => "bz2",
+        "filemime" => "application/x-bzip",
+        "backup" => TRUE,
+        "restore" => TRUE,
+      ),
       "zip" => array(
         "extension" => "zip",
         "filemime" => "application/zip",
@@ -234,7 +240,7 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
         break;
 
       case "bzip":
-        $from = $file->push_type('bzip');
+        $from = $file->push_type('bzip2');
         if (!$success = $this->_backup_migrate_bzip_encode($from, $file->filepath())) {
           $file = NULL;
         }
@@ -269,6 +275,7 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
         break;
 
       case "bzip":
+      case "bzip2":
         $from = $file->pop_type();
         $success = $this->_backup_migrate_bzip_decode($from->filepath(), $file->filepath());
         break;

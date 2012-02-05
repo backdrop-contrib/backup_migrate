@@ -181,7 +181,7 @@ function backup_migrate_crud_delete_confirm_form_submit($form, &$form_state) {
     $item = $form_state['values']['item'];
     $item->delete();
   }
-  $form_state['redirect'] = $type->get_settings_path();
+  $form_state['redirect'] = $item->get_settings_path();
 }
 
 /**
@@ -212,20 +212,14 @@ function backup_migrate_crud_export_form(&$form_state, $export) {
 /**
  * Page callback to import an item.
  */
-function backup_migrate_crud_ui_import($type) {
-  if ($type = backup_migrate_crud_type_load($type)) {
-    return drupal_get_form('backup_migrate_crud_import_form', $type);
-  }
+function backup_migrate_crud_ui_import() {
+  return drupal_get_form('backup_migrate_crud_import_form');
 }
 
 /**
  * Ask confirmation for deletion of a item.
  */
-function backup_migrate_crud_import_form(&$form_state, $type) {
-  $form['item_type'] = array(
-    '#type' => 'value',
-    '#value' => $type,
-  );
+function backup_migrate_crud_import_form(&$form_state) {
   $form['code'] = array(
     '#type' => 'textarea',
     '#title' => t('Paste Exported Code Here'),
@@ -242,7 +236,7 @@ function backup_migrate_crud_import_form(&$form_state, $type) {
  * Validate handler to import a view
  */
 function backup_migrate_crud_import_form_validate($form, &$form_state) {
-  $item = backup_migrate_crud_create_from_import($form_state['values']['item_type'], $form_state['values']['code']);
+  $item = backup_migrate_crud_create_from_import($form_state['values']['code']);
   if ($item) {
     $form_state['values']['item'] = $item;
   }
@@ -264,15 +258,19 @@ function backup_migrate_crud_import_form_submit($form, &$form_state) {
 /**
  * Create an object from the exported object.
  */
-function backup_migrate_crud_create_from_import($type, $code) {
+function backup_migrate_crud_create_from_import($code) {
   $item = NULL;
   $code = 'return ' . $code . ';';
   ob_start();
   $values = eval($code);
   ob_end_clean();
+
   if ($values) {
-    $item = $type->create($values);
-    $item->generate_id();
+    if (!empty($values['type_name']) && $type = backup_migrate_crud_type_load($values['type_name'])) {
+      $item = $type->create($values);
+      // Make sure the item's ID doesn't already exist.
+      $item->unique_id();
+    }
   }
   return $item;
 }
@@ -354,7 +352,7 @@ class backup_migrate_item {
    */  
   function save() {
     if (!$this->get_id()) {
-      $this->generate_id();
+      $this->unique_id();
     }
     drupal_write_record($this->db_table, $this->to_array(), !empty($this->storage) ? $this->get_primary_key() : array());
   }
@@ -402,6 +400,8 @@ class backup_migrate_item {
    */
   function export() {
     $out = $this->to_array();
+    $out['type_name'] = $this->type_name;
+
     ob_start();
     var_export($out);
     $out = ob_get_contents();
@@ -490,8 +490,33 @@ class backup_migrate_item {
    * Return a random (very very likely unique) string id for a new item.
    */
   function generate_id() {
-    $this->set_id(md5(uniqid(mt_rand(), true)));
+    $id = md5(uniqid(mt_rand(), true));
+
+    // Find the shortest possible unique id from (min 4 chars).
+    for ($i = 4; $i < 32; $i++) {
+      $new_id = substr($id, 0, $i);
+      if (!$this->item($new_id)) {
+        $this->set_id($new_id);
+        return;
+      }
+    }
+    // If we get here, then all 28 increasingly complex ids were already taken so we'll try again.
+    // this could theoretially lead to an infinite loop, but the odds are incredibly low.
+    $this->generate_id();
   }
+
+  /**
+   * Make sure this item has a unique id. Should only be called for new items or the item will collide with itself.
+   */
+  function unique_id() {
+    $id = $this->get_id();
+
+    // If the item doesn't have an ID or if it's id is already taken, generate random one.
+    if (!$id || $this->item($id)) {
+      $this->generate_id();
+    }
+  }
+
 
   /**
    * Get the name of the item.
@@ -696,15 +721,6 @@ class backup_migrate_item {
       'title arguments' => array('!type' => t(ucwords($this->plural))),
       'weight' => 1,
       'type' => MENU_DEFAULT_LOCAL_TASK,
-    );
-    $items[$path .'/import'] = array(
-      'title' => 'Import !type',
-      'title arguments' => array('!type' => t(ucwords($this->singular))),
-      'page callback' => 'backup_migrate_menu_callback',
-      'page arguments' => array('crud', 'backup_migrate_crud_ui_import', TRUE, $this->type_name),
-      'access arguments' => array('administer backup and migrate'),
-      'weight' => 2,
-      'type' => MENU_LOCAL_TASK,
     );
     $items[$path .'/add'] = array(
       'title' => 'Create !type',

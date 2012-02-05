@@ -70,10 +70,12 @@ class backup_migrate_destination_db extends backup_migrate_source_remote {
     $core = array(
         'cache',
         'cache_filter',
+        'cache_rules',
         'cache_calendar_ical',
         'cache_menu',
         'cache_page',
         'cache_views',
+        'cache_views_data',
         'cache_block',
         'cache_update',
         'cache_form',

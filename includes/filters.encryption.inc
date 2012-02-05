@@ -44,10 +44,10 @@ class backup_migrate_filter_encryption extends backup_migrate_filter {
     if (count($options) > 1) {
       $form['file']['encryption'] = array(
         "#type" => "select",
-        "#title" => t("File Encryption (EXPERIMENTAL)"),
+        "#title" => t("File Encryption"),
         "#options" => $options,
         "#default_value" => @$settings['encryption'],
-        '#description' => t('Encrypted files can only be restored by Backup and Migrate and only on sites with the same encryption key. <strong>This functionality is experimental, and should only be used for testing.</strong>'),
+        '#description' => t('Encrypted files can only be restored by Backup and Migrate and only on sites with the same encryption key.'),
       );
     }
     else {

@@ -355,6 +355,12 @@ class backup_migrate_schedule extends backup_migrate_item {
       if ($settings = $this->get_profile()) {
         $settings->destination_id = $this->destination_id;
         $settings->source_id = $this->source_id;
+        $settings->file_info = empty($settings->file_info) ? array() : $settings->file_info;
+        $settings->file_info += array(
+          'schedule_id'   => $this->get_id(),
+          'schedule_name' => $this->get('name'),
+        );
+
         backup_migrate_perform_backup($settings);
         $this->update_last_run($now);
         $this->remove_expired_backups();
@@ -393,8 +399,11 @@ class backup_migrate_schedule extends backup_migrate_item {
       if ($destination->op('delete') && $destination_files = $destination->list_files()) {
         // Sort the files by modified time.
         foreach ($destination_files as $file) {
-          if ($file->is_recognized_type() && $destination->can_delete_file($file->file_id())) {
-            $files[str_pad($file->info('filetime'), 10, "0", STR_PAD_LEFT) ."-". $i++] = $file;
+          // Only delete files created by this schedule.
+          if (!empty($file->file_info['schedule_id']) && $file->file_info['schedule_id'] == $this->get_id()) {
+            if ($file->is_recognized_type() && $destination->can_delete_file($file->file_id())) {
+              $files[str_pad($file->info('filetime'), 10, "0", STR_PAD_LEFT) ."-". $i++] = $file;
+            }
           }
         }
   
