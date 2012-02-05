@@ -181,7 +181,7 @@ function backup_migrate_permission() {
       'description' => t('Restore the site\'s database from a backup file.'),
     ),
     'administer backup and migrate' => array(
-      'title' => t('Administer Backup and Mirgate'),
+      'title' => t('Administer Backup and Migrate'),
       'description' => t('Edit Backup and Migrate profiles, schedules and destinations.'),
     ),
   );
