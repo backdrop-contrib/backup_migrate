@@ -57,7 +57,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $form['advanced']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Site off-line message'),
-      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
+      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('maintenance_mode_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
       '#description' => t('Message to show visitors when the site is in off-line mode.')
     );
     $form['advanced']['utils_description'] = array(
@@ -92,7 +92,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $form['advanced']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Site off-line message'),
-      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
+      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('maintenance_mode_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
       '#description' => t('Message to show visitors when the site is in off-line mode.')
     );
     return $form;
@@ -161,14 +161,14 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    */
   function take_site_offline($settings) {
     // Save the current state of the site in case a restore overwrites it.
-    $this->saved_site_offline = variable_get('site_offline', 0);
+    $this->saved_site_offline = variable_get('maintenance_mode', 0);
     if (@$settings->filters['utils_site_offline']) {
-      $this->saved_site_offline_message = variable_get('site_offline_message', NULL);
+      $this->saved_site_offline_message = variable_get('maintenance_mode_message', NULL);
       if (!empty($settings->filters['utils_site_offline_message'])) {
-        $this->saved_site_offline_message = variable_get('site_offline_message', NULL);
-        variable_set('site_offline_message', $settings->filters['utils_site_offline_message']);
+        $this->saved_site_offline_message = variable_get('maintenance_mode_message', NULL);
+        variable_set('maintenance_mode_message', $settings->filters['utils_site_offline_message']);
       }
-      variable_set('site_offline', 1);
+      variable_set('maintenance_mode', 1);
       _backup_migrate_message('Site was taken offline.');
     }
   }
@@ -178,10 +178,10 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    */
   function take_site_online($settings) {
     // Take the site back off/online because the restored db may have changed that setting.
-    variable_set('site_offline', $this->saved_site_offline);
+    variable_set('maintenance_mode', $this->saved_site_offline);
     if ($settings->filters['utils_site_offline']) {
       if (!empty($this->saved_site_offline_message)) {
-        variable_set('site_offline_message', $this->saved_site_offline_message);
+        variable_set('maintenance_mode_message', $this->saved_site_offline_message);
       }
       _backup_migrate_message('Site was taken online.');
     }
