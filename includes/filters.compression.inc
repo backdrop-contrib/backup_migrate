@@ -89,7 +89,7 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
       $compression_options['bzip'] = t("BZip");
     }
     if (class_exists('ZipArchive')) {
-      $compression_options['zip'] = t("Zip");
+      $compression_options['zip'] = t("Zip", array(), array('context' => 'compression format'));
     }
     return $compression_options;
   }
