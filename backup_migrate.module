@@ -653,12 +653,13 @@ function backup_migrate_perform_backup(&$settings) {
     set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
 
+  $filename = $settings->filename;
   if ($settings->append_timestamp && $settings->timestamp_format) {
-    $settings->filename .= "-". format_date(time(), 'custom', $settings->timestamp_format);
+    $filename .= "-". format_date(time(), 'custom', $settings->timestamp_format);
   }
-  $settings->filename = _backup_migrate_clean_filename($settings->filename);
+  $filename = _backup_migrate_clean_filename($filename);
 
-  $file = new backup_file(array('filename' => $settings->filename));
+  $file = new backup_file(array('filename' => $filename));
   if (!$file) {
     backup_migrate_backup_fail("Could not run backup because a temporary file could not be created.", array(), $settings);
     return FALSE;
@@ -688,7 +689,7 @@ function backup_migrate_perform_backup(&$settings) {
   $time = timer_stop('backup_migrate_backup');
   $message = '%source backed up successfully to %file in destination %dest in !time ms. !action';
   $params = array(
-    '%file' => $settings->filename,
+    '%file' => $filename,
     '%dest' => $settings->get_destination_name(),
     '%source' => $settings->get_source_name(),
     '!time' => $time['time'],
