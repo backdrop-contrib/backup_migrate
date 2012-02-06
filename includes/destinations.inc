@@ -797,10 +797,6 @@ class backup_migrate_destination extends backup_migrate_item {
   function get_list_row() {
     $out = parent::get_list_row();
 
-    $out['name'] = check_plain($out['name']);
-    $out['destination_type_name'] = check_plain($out['destination_type_name']);
-    $out['display_location'] = check_plain($out['display_location']);
-
     // Supress destinations with no actions as there's no value in showing them (and they may confuse new users).
     if (empty($out['actions'])) {
       return NULL;
