@@ -393,7 +393,7 @@ function backup_migrate_update_7200() {
 /**
  * Change the filename field to support 255 characters.
  */
-function backup_migrate_update_7201() {
+function backup_migrate_update_7202() {
   $ret = array();
   db_change_field('backup_migrate_profiles', 'filename', 'filename', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE));
   return $ret;
