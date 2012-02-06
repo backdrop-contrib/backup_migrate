@@ -666,11 +666,11 @@ function backup_migrate_perform_backup(&$settings) {
     set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
 
-  $filename = $settings->filename;
+  $timestamp = '';
   if ($settings->append_timestamp && $settings->timestamp_format) {
-    $filename .= "-". format_date(time(), 'custom', $settings->timestamp_format);
+    $timestamp = format_date(time(), 'custom', $settings->timestamp_format);
   }
-  $filename = _backup_migrate_clean_filename($filename);
+  $filename = _backup_migrate_construct_filename($settings->filename, $timestamp);
 
   $file = new backup_file(array('filename' => $filename));
   if (!$file) {
