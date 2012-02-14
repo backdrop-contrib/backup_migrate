@@ -111,7 +111,13 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#title" => t("Append a timestamp."),
     "#default_value" => $profile->append_timestamp,
   );
-  $form['file']['timestamp_format'] = array(
+  $form['file']['timestamp_format_wrapper'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'append-timestamp' => TRUE,
+    ),
+  );
+  $form['file']['timestamp_format_wrapper']['timestamp_format'] = array(
     "#type" => "textfield",
     "#title" => t("Timestamp format"),
     "#default_value" => $profile->timestamp_format,

@@ -173,6 +173,16 @@ function backup_migrate_menu() {
 
 /**
  * Implementation of hook_cron().
+ */
+function backup_migrate_elements() {
+  $types['backup_migrate_dependent'] = array(
+    '#dependencies' => array(),
+  );
+  return $types;
+}
+
+/**
+ * Implementation of hook_cron().
  *
  * Takes care of scheduled backups and deletes abandoned temp files.
  */
@@ -216,6 +226,9 @@ function backup_migrate_theme() {
   $themes = array(
     'backup_migrate_ui_manual_quick_backup_form' => array(
       'arguments' => array('form'),
+    ),
+    'backup_migrate_dependent' => array(
+      'arguments' => array('element'),
     ),
   );
   return $themes;
@@ -450,6 +463,24 @@ function theme_backup_migrate_ui_manual_quick_backup_form($form) {
 }
 
 /**
+ * Theme the dependent form section.
+ */
+function theme_backup_migrate_dependent($element) {
+  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+
+  $id = form_clean_id(implode('-', $element['#parents']));
+
+  $settings = array(
+    'backup_migrate' => array(
+      'dependents' => array($id => array('dependent' => $id, 'dependencies' => $element['#dependencies']))
+    )
+  );
+  drupal_add_js($settings, 'setting');
+
+  return '<div id="edit-' . $id . '">' . $element['#children'] . '</div>';
+}
+
+/**
  * The backup/export form.
  */
 function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) {
@@ -495,8 +526,10 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) 
       '#weight' => 80,
     );
     $form['save_options'] = array(
-      '#prefix' => '<div class="backup-migrate-save-options">',
-      '#suffix' => '</div>',
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'save-settings' => TRUE,
+      ),
       '#weight' => 90,
     );
     $name = array(
