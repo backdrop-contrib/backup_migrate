@@ -380,7 +380,7 @@ function backup_migrate_update_2005() {
  * Move the backup and migrate directory to the private directory.
  */
 function backup_migrate_update_7200() {
-  $form = 'public://backup_migrate';
+  $from = 'public://backup_migrate';
   $to   = 'private://backup_migrate';
   if (drupal_realpath($from) && !drupal_realpath($to)) {
     if (!rename($from, $to)) {
