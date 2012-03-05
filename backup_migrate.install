@@ -35,9 +35,9 @@ function backup_migrate_schema() {
         'not null' => TRUE
       ),
       'filename' => array(
-        'description' => t('The name of the profile.'),
+        'description' => t('The base pattern (including unreplaced tokens) for the name of the backup file.'),
         'type' => 'varchar',
-        'length' => 50,
+        'length' => 128,
         'not null' => TRUE
       ),
       'append_timestamp' => array(
@@ -146,7 +146,7 @@ function backup_migrate_schema() {
         'default' => '0',
         'description' => t('The primary identifier for a profile.'),
       ),
-     'name' => array(
+      'name' => array(
         'description' => t('The name of the profile.'),
         'type' => 'varchar',
         'length' => 255,
@@ -414,6 +414,15 @@ function backup_migrate_update_2005() {
     db_drop_field($ret, 'backup_migrate_profiles', 'exclude_tables');
   }
 
+  return $ret;
+}
+
+/**
+ * Change the filename field to support 128 characters: the max that the form field allows
+ */
+function backup_migrate_update_2006() {
+  $ret = array();
+  db_change_field($ret, 'backup_migrate_profiles', 'filename', 'filename', array('type' => 'varchar', 'length' => 128, 'not null' => TRUE));
   return $ret;
 }
 
