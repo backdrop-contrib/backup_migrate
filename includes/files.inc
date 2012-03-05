@@ -146,7 +146,9 @@ function _backup_migrate_construct_filename($filename, $timestamp='') {
   }
   $filename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $filename);
   $filename = _backup_migrate_filename_append_prepare($filename, $timestamp);
-  $filename .= $timestamp;
+  $filename .= '-' . $timestamp;
+  $filename = trim($filename, '-');
+
   if (drupal_strlen($filename) == 0) {
     $filename = 'untitled';
   }
