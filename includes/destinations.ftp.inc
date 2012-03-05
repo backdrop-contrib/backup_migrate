@@ -204,6 +204,8 @@ function drupal_ftp_ftp_to_file($file, $filename, $directory, &$ftp) {
     _backup_migrate_message('FTP Error: Unable to download file: @filename from @directory', array('@filename' => $filename, '@directory' => $directory), 'error');
     return FALSE;
   }
+  
+  return TRUE;
 }
 
 /**
