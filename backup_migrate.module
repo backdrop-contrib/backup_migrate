@@ -148,7 +148,7 @@ function backup_migrate_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   $items[BACKUP_MIGRATE_MENU_PATH . '/settings/import'] = array(
-    'title' => 'Import Settings',
+    'title' => 'Import',
     'description' => 'Import backup and migrate settings.',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('crud', 'backup_migrate_crud_ui_import', TRUE),
@@ -224,7 +224,7 @@ function backup_migrate_simpletest() {
  */
 function backup_migrate_theme() {
   $themes = array(
-    'backup_migrate_ui_manual_quick_backup_form' => array(
+    'backup_migrate_ui_manual_quick_backup_form_inline' => array(
       'arguments' => array('form'),
     ),
     'backup_migrate_dependent' => array(
@@ -233,6 +233,41 @@ function backup_migrate_theme() {
   );
   return $themes;
 }
+
+/**
+ * Implementation of hook_block().
+ */
+function backup_migrate_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      return _backup_migrate_block_info();
+    case 'view':
+      return _backup_migrate_block_view($delta);
+  }
+}
+
+/**
+ * List the available blocks.
+ */
+function _backup_migrate_block_info() {
+  $blocks = array();
+  $blocks['quick_backup'] = array(
+    'info' => t('Backup and Migrate Quick Backup'),
+    'admin' => TRUE
+  );
+  return $blocks;
+}
+
+/**
+ * Show the given block.
+ */
+function _backup_migrate_block_view($delta) {
+  $function = '_backup_migrate_block_view_' . $delta;
+  if (function_exists('_backup_migrate_block_view_' . $delta)) {
+    return $function();
+  }
+}
+
 
 /* Menu Callbacks */
 
@@ -336,14 +371,38 @@ function backup_migrate_ui_manual_backup_load_profile_form_submit($form, &$form_
   }
 }
 
+/* Blocks */
+
+/**
+ * Quick Backup block.
+ */
+function _backup_migrate_block_view_quick_backup() {
+  if (user_access('access backup and migrate') && user_access('perform backup')) {
+    drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+    // Messages should be sent to the browser.
+    _backup_migrate_message_callback('_backup_migrate_message_browser');
+    return array(
+      'subject' => t('Backup and Migrate'),
+      'content' => drupal_get_form('backup_migrate_ui_manual_quick_backup_form', FALSE),
+    );
+  }
+  return array();
+}
+
 /**
  * The quick backup form.
  */
-function backup_migrate_ui_manual_quick_backup_form(&$form_state) {
+function backup_migrate_ui_manual_quick_backup_form(&$form_state, $inline = TRUE) {
   backup_migrate_include('profiles', 'destinations', 'sources');
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
 
   $form = array();
+
+  // Theme the form if we want it inline.
+  if ($inline) {
+    $form['#theme'] = 'backup_migrate_ui_manual_quick_backup_form_inline';
+  }
 
   $form['quickbackup'] = array(
     '#type' => 'fieldset',
@@ -357,7 +416,7 @@ function backup_migrate_ui_manual_quick_backup_form(&$form_state) {
 
   $form['quickbackup']['destination_id'] = array(
     "#type" => "select",
-    "#title" => t("Destination"),
+    "#title" => t("Backup Destination"),
     "#options" => _backup_migrate_get_destination_form_item_options('manual backup'),
     "#default_value" => variable_get("backup_migrate_destination_id", "download"),
   );
@@ -382,17 +441,17 @@ function backup_migrate_ui_manual_quick_backup_form(&$form_state) {
     '#description' => t('This note will be saved with the backup file and shown on the listing page.'),
   );
 
-  $form['quickbackup']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Backup now'),
-    '#weight' => 1,
-  );
-
   $form['advanced'] = array(
     '#type' => 'markup',
     '#value' => t('For more backup options, try the <a href="!advancedurl">advanced backup page</a>.', array('!advancedurl' => url('admin/content/backup_migrate/export/advanced'))),
   );
 
+
+  $form['quickbackup']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Backup now'),
+    '#weight' => 1,
+  );
 
   return $form;
 }
@@ -422,7 +481,6 @@ function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) 
     // Add the note
     $settings->filters['utils_description'] = $form_state['values']['description'];
 
-
     // Save the settings for next time.
     variable_set("backup_migrate_source_id", $form_state['values']['source_id']);
     variable_set("backup_migrate_destination_id", $form_state['values']['destination_id']);
@@ -431,13 +489,12 @@ function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) 
     // Do the backup.
     backup_migrate_ui_manual_backup_perform($settings);
   }
-  $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH;
 }
 
 /**
  * Theme the quick backup form.
  */
-function theme_backup_migrate_ui_manual_quick_backup_form($form) {
+function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   // Remove the titles so that the pulldowns can be displayed inline.
   unset($form['quickbackup']['source_id']['#title']);
   unset($form['quickbackup']['destination_id']['#title']);

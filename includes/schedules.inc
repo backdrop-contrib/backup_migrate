@@ -101,6 +101,16 @@ class backup_migrate_schedule extends backup_migrate_item {
   }
 
   /**
+   * Get the menu items for manipulating this type.
+   */
+  function get_menu_items() {
+    $items = parent::get_menu_items();
+    $path = $this->get_settings_path();
+    $items[$path]['title'] = t('Automatic Backups');
+    return $items;
+  }
+
+  /**
    * Get a row of data to be used in a list of items of this type.
    */
   function get_list_row() {

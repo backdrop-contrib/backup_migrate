@@ -27,7 +27,7 @@ div.backup-migrate-tables-checkboxes {
 div.backup-migrate-tags,
 div.backup-migrate-description,
 div.backup-migrate-date
- {
+{
   font-size: smaller;
 }
 span.backup-migrate-label {
@@ -47,4 +47,8 @@ div.row-error {
 }
 .backup-migrate-actions {
   text-align: right;
+}
+
+#block-backup_migrate-quick_backup fieldset.collapsed {
+  margin-bottom: 1em;
 }
