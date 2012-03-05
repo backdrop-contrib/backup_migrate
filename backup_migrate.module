@@ -553,7 +553,7 @@ function theme_backup_migrate_dependent($element) {
 /**
  * The backup/export form.
  */
-function backup_migrate_ui_manual_backup_form(&$form_state, $profile = array()) {
+function backup_migrate_ui_manual_backup_form(&$form_state, $profile) {
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
 
   $form = array();
