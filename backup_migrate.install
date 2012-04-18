@@ -404,7 +404,7 @@ function backup_migrate_update_7203() {
       variable_set('backup_migrate_schedule_last_run_' . $item['schedule_id'], $item['last_run']);
     }
   }
-  if (db_column_exists('backup_migrate_schedules', 'last_run')) {
+  if (db_field_exists('backup_migrate_schedules', 'last_run')) {
     db_drop_field('backup_migrate_schedules', 'last_run');
   }
 }
