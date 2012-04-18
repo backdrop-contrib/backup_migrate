@@ -400,8 +400,11 @@ function backup_migrate_update_7202() {
 function backup_migrate_update_7203() {
   $result = db_query('SELECT * FROM {backup_migrate_schedules}', array(), array('fetch' => PDO::FETCH_ASSOC));
   foreach ($result as $item) {
-    variable_set('backup_migrate_schedule_last_run_' . $item['schedule_id'], $item['last_run']);
+    if (isset($item['last_run'])) {
+      variable_set('backup_migrate_schedule_last_run_' . $item['schedule_id'], $item['last_run']);
+    }
   }
-  db_drop_field('backup_migrate_schedules', 'last_run');
-  return $ret;
+  if (db_column_exists('backup_migrate_schedules', 'last_run')) {
+    db_drop_field('backup_migrate_schedules', 'last_run');
+  }
 }
