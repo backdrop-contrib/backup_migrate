@@ -7,3 +7,5 @@ files[] = backup_migrate.install
 files[] = includes/destinations.inc
 files[] = includes/profiles.inc
 files[] = includes/schedules.inc
+
+configure = admin/config/system/backup_migrate
