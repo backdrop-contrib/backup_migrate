@@ -272,6 +272,9 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     // get auto_increment values and names of all tables
     $tables = $this->query("show table status", array(), array('fetch' => PDO::FETCH_ASSOC));
     foreach ($tables as $table) {
+      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default query behavior was changed.
+      // See: http://drupal.org/node/1171866
+      $table = array_change_key_case($table);
       $out[$table['name']] = $table;
     }
     return $out;
@@ -284,6 +287,9 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     $out = "";
     $result = $this->query("SHOW CREATE TABLE `". $table['name'] ."`", array(), array('fetch' => PDO::FETCH_ASSOC));
     foreach ($result as $create) {
+      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default query behavior was changed.
+      // See: http://drupal.org/node/1171866
+      $create = array_change_key_case($create);
       $out .= "DROP TABLE IF EXISTS `". $table['name'] ."`;\n";
       // Remove newlines and convert " to ` because PDO seems to convert those for some reason.
       $out .= strtr($create['create table'], array("\n" => ' ', '"' => '`'));
