@@ -214,17 +214,15 @@ function backup_migrate_drush_destination_files($destination_id = NULL) {
     $destination->file_cache_clear();
     $dest_files = $destination->list_files();
     foreach ($dest_files as $id => $file) {
-      if ($file->is_recognized_type()) {
-        $info = $file->info();
-        $rows[] = array(
-          check_plain($info['filename']),
-          $destination->get_id(),
-          format_date($info['filetime'], 'small'),
-          format_interval(time() - $info['filetime'], 1),
-          format_size($info['filesize']),
-        );
-        $sort[] = $info['filetime'];
-      }
+      $info = $file->info();
+      $rows[] = array(
+        check_plain($info['filename']),
+        $destination->get_id(),
+        format_date($info['filetime'], 'small'),
+        format_interval(time() - $info['filetime'], 1),
+        format_size($info['filesize']),
+      );
+      $sort[] = $info['filetime'];
     }
   }
 

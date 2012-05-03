@@ -8,7 +8,7 @@
  * database with an option to exclude table data (e.g. cache_*)
  */
 
-define('BACKUP_MIGRATE_VERSION', '6.x-2.x');
+define('BACKUP_MIGRATE_VERSION', '6.x-3.x');
 define('BACKUP_MIGRATE_MENU_PATH', 'admin/content/backup_migrate');
 define('BACKUP_MIGRATE_MENU_DEPTH', 3);
 
@@ -45,13 +45,18 @@ function backup_migrate_help($section, $arg) {
       'body' => t('Upload a backup and migrate backup file. The restore function will not work with database dumps from other sources such as phpMyAdmin.'),
       'access arguments' => array('restore from backup'),
     ),
-    BACKUP_MIGRATE_MENU_PATH . '/destination' => array(
+    BACKUP_MIGRATE_MENU_PATH . '/settings/destination' => array(
       'title' => t('Destinations'),
       'body' => t('Destinations are the places you can save your backup files to or them load from.'),
       'more' => t('Files can be saved to a directory on your web server, downloaded to your desktop or emailed to a specified email account. From the Destinations tab you can create, delete and edit destinations or list the files which have already been backed up to the available destinations.'),
       'access arguments' => array('administer backup and migrate'),
     ),
-    BACKUP_MIGRATE_MENU_PATH . '/profile' => array(
+    BACKUP_MIGRATE_MENU_PATH . '/settings/source' => array(
+      'title' => t('Sources'),
+      'body' => t('Sources are the things that can be backed up such as database or file directories.'),
+      'access arguments' => array('administer backup and migrate'),
+    ),
+    BACKUP_MIGRATE_MENU_PATH . '/settings/profile' => array(
       'title' => t('Profiles'),
       'body' => t('Profiles are saved backup settings. Profiles store your table exclusion settings as well as your backup file name, compression and timestamp settings. You can use profiles in !schedulelink and for !manuallink.',
                   array('!schedulelink' => user_access('administer backup and migrate') ? l(t('schedules'), BACKUP_MIGRATE_MENU_PATH . '/schedule') : t('settings profiles'), '!manuallink' => user_access('perform backups') ? l(t('manual backups'), BACKUP_MIGRATE_MENU_PATH) : t('manual backups'))),
@@ -192,6 +197,18 @@ function backup_migrate_elements() {
     '#dependencies' => array(),
   );
   return $types;
+}
+
+/**
+ * Implementation of hook_form_update_script_selection_form_alter().
+ */
+function backup_migrate_form_update_script_selection_form_alter(&$form, $form_state) {
+  // Add a link to backup and migrate.
+  $form['backup_migrate'] = array(
+    '#type' => 'markup',
+    '#weight' => -100,
+    '#value' => t('Before you run any database updates, <strong>make sure you have a backup of your database.</strong> Use !backup_migrate to create that backup now.', array('!backup_migrate' => l(t('Backup and Migrate'), BACKUP_MIGRATE_MENU_PATH))),
+  );
 }
 
 /**

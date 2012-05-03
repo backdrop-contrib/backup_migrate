@@ -427,9 +427,27 @@ function backup_migrate_update_2006() {
 }
 
 /**
+ * Update the schedule last run times to use variables instead of saving with the schedule.
+ */
+function backup_migrate_update_6200() {
+  $ret = array();
+  $result = db_query('SELECT * FROM {backup_migrate_schedules}', array());
+  while ($item = db_fetch_array($result)) {
+    if (isset($item['last_run'])) {
+      variable_set('backup_migrate_schedule_last_run_' . $item['schedule_id'], $item['last_run']);
+    }
+  }
+  if (db_column_exists('backup_migrate_schedules', 'last_run')) {
+    db_drop_field($ret, 'backup_migrate_schedules', 'last_run');
+  }
+  return $ret;
+}
+
+
+/**
  * Uninstall backup migrate files if it's installed
  */
-function backup_migrate_update_3000() {
+function backup_migrate_update_6300() {
   $ret = array();
   if (module_exists('backup_migrate_files')) {
     module_disable(array('backup_migrate_files'));
@@ -439,6 +457,7 @@ function backup_migrate_update_3000() {
     );
   }
 
+  // Add sources to the schema.
   $schema['backup_migrate_sources'] = array(
     'fields' => array(
       'source_id' => array(
@@ -477,7 +496,11 @@ function backup_migrate_update_3000() {
   );
 
   $ret = array();
-  db_create_table($ret, 'backup_migrate_sources', $schema['backup_migrate_sources']);
+  if (!db_table_exists('backup_migrate_sources')) {
+    db_create_table($ret, 'backup_migrate_sources', $schema['backup_migrate_sources']);
+  }
+  // @TODO: Move custom destinations to sources.
 
   return $ret;
 }
+
