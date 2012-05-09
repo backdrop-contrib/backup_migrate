@@ -820,7 +820,7 @@ function backup_migrate_ui_saved_backups() {
 
 
   // Render the list.
-  $out = _backup_migrate_ui_destination_display_file_list($files, 10);
+  $out = _backup_migrate_ui_destination_display_file_list($files, 20);
 
   // Add the refesh link if needed.
   if ($fetch_time < $now) {
