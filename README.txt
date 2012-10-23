@@ -47,15 +47,12 @@ Add the following code to your web.config code to secire your backup directories
    <action type="Rewrite" url=""/>
 </rule>
 You may need to adjust the path to reflect the actual path to the files.
-<<<<<<< HEAD
 
 NGINX USERS:
 Add the following to your configuration:
 location ^~ /backup_migrate/ {
     internal;
 }
-=======
->>>>>>> d01a8c43437b35daff7ba29848657f260bbc2ed3
 
 -------------------------------------------------------------------------------
 
