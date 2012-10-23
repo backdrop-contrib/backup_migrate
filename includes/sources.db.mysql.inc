@@ -1,6 +1,6 @@
 <?php
 
-backup_migrate_include('destinations.db');
+backup_migrate_include('sources.db');
 
 /**
  * @file

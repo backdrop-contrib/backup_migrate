@@ -1,5 +1,5 @@
 <?php
-backup_migrate_include('destinations.filesource');
+backup_migrate_include('sources.filesource');
 
 /**
  * @file
@@ -24,7 +24,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
    */
   function sources() {
     $out  = array();
-    $out['archive'] = backup_migrate_create_destination('archive', array('source_id' => 'archive', 'location' => '.', 'name' => t('Entire Site'), 'show_in_list' => FALSE));
+    $out['archive'] = backup_migrate_create_destination('archive', array('source_id' => 'archive', 'location' => '.', 'name' => t('Entire Site (code, files & DB)'), 'show_in_list' => FALSE));
     return $out;
   }
 
@@ -51,7 +51,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
     foreach ($excludes as $i => $exclude) {
       $excludes[$i] = file_directory_path() . '/' . $exclude;
     }
-    $excludes[] = 'sites/default/files/settings.php';
+    $excludes[] = conf_path() . '/settings.php';
     $excludes[] = file_directory_temp();
 
     return array(
@@ -66,13 +66,13 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
     if ($this->check_libs()) {
       $excluded_paths = empty($settings->filters['exclude_filepaths']) ? '' : $settings->filters['exclude_filepaths'];
       $exclude = $this->get_excluded_paths($excluded_paths);
-      var_dump($this->get_location());
       $files = $this->get_files_to_backup($this->get_location(), $settings, $exclude, realpath('.') . '/');
       if ($files) {
         $manifest = $this->generate_manifest();
         $db = $this->get_db();
 
-        $file->push_type('sitearchve');
+        $file->push_type('sitearchive');
+        dpm($file);
         $gz = new Archive_Tar($file->filepath(), false);
 
         $gz->addModify(array($manifest), $file->name .'/', dirname($manifest));

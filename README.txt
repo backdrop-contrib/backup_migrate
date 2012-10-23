@@ -38,6 +38,21 @@ Add the following code to your lighttp.conf to secure your backup directories:
   $HTTP["url"] =~ "^/sites/default/files/backup_migrate/" {
        url.access-deny = ( "" )
   }
+You may need to adjust the path to reflect the actual path to the files.
+
+IIS 7 USERS:
+Add the following code to your web.config code to secire your backup directories:
+<rule name="postinst-redirect" stopProcessing="true">
+   <match url="sites/default/files/backup_migrate" />
+   <action type="Rewrite" url=""/>
+</rule>
+You may need to adjust the path to reflect the actual path to the files.
+
+NGINX USERS:
+Add the following to your configuration:
+location ^~ /backup_migrate/ {
+    internal;
+}
 
 -------------------------------------------------------------------------------
 

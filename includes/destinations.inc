@@ -294,15 +294,13 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
       }
 
       // Show only files that can be restored from.
-      if ($file->is_recognized_type()) {
-        $sort[] = $info[$sort_key];
-        $rows[] = array(
-          check_plain($info['filename']) . $description,
-          t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 1))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
-          format_size($info['filesize']),
-          implode(" | ", $file->destination->get_file_links($file->file_id())),
-        );
-      }
+      $sort[] = $info[$sort_key];
+      $rows[] = array(
+        check_plain($info['filename']) . $description,
+        t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 1))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
+        format_size($info['filesize']),
+        implode(" | ", $file->destination->get_file_links($file->file_id())),
+      );
     }
 
     array_multisort($sort, $sort_dir, $rows);
@@ -314,15 +312,13 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
       $rows = array_slice($rows, 0, $limit, TRUE);
     }
 
-    if ($files) {
-      $out = theme("table", $headers, $rows, array('class' => 'backup-migrate-listing backup-migrate-listing-files'));
-      $out .= $showing;
-    }
-    else {
-      $out = t('There are no backup files to display.');
-    }
-    return $out;
+    $out = theme("table", $headers, $rows, array('class' => 'backup-migrate-listing backup-migrate-listing-files'));
+    $out .= $showing;
   }
+  else {
+    $out = t('There are no backup files to display.');
+  }
+  return $out;
 }
 
 /**
@@ -529,19 +525,26 @@ class backup_migrate_destination extends backup_migrate_location {
    * List all the available files in the given destination with their destination specific id.
    */
   function list_files() {
-    $out = NULL;
+    $files = NULL;
     if ($this->cache_files) {
-      $out = $this->file_cache_get();
+      $files = $this->file_cache_get();
     }
-    if ($out === NULL) {
-      $out = $this->_list_files();
-      $out = $this->load_files_info($out);
+    if ($files === NULL) {
+      $files = $this->_list_files();
+      $files = $this->load_files_info($files);
       if ($this->cache_files) {
-        $this->file_cache_set($out);
+        $this->file_cache_set($files);
       }
     }
-    foreach ($out as $id => $file) {
-      $out[$id]->destination = &$this;
+
+    $out = array();
+    if (is_array($files)) {
+      foreach ($files as $id => $file) {
+        if ($file->is_recognized_type()) {
+          $out[$id] = $file;
+          $out[$id]->destination = &$this;
+        }
+      }
     }
     return $out;
   }

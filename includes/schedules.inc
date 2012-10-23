@@ -101,6 +101,16 @@ class backup_migrate_schedule extends backup_migrate_item {
   }
 
   /**
+   * Get the menu items for manipulating this type.
+   */
+  function get_menu_items() {
+    $items = parent::get_menu_items();
+    $path = $this->get_settings_path();
+    $items[$path]['title'] = t('Automatic Backups');
+    return $items;
+  }
+
+  /**
    * Get a row of data to be used in a list of items of this type.
    */
   function get_list_row() {
@@ -397,11 +407,13 @@ class backup_migrate_schedule extends backup_migrate_item {
     if ($num_to_keep && ($destination = $this->get_destination())) {
       $i = 0;
       if ($destination->op('delete') && $destination_files = $destination->list_files()) {
+        $files = array();
+
         // Sort the files by modified time.
         foreach ($destination_files as $file) {
           // Only delete files created by this schedule.
           if (!empty($file->file_info['schedule_id']) && $file->file_info['schedule_id'] == $this->get_id()) {
-            if ($file->is_recognized_type() && $destination->can_delete_file($file->file_id())) {
+            if ($destination->can_delete_file($file->file_id())) {
               $files[str_pad($file->info('filetime'), 10, "0", STR_PAD_LEFT) ."-". $i++] = $file;
             }
           }
