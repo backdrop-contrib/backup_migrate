@@ -283,9 +283,14 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
       $info['filetime'] = !empty($info['datestamp']) ? $info['datestamp'] : $info['filetime'];
 
       $description = '';
+
       // Add the description as a new row.
       if (!empty($info['description'])) {
         $description .= ' <div title="'.check_plain($info['description']).'" class="backup-migrate-description">'. $info['description'] .'</div>';
+      }
+      // Add the backup source.
+      if (!empty($info['bam_sourcename'])) {
+        $description .= ' <div title="'. check_plain($info['bam_sourcename']) .'" class="backup-migrate-tags"><span class="backup-migrate-label">'. t('Source:') .' </span>'. check_plain($info['bam_sourcename']) .'</div>';
       }
       // Add the tags as a new row.
       if (!empty($info['tags'])) {
