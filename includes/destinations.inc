@@ -302,7 +302,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
       $sort[] = $info[$sort_key];
       $rows[] = array(
         check_plain($info['filename']) . $description,
-        t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 1))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
+        t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 2))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
         format_size($info['filesize']),
         implode(" | ", $file->destination->get_file_links($file->file_id())),
       );
