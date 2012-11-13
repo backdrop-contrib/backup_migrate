@@ -4,8 +4,35 @@
  * @file
  * All of the schedule handling code needed for Backup and Migrate.
  */
+ 
+define('BACKUP_MIGRATE_KEEP_ALL', 0);
+define('BACKUP_MIGRATE_STANDARD_DELETE', -1);
+define('BACKUP_MIGRATE_SMART_DELETE', -2);
+
+define('BACKUP_MIGRATE_CRON_BUILTIN', 'builtin');
+define('BACKUP_MIGRATE_CRON_ELYSIA',  'elysia');
+define('BACKUP_MIGRATE_CRON_NONE', 'none');
+
+
+define('BACKUP_MIGRATE_SMART_KEEP_SUBHOURLY', 3600);
+define('BACKUP_MIGRATE_SMART_KEEP_HOURLY', 24);
+define('BACKUP_MIGRATE_SMART_KEEP_DAILY', 30);
+define('BACKUP_MIGRATE_SMART_KEEP_WEEKLY', PHP_INT_MAX);
+
+define('BACKUP_MIGRATE_KEEP_DEFAULT', 100);
 
 backup_migrate_include('crud');
+
+/**
+ * Run the preconfigured schedules. Called on cron.
+ */
+function backup_migrate_schedules_cron() {
+  backup_migrate_include('profiles');
+  foreach (backup_migrate_get_schedules() as $schedule) {
+    $schedule->cron();
+  }
+  backup_migrate_cleanup();
+}
 
 /**
  * Run the preconfigured schedules. Called on cron.
@@ -13,7 +40,18 @@ backup_migrate_include('crud');
 function backup_migrate_schedules_run() {
   backup_migrate_include('profiles');
   foreach (backup_migrate_get_schedules() as $schedule) {
-    $schedule->cron();
+    $schedule->run();
+  }
+  backup_migrate_cleanup();
+}
+
+/**
+ * Run the preconfigured schedules. Called on cron.
+ */
+function backup_migrate_schedule_run($schedule_id) {
+  backup_migrate_include('profiles');
+  if ($schedule = backup_migrate_get_schedule($schedule_id)) {
+    $schedule->run();
   }
   backup_migrate_cleanup();
 }
@@ -68,9 +106,11 @@ class backup_migrate_schedule extends backup_migrate_item {
         'name' => t("Untitled Schedule"),
         'source_id' => 'db',
         'enabled' => 1,
-        'keep' => 0,
+        'keep' => BACKUP_MIGRATE_KEEP_ALL,
         'period' => 60 * 60 * 24,
-        'storage' => BACKUP_MIGRATE_STORAGE_NONE
+        'storage' => BACKUP_MIGRATE_STORAGE_NONE,
+        'cron' => BACKUP_MIGRATE_CRON_BUILTIN,
+        'cron_schedule' => '* 0 * * *',
       );
   }
 
@@ -182,7 +222,16 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function get_frequency_description() {
     $period = $this->get_frequency_period();
-    $out = format_plural(($this->period / $period['seconds']), $period['singular'], $period['plural']);
+    $cron = $this->get('cron');
+    if ($cron == BACKUP_MIGRATE_CRON_BUILTIN) {
+      $out = format_plural(($this->period / $period['seconds']), $period['singular'], $period['plural']);
+    }
+    else if ($cron == BACKUP_MIGRATE_CRON_ELYSIA) {
+      $out = $this->get('cron_schedule');
+    }
+    else {
+      $out = t('None');
+    }
     return $out;
   }
 
@@ -190,7 +239,13 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Format the number to keep in human-readable form.
    */
   function get_keep_description() {
-    return !empty($this->keep) ? $this->keep : t('All');
+    if ($this->keep == BACKUP_MIGRATE_KEEP_ALL) {
+      return t('All');
+    }
+    else if ($this->keep == BACKUP_MIGRATE_SMART_DELETE) {
+      return t('Smart delete');
+    }
+    return $this->keep;
   }
 
   /**
@@ -228,11 +283,6 @@ class backup_migrate_schedule extends backup_migrate_item {
     $form = parent::edit_form();
     backup_migrate_include('destinations', 'sources', 'profiles');
 
-    $form['enabled'] = array(
-      "#type" => "checkbox",
-      "#title" => t("Enabled"),
-      "#default_value" => $this->get('enabled'),
-    );
     $form['name'] = array(
       "#type" => "textfield",
       "#title" => t("Schedule Name"),
@@ -259,31 +309,147 @@ class backup_migrate_schedule extends backup_migrate_item {
     $default_period     = $this->get_frequency_period();
     $default_period_num = $this->get('period') / $default_period['seconds'];
 
-    $form['period']     = array(
+    $form['enabled'] = array(
+      '#type' => "checkbox",
+      '#title' => t('Enabled'),
+      '#default_value' => $this->get('enabled'),
+    );
+    $form['cron_settings'] = array(
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'enabled' => TRUE,
+      ),
+    );
+
+    $cron = $this->get('cron');
+    $form['cron_settings']['cron_builtin'] = array(
+      "#type" => "radio",
+      "#title" => t('Run using Drupal\'s cron'),
+      '#return_value' => BACKUP_MIGRATE_CRON_BUILTIN,
+      "#description" => t('Run this schedule when !cron runs.', array('!cron' => l(t('your cron task'), 'http://drupal.org/cron'))),
+      "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
+      '#parents' => array('cron'),
+    );
+    
+    $form['cron_settings']['period_settings'] = array(
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'cron' => BACKUP_MIGRATE_CRON_BUILTIN,
+      ),
+    );
+    $form['cron_settings']['period_settings']['period'] = array(
       "#type" => "item",
       "#title" => t("Backup every"),
       "#prefix" => '<div class="container-inline">',
       "#suffix" => '</div>',
       "#tree" => TRUE,
+      '#parents' => array('period'),
     );
-    $form['period']['number'] = array(
+    $form['cron_settings']['period_settings']['period']['number'] = array(
       "#type" => "textfield",
       "#size" => 6,
       "#default_value" => $default_period_num,
+      '#parents' => array('period', 'number'),
     );
-    $form['period']['type'] = array(
+    $form['cron_settings']['period_settings']['period']['type'] = array(
       "#type" => "select",
       "#options" => $period_options,
       "#default_value" => $default_period['type'],
+      '#parents' => array('period', 'type'),
     );
 
-    $form['keep'] = array(
+
+    $form['cron_settings']['cron_elysia'] = array(
+      "#type" => "radio",
+      "#title" => t('Run using Elysia cron'),
+      '#return_value' => BACKUP_MIGRATE_CRON_ELYSIA,
+      "#description" => t('You can specify exactly when this schedule should run using !elysia.', array('!elysia' => l(t('the Elysia Cron module'), 'http://drupal.org/project/elysia_cron'))),
+      "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
+      '#parents' => array('cron'),
+    );
+    if (!module_exists('elysia_cron')) {
+      $form['cron_settings']['cron_elysia']['#disabled'] = TRUE;
+      $form['cron_settings']['cron_elysia']['#description'] .= ' ' . t('Install !elysia to enable this option.', array('!elysia' => l(t('Elysia Cron'), 'http://drupal.org/project/elysia_cron')));
+    }
+    $form['cron_settings']['cron_schedule_settings'] = array(
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'cron' => BACKUP_MIGRATE_CRON_ELYSIA,
+      ),
+    );
+    $form['cron_settings']['cron_schedule_settings']['cron_schedule'] = array(
+      "#type" => "textfield",
+      "#title" => t('Cron Schedule'),
+      '#length' => 10,
+      "#description" => t('Specify the frequecy of the schedule using standard cron notation. For more information see the !elysiareadme.', array('!elysiareadme' => l(t('the Elysia Cron README'), 'http://drupalcode.org/project/elysia_cron.git/blob/refs/heads/7.x-1.x:/README.txt'))),
+      "#default_value" => $this->get('cron_schedule'),
+      '#parents' => array('cron_schedule'),
+    );
+
+    $form['cron_settings']['cron_none'] = array(
+      "#type" => "radio",
+      "#title" => t('Do not run automatically'),
+      '#return_value' => 'none',
+      "#description" => t('Do not run this schedule automatically. You can still run it using !drush.', array('!drush' => l(t('Drush'), 'http://drupal.org/project/drush'))),
+      "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
+      '#parents' => array('cron'),
+    );
+
+
+
+    $keep = $this->get('keep');
+    $form['delete'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => $keep != 0,
+      '#title' => t('Automatically delete old backups'),
+    );
+    $form['delete_settings'] = array(
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'delete' => TRUE,
+      ),
+    );
+
+    $keep_hourly = variable_get('backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
+    $keep_daily  = variable_get('backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
+    $keep_weekly = variable_get('backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
+    $form['delete_settings']['smartdelete'] = array(
+      "#type" => "radio",
+      "#title" => t('Time Machine Delete'),
+      '#return_value' => BACKUP_MIGRATE_SMART_DELETE,
+      "#description" => t('Keep hourly backups !hours, daily backups !days and weekly backups !weeks.',
+        array(
+          '!hours' => $keep_hourly == PHP_INT_MAX ? t('forever') : format_plural($keep_hourly, 'for 1 hour', 'for the past @count hours'),
+          '!days'  => $keep_daily  == PHP_INT_MAX ? t('forever') : format_plural($keep_daily,  'for 1 day',  'for the past @count days'),
+          '!weeks' => $keep_weekly == PHP_INT_MAX ? t('forever') : format_plural($keep_weekly, 'for 1 week', 'for the past @count weeks'),
+        )
+      ),
+      "#default_value" => $keep ? $keep : BACKUP_MIGRATE_SMART_DELETE,
+      '#parents' => array('deletetype'),
+    );
+    $form['delete_settings']['standarddelete'] = array(
+      "#type" => "radio",
+      "#title" => t('Simple Delete'),
+      '#return_value' => BACKUP_MIGRATE_STANDARD_DELETE,
+      "#description" => t("Keep a specified number of files deleting the oldest ones first."),
+      "#default_value" => $keep > 0 ? BACKUP_MIGRATE_STANDARD_DELETE : 0,
+      '#parents' => array('deletetype'),
+    );
+    $form['delete_settings']['keep-settings'] = array(
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'deletetype' => BACKUP_MIGRATE_STANDARD_DELETE,
+      ),
+    );
+    $form['delete_settings']['keep-settings']['keep'] = array(
       "#type" => "textfield",
       "#size" => 6,
       "#title" => t("Number of Backup files to keep"),
-      "#description" => t("The number of backup files to keep before deleting old ones. Use 0 to never delete backups. <strong>Other files in the destination directory will get deleted if you specify a limit.</strong>"),
-      "#default_value" => $this->get('keep'),
+      "#description" => t("The number of backup files to keep before deleting old ones. Use 0 to never delete backups."),
+      "#default_value" => $keep > 0 ? $keep : BACKUP_MIGRATE_KEEP_DEFAULT,
     );
+
+
     $destination_options = _backup_migrate_get_destination_form_item_options('scheduled backup');
     $form['destination_id'] = array(
       "#type" => "select",
@@ -304,8 +470,15 @@ class backup_migrate_schedule extends backup_migrate_item {
     if (!is_numeric($form_state['values']['period']['number']) || $form_state['values']['period']['number'] <= 0) {
       form_set_error('period][number', t('Backup period must be a number greater than 0.'));
     }
-    if (!is_numeric($form_state['values']['keep']) || $form_state['values']['keep'] < 0) {
-      form_set_error('keep', t('Number to keep must be an integer greater than or equal to 0.'));
+
+    if (!$form_state['values']['delete']) {
+      $form_state['values']['keep'] = 0;
+    }
+    else if ($form_state['values']['deletetype'] == BACKUP_MIGRATE_SMART_DELETE) {
+      $form_state['values']['keep'] = BACKUP_MIGRATE_SMART_DELETE;
+    }
+    else if (!is_numeric($form_state['values']['keep']) || $form_state['values']['keep'] <= 0) {
+      form_set_error('keep', t('Number to keep must be a number greater than 0.'));
     }
     parent::edit_form_validate($form, $form_state);
   }
@@ -362,22 +535,29 @@ class backup_migrate_schedule extends backup_migrate_item {
     $wait_time = $this->period - ($this->period * variable_get('backup_migrate_schedule_buffer', 0.01));
 
     if ($this->is_enabled() && ($now - $this->last_run) >= $wait_time) {
-      if ($settings = $this->get_profile()) {
-        $settings->destination_id = $this->destination_id;
-        $settings->source_id = $this->source_id;
-        $settings->file_info = empty($settings->file_info) ? array() : $settings->file_info;
-        $settings->file_info += array(
-          'schedule_id'   => $this->get_id(),
-          'schedule_name' => $this->get('name'),
-        );
+      $this->run();
+    }
+  }
 
-        backup_migrate_perform_backup($settings);
-        $this->update_last_run($now);
-        $this->remove_expired_backups();
-      }
-      else {
-        backup_migrate_backup_fail("Schedule '%schedule' could not be run because requires a profile which is missing.", array('%schedule' => $schedule->get_name()), $settings);
-      }
+  /**
+   * Run the actual schedule.
+   */
+  function run() {
+    if ($settings = $this->get_profile()) {
+      $settings->destination_id = $this->destination_id;
+      $settings->source_id = $this->source_id;
+      $settings->file_info = empty($settings->file_info) ? array() : $settings->file_info;
+      $settings->file_info += array(
+        'schedule_id'   => $this->get_id(),
+        'schedule_name' => $this->get('name'),
+      );
+
+      backup_migrate_perform_backup($settings);
+      $this->update_last_run(time());
+      $this->remove_expired_backups();
+    }
+    else {
+      backup_migrate_backup_fail("Schedule '%schedule' could not be run because requires a profile which is missing.", array('%schedule' => $schedule->get_name()), $settings);
     }
   }
 
@@ -404,37 +584,129 @@ class backup_migrate_schedule extends backup_migrate_item {
 
     $num_to_keep = $this->keep;
     // If num to keep is not 0 (0 is infinity).
-    if ($num_to_keep && ($destination = $this->get_destination())) {
-      $i = 0;
-      if ($destination->op('delete') && $destination_files = $destination->list_files()) {
-        $files = array();
-
-        // Sort the files by modified time.
-        foreach ($destination_files as $file) {
-          // Only delete files created by this schedule.
-          if (!empty($file->file_info['schedule_id']) && $file->file_info['schedule_id'] == $this->get_id()) {
-            if ($destination->can_delete_file($file->file_id())) {
-              $files[str_pad($file->info('filetime'), 10, "0", STR_PAD_LEFT) ."-". $i++] = $file;
-            }
-          }
-        }
-  
-        // If we are beyond our limit, remove as many as we need.
-        $num_files = count($files);
-  
-        if ($num_files > $num_to_keep) {
-          $num_to_delete = $num_files - $num_to_keep;
-          // Sort by date.
-          ksort($files);
-          // Delete from the start of the list (earliest).
-          for ($i = 0; $i < $num_to_delete; $i++) {
-            $file = array_shift($files);
-            $destination->delete_file($file->file_id());
-          }
-        }
+    $destination = $this->get_destination();
+    if ($destination && $destination->op('delete') && $destination_files = $destination->list_files()) {
+      if ($num_to_keep == BACKUP_MIGRATE_SMART_DELETE) {
+        $this->smart_delete_backups(
+          $destination, 
+          $destination_files,
+          variable_get('backup_migrate_smart_keep_subhourly', BACKUP_MIGRATE_SMART_KEEP_SUBHOURLY),
+          variable_get('backup_migrate_smart_keep_hourly',    BACKUP_MIGRATE_SMART_KEEP_HOURLY),
+          variable_get('backup_migrate_smart_keep_daily',     BACKUP_MIGRATE_SMART_KEEP_DAILY),
+          variable_get('backup_migrate_smart_keep_weekly',    BACKUP_MIGRATE_SMART_KEEP_WEEKLY)
+        );
+      }
+      else if ($num_to_keep != BACKUP_MIGRATE_KEEP_ALL) {
+        $this->delete_backups($destination, $destination_files, $num_to_keep);
       }
     }
   }
 
+  /**
+   * Remove older backups keeping only the number specified by the aministrator.
+   */
+  function delete_backups($destination, $files, $num_to_keep) {
+    backup_migrate_include('destinations');
+
+    $num_to_keep = $this->keep;
+
+    // Sort the files by modified time.
+    $i = 0;
+    foreach ($files as $id => $file) {
+      if ($file->is_recognized_type()) {
+        $time = $file->info('filetime');
+        $sorted[$id] = $time;
+      }
+    }
+    asort($sorted);
+
+    // If we are beyond our limit, remove as many as we need.
+    $num_files = count($files);
+
+    if ($num_files > $num_to_keep) {
+      $num_to_delete = $num_files - $num_to_keep;
+      // Delete from the start of the list (earliest).
+      foreach ($sorted as $id => $time) {
+        if (!$num_to_delete--) {
+          break;
+        }
+        $destination->delete_file($id);
+      }
+    }
+  }
+
+  /**
+   * Delete files keeping the specified number of hourly, daily, weekly and monthly backups.
+   */
+  function smart_delete_backups($destination, $files, $keep_subhourly = 3600, $keep_hourly = 24, $keep_daily = 14, $keep_weekly = PHP_INT_MAX, $keep_monthly = PHP_INT_MAX) {
+    $now = time();
+    $periods = array(
+      'subhourly' => array(
+        'delta' => 1,
+        'keep' => $keep_subhourly,
+        'last_time' => 0,
+        'files' => array(),
+      ),
+      'hourly' => array(
+        'delta' => 60*60,
+        'keep' => $keep_hourly,
+        'last_time' => 0,
+        'files' => array(),
+      ),
+      'daily' => array(
+        'delta' => 60*60*24,
+        'keep' => $keep_daily,
+        'last_time' => 0,
+        'files' => array(),
+      ),
+      'weekly' => array(
+        'delta' => 60*60*24*7,
+        'keep' => $keep_weekly,
+        'last_time' => 0,
+        'files' => array(),
+      ),
+      /*
+      'monthly' => array(
+        'delta' => 60*60*24*7*4,
+        'keep' => $keep_monthly,
+        'last_time' => 0,
+        'files' => array(),
+      ),
+      */
+    );
+
+    $keep_files = $filetimes = $times = $groups = $sorted = $saved = array();
+    foreach ($files as $id => $file) {
+      if ($file->is_recognized_type()) {
+        $time = $file->info('filetime');
+        $sorted[$id] = $time;
+      }
+    }
+    arsort($sorted);
+
+    $now = time();
+    foreach ($periods as $i => $period) {
+      foreach ($sorted as $id => $time) {
+        if ($time < ($now - ($period['delta'] * $period['keep']))) {
+          break;
+        }
+        if ($period['last_time'] == 0 || $time <= ($period['last_time'] - $period['delta'])) {
+          $period['last_time'] = $time;
+          $keep_files[$id] = $id;
+        }
+      }
+      // Keep oldest backup or it will get deleted if it doesn't fall on an exact multiple of the period
+      if ($id) {
+        $keep_files[$id] = $id;
+      }
+    }
+
+    // Do the delete.
+    foreach ($files as $id => $file) {
+      if (!isset($keep_files[$id])) {
+        $destination->delete_file($file->file_id());
+      }
+    }
+  }
 }
 

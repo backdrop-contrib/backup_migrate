@@ -227,10 +227,29 @@ function backup_migrate_cron() {
   _backup_migrate_message_callback('_backup_migrate_message_log');
 
   backup_migrate_include('schedules');
-  backup_migrate_schedules_run();
+  backup_migrate_schedules_cron();
 
   backup_migrate_include('files');
   _backup_migrate_temp_files_delete();
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function backup_migrate_cronapi($op, $job = NULL) {
+  $items = array();
+  backup_migrate_include('schedules');
+  foreach (backup_migrate_get_schedules() as $schedule) {
+    $id = $schedule->get('id');
+    $items['backup_migrate_' . $id] = array(
+      'description' => t('Run the Backup and Migrate \'!name\' schedule', array('!name' => $schedule->get('name'))),
+      'rule' => $schedule->get('cron_schedule'),
+      'callback' => 'backup_migrate_schedule_run', 
+      'arguments' => array($id),
+      'file' => 'includes/schedules.inc',
+    );
+  }
+  return $items;
 }
 
 /**
@@ -322,11 +341,18 @@ function backup_migrate_include() {
   static $used = array();
   foreach (func_get_args() as $file) {
     if (!isset($used[$file])) {
-      require_once './' . drupal_get_path('module', 'backup_migrate') . "/includes/$file.inc";
+      require_once backup_migrate_include_path($file);
     }
   
     $used[$file] = TRUE;
   }
+}
+
+/**
+ * Include views .inc files as necessary.
+ */
+function backup_migrate_include_path($file) {
+  return './' . drupal_get_path('module', 'backup_migrate') . "/includes/$file.inc";
 }
 
 
@@ -554,6 +580,7 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
  */
 function theme_backup_migrate_dependent($element) {
   drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $id = form_clean_id(implode('-', $element['#parents']));
 
@@ -564,7 +591,7 @@ function theme_backup_migrate_dependent($element) {
   );
   drupal_add_js($settings, 'setting');
 
-  return '<div id="edit-' . $id . '">' . $element['#children'] . '</div>';
+  return '<div id="edit-' . $id . '" class="backup-migrate-form-dependent">' . $element['#children'] . '</div>';
 }
 
 /**

@@ -52,3 +52,10 @@ div.row-error {
 #block-backup_migrate-quick_backup fieldset.collapsed {
   margin-bottom: 1em;
 }
+.backup-migrate-form-dependent {
+  padding-left: 2em;
+  padding-bottom: 1em;
+}
+.backup-migrate-form-dependent .form-item {
+  margin-top: 0;
+}

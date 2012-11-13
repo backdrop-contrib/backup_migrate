@@ -133,7 +133,7 @@ function backup_migrate_crud_edit_form($form_state, $item) {
  */
 function backup_migrate_crud_edit_form_validate($form, &$form_state) {
   $item = $form_state['values']['item'];
-  //$item->edit_form_validate($form, $form_state);
+  $item->edit_form_validate($form, $form_state);
 }
 
 /**

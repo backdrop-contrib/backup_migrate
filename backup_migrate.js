@@ -8,28 +8,36 @@ Drupal.backup_migrate = {
           info = Drupal.settings.backup_migrate.dependents[key];
           dependent = $('#edit-' + info['dependent']);
           for (key in info['dependencies']) {
-            dependency = $('#edit-' + key);
-            dependency.checkval = function(inval) {
-              var val = this.val();
-              if (this.attr('type') == 'checkbox') {
-                val = this.attr('checked');
-              }
-              return val == inval;
-            };
-
-            if (!dependency.checkval(info['dependencies'][key])) {
-              dependent.css('display', 'none');
-            }
-            (function(dependent, dependency) {
-              dependency.bind('change click keypress focus', function() {
-                if (dependency.checkval(info['dependencies'][key])) {
-                  dependent.slideDown();
+            $('[name="' + key + '"]').each(function() {
+              var dependentval = info['dependencies'][key];
+              var dependency = $(this);
+              (function(dependent, dependency) {
+                var checkval = function(inval) {
+                  if (dependency.attr('type') == 'radio') {
+                    var val = $('[name="' + dependency.attr('name') + '"]:checked').val();
+                    return val == inval;
+                  }
+                  else if (dependency.attr('type') == 'checkbox') {
+                    return dependency.attr('checked') && inval == dependency.val();
+                  }
+                  else {
+                    return dependency.val() == inval;
+                  }
+                  return false;
+                };
+                if (!checkval(dependentval)) {
+                  dependent.hide();
                 }
-                else {
-                  dependent.slideUp();
-                }
-              });
-            })(dependent, dependency);
+                dependency.bind('load change click keypress focus', function() {
+                  if (checkval(dependentval)) {
+                    dependent.slideDown();
+                  }
+                  else {
+                    dependent.slideUp();
+                  }
+                });
+              })(dependent, dependency);
+            });
           }
         }
       }

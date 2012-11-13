@@ -268,7 +268,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
       array('data' => 'Filename', 'field' => 'filename'),
       array('data' => 'Created', 'field' => 'filetime', 'sort' => 'desc'),
       array('data' => 'Size', 'field' => 'filesize'),
-      t('Operations'),
+      '',
     );
 
     $sort_order = tablesort_get_order($headers);
@@ -304,7 +304,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
         check_plain($info['filename']) . $description,
         t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 2))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
         format_size($info['filesize']),
-        implode(" | ", $file->destination->get_file_links($file->file_id())),
+        array('data' => implode(" | ", $file->destination->get_file_links($file->file_id())), 'class' => 'backup-migrate-actions'),
       );
     }
 
@@ -579,7 +579,7 @@ class backup_migrate_destination extends backup_migrate_location {
         $info_file = $this->load_file($files[$key . '.info']->file_id());
         $info = drupal_parse_info_file($info_file->filepath());
         // Allow the stored metadata to override the detected metadata.
-        $file->file_info = $file->file_info + $info;
+        $file->file_info = $info + $file->file_info;
         // Remove the metadata file from the list
         unset($files[$key . '.info']);
       }
