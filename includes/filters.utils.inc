@@ -173,7 +173,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $file->file_info['bam_sourcename']    = $source->get('name');
     $file->file_info['drupalversion']     = VERSION;
 
-    // Add any additional info tha has been added to the settings by other plugins.
+    // Add any additional info that has been added to the settings by other plugins.
     if (!empty($settings->file_info)) {
       $file->file_info += $settings->file_info;
     }

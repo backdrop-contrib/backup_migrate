@@ -325,19 +325,33 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   
     return $lines;
   }
-  
+
   /**
    * The header for the top of the sql dump file. These commands set the connection
    *  character encoding to help prevent encoding conversion issues.
    */
   function _get_sql_file_header() {
-    return "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+    $info = $this->_db_info();
+
+    return "-- Backup and Migrate (Drupal) MySQL Dump
+-- Backup and Migrate Version: ". BACKUP_MIGRATE_VERSION ."
+-- http://drupal.org/project/backup_migrate
+-- Drupal Version: " . VERSION . "
+-- http://drupal.org/
+--
+-- Host: " . url('', array('absolute' => TRUE)) . "
+-- Site Name: " . url('', array('absolute' => TRUE)) . "
+-- Generation Time: " . format_date(time(), 'custom', 'r') . "
+-- MySQL Version: " . $info['version'] . "
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
 
+SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";
 SET NAMES utf8;
 
 ";
@@ -357,5 +371,16 @@ SET NAMES utf8;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 ";
   }
+
+  /**
+   * Get the version info for the given DB.
+   */
+  function _db_info() {
+    return array(
+      'type' => 'mysql',
+      'version' => db_version(),
+    );
+  }
+
 }
 

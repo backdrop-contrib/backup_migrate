@@ -280,4 +280,15 @@ class backup_migrate_destination_db extends backup_migrate_source_remote {
   function get_file_type_id() {
     return 'sql';
   }
+
+  /**
+   * Get the version info for the given DB.
+   */
+  function _db_info() {
+    return array(
+      'type' => FALSE,
+      'version' => t('Unknown'),
+    );
+  }
+
 }
