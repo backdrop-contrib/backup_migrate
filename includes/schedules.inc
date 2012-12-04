@@ -110,7 +110,7 @@ class backup_migrate_schedule extends backup_migrate_item {
         'period' => 60 * 60 * 24,
         'storage' => BACKUP_MIGRATE_STORAGE_NONE,
         'cron' => BACKUP_MIGRATE_CRON_BUILTIN,
-        'cron_schedule' => '* 0 * * *',
+        'cron_schedule' => '0 4 * * *',
       );
   }
 
@@ -534,7 +534,8 @@ class backup_migrate_schedule extends backup_migrate_item {
     // Add a small negative buffer (1% of the entire period) to the time to account for slight difference in cron run length.
     $wait_time = $this->period - ($this->period * variable_get('backup_migrate_schedule_buffer', 0.01));
 
-    if ($this->is_enabled() && ($now - $this->last_run) >= $wait_time) {
+    $cron = $this->get('cron');
+    if ($cron == BACKUP_MIGRATE_CRON_BUILTIN && $this->is_enabled() && ($now - $this->last_run) >= $wait_time) {
       $this->run();
     }
   }

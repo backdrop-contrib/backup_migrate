@@ -213,7 +213,7 @@ function backup_migrate_schema() {
         'length' => 255,
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'default' => '* 0 * * *',
+        'default' => '0 4 * * *',
       ),
     ),
     'primary key' => array('schedule_id'),
@@ -519,7 +519,7 @@ function backup_migrate_update_6301() {
   $ret = array();
 
   db_change_field($ret, 'backup_migrate_schedules', 'cron', 'cron', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
-  db_add_field($ret, 'backup_migrate_schedules', 'cron_schedule', array('description' => t('The cron schedule to run on.'), 'type' => 'varchar', 'length' => 255, 'default' => '0 * * * * *', 'not null' => TRUE));
+  db_add_field($ret, 'backup_migrate_schedules', 'cron_schedule', array('description' => t('The cron schedule to run on.'), 'type' => 'varchar', 'length' => 255, 'default' => '0 4 * * *', 'not null' => TRUE));
 
   return $ret;
 }
