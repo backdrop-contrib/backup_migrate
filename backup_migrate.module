@@ -845,9 +845,8 @@ function backup_migrate_ui_saved_backups() {
     drupal_goto($_GET['q']);
   }
 
-
   // Render the list.
-  $out = _backup_migrate_ui_destination_display_file_list($files, 20);
+  $out = _backup_migrate_ui_destination_display_file_list($files, 20, TRUE);
 
   // Add the refesh link if needed.
   if ($fetch_time < $now) {

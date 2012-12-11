@@ -230,7 +230,7 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
   $rows = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
     drupal_set_title(t('%title Files', array('%title' => $destination->get_name())));
-    return _backup_migrate_ui_destination_display_files($destination);
+    return _backup_migrate_ui_destination_display_files($destination, 20, TRUE);
   }
   drupal_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
 }
@@ -238,7 +238,7 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
 /**
  * List the backup files in the given destination.
  */
-function _backup_migrate_ui_destination_display_files($destination = NULL, $limit = NULL) {
+function _backup_migrate_ui_destination_display_files($destination = NULL, $limit = NULL, $show_pager = FALSE) {
   if ($destination) {
     // Refresh the file listing cache if requested.
     if (isset($_GET['refresh'])) {
@@ -247,7 +247,7 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
     }
     $files = $destination->list_files();
 
-    $out = _backup_migrate_ui_destination_display_file_list($files, $limit);
+    $out = _backup_migrate_ui_destination_display_file_list($files, $limit, $show_pager);
 
     if ($destination->cache_files && $destination->fetch_time) {
       $out .= '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
@@ -259,7 +259,7 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
 /**
  * List the backup files in the given destination.
  */
-function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL) {
+function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL, $show_pager = FALSE) {
   drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $rows = $sort = array();
@@ -311,14 +311,38 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL)
     array_multisort($sort, $sort_dir, $rows);
 
     // Show only some of them if it's limited.
-    $showing = '';
+    $showing = $pager = '';
     if ($limit) {
-      $showing = t('Showing @limit of @total files.', array('@limit' => $limit, '@total' => count($rows)));
-      $rows = array_slice($rows, 0, $limit, TRUE);
+      $total = count($rows);
+      $start = 0;
+
+      if ($show_pager) {
+        $page = isset($_GET['page']) ? $_GET['page'] : '';
+        $start = $page * $limit;
+
+        $element = 0;
+        $GLOBALS['pager_total'][$element] = ceil($total / $limit);
+        $GLOBALS['pager_page_array'][$element] = $page;
+        $tags = array(
+          t('« newest'),
+          t('« newer'),
+          '',
+          t('older »'),
+          t('oldest »'),
+          );
+        $pager = theme('pager', $tags, $limit, $element, array(), ceil($total/$limit));
+
+        $end = min($total - 1, $start + $limit);
+      }
+      $showing = t('Showing @start to @end of @total files.', array('@start' => $start + 1, '@end' => $end + 1, '@total' => $total));
+
+      // Limit the number of rows shown.
+      $rows = array_slice($rows, $start, $limit, TRUE);
     }
 
     $out = theme("table", $headers, $rows, array('class' => 'backup-migrate-listing backup-migrate-listing-files'));
     $out .= $showing;
+    $out .= $pager;
   }
   else {
     $out = t('There are no backup files to display.');
