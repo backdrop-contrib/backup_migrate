@@ -128,7 +128,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     $args = array(
       '%file' => $file->filepath(),
       '%host' => $this->dest_url['host'],
-      '%port' => $this->dest_url['port'] ? $this->dest_url['port'] : '3306',
+      '%port' => isset($this->dest_url['port']) ? $this->dest_url['port'] : '3306',
       '%user' => $this->dest_url['user'],
       '%pass' => $this->dest_url['pass'],
       '%db' => $this->dest_url['path'],
