@@ -85,7 +85,6 @@ class backup_migrate_schedule extends backup_migrate_item {
   var $singular = 'schedule';
   var $plural = 'schedules';
   var $default_values = array();
-  var $settings_path = '/';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.
@@ -239,13 +238,40 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Format the number to keep in human-readable form.
    */
   function get_keep_description() {
-    if ($this->keep == BACKUP_MIGRATE_KEEP_ALL) {
-      return t('All');
+      return $this->generate_keep_description($this->keep);
+  }
+
+  /**
+   * Format a number to keep in human readable from
+   */
+  function generate_keep_description($keep, $terse = TRUE) {
+    if ($keep == BACKUP_MIGRATE_KEEP_ALL) {
+      return t('all backups');
     }
-    else if ($this->keep == BACKUP_MIGRATE_SMART_DELETE) {
-      return t('Smart delete');
+    else if ($keep == BACKUP_MIGRATE_SMART_DELETE) {
+      $keep_hourly = variable_get('backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
+      $keep_daily  = variable_get('backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
+      $keep_weekly = variable_get('backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
+      if ($terse) {
+      return t('!hours hourly, !days daily, !weeks weekly backups',
+          array(
+            '!hours' => $keep_hourly == PHP_INT_MAX ? t('all') : $keep_hourly,
+            '!days'  => $keep_daily  == PHP_INT_MAX ? t('all') : $keep_daily,
+            '!weeks' => $keep_weekly == PHP_INT_MAX ? t('all') : $keep_weekly,
+          ));
+      }
+      else {
+        return t('hourly backups !hours, daily backups !days and weekly backups !weeks',
+          array(
+            '!hours' => $keep_hourly == PHP_INT_MAX ? t('forever') : format_plural($keep_hourly, 'for 1 hour', 'for the past @count hours'),
+            '!days'  => $keep_daily  == PHP_INT_MAX ? t('forever') : format_plural($keep_daily,  'for 1 day',  'for the past @count days'),
+            '!weeks' => $keep_weekly == PHP_INT_MAX ? t('forever') : format_plural($keep_weekly, 'for 1 week', 'for the past @count weeks'),
+          )
+        );
+      }
     }
-    return $this->keep;
+
+    return format_plural($keep, 'last 1 backup', 'last @count backups');
   }
 
   /**
@@ -415,15 +441,9 @@ class backup_migrate_schedule extends backup_migrate_item {
     $keep_weekly = variable_get('backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
     $form['delete_settings']['smartdelete'] = array(
       "#type" => "radio",
-      "#title" => t('Time Machine Delete'),
+      "#title" => t('Smart Delete'),
       '#return_value' => BACKUP_MIGRATE_SMART_DELETE,
-      "#description" => t('Keep hourly backups !hours, daily backups !days and weekly backups !weeks.',
-        array(
-          '!hours' => $keep_hourly == PHP_INT_MAX ? t('forever') : format_plural($keep_hourly, 'for 1 hour', 'for the past @count hours'),
-          '!days'  => $keep_daily  == PHP_INT_MAX ? t('forever') : format_plural($keep_daily,  'for 1 day',  'for the past @count days'),
-          '!weeks' => $keep_weekly == PHP_INT_MAX ? t('forever') : format_plural($keep_weekly, 'for 1 week', 'for the past @count weeks'),
-        )
-      ),
+      "#description" => t('Keep !keep. <strong>Recommended</strong>', array('!keep' => $this->generate_keep_description(BACKUP_MIGRATE_SMART_DELETE, FALSE))),
       "#default_value" => $keep ? $keep : BACKUP_MIGRATE_SMART_DELETE,
       '#parents' => array('deletetype'),
     );
@@ -445,7 +465,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#type" => "textfield",
       "#size" => 6,
       "#title" => t("Number of Backup files to keep"),
-      "#description" => t("The number of backup files to keep before deleting old ones. Use 0 to never delete backups."),
+      "#description" => t("The number of backup files to keep before deleting old ones."),
       "#default_value" => $keep > 0 ? $keep : BACKUP_MIGRATE_KEEP_DEFAULT,
     );
 

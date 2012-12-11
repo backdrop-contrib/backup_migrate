@@ -147,13 +147,31 @@ function backup_migrate_menu() {
     'weight' => 1,
     'type' => MENU_LOCAL_TASK,
   );
+  $items[BACKUP_MIGRATE_MENU_PATH . '/restore'] = array(
+    'title' => 'Restore',
+    'description' => 'Restore the database from a previous backup',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('', 'backup_migrate_ui_manual_restore', TRUE),
+    'access arguments' => array('restore from backup'),
+    'weight' => 1,
+    'type' => MENU_LOCAL_TASK,
+  );
   $items[BACKUP_MIGRATE_MENU_PATH . '/backups'] = array(
     'title' => 'Saved Backups',
     'description' => 'Previously created backups',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('', 'backup_migrate_ui_saved_backups', TRUE),
     'access arguments' => array('access backup and migrate'),
-    'weight' => 1,
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items[BACKUP_MIGRATE_MENU_PATH . '/schedule'] = array(
+    'title' => 'Schedule',
+    'description' => 'Schedule automatic backups',
+    'page callback' => 'backup_migrate_menu_callback',
+    'page arguments' => array('', 'backup_migrate_ui_schedule', TRUE),
+    'access arguments' => array('administer backup and migrate'),
+    'weight' => 3,
     'type' => MENU_LOCAL_TASK,
   );
   $items[BACKUP_MIGRATE_MENU_PATH . '/settings'] = array(
@@ -162,7 +180,7 @@ function backup_migrate_menu() {
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('crud', 'backup_migrate_crud_ui_list_all', TRUE),
     'access arguments' => array('administer backup and migrate'),
-    'weight' => 2,
+    'weight' => 4,
     'type' => MENU_LOCAL_TASK,
   );
   $items[BACKUP_MIGRATE_MENU_PATH . '/settings/import'] = array(
@@ -172,15 +190,6 @@ function backup_migrate_menu() {
     'page arguments' => array('crud', 'backup_migrate_crud_ui_import', TRUE),
     'access arguments' => array('administer backup and migrate'),
     'weight' => 10,
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items[BACKUP_MIGRATE_MENU_PATH . '/restore'] = array(
-    'title' => 'Restore',
-    'description' => 'Restore the database from a previous backup',
-    'page callback' => 'backup_migrate_menu_callback',
-    'page arguments' => array('', 'backup_migrate_ui_manual_restore', TRUE),
-    'access arguments' => array('restore from backup'),
-    'weight' => 1,
     'type' => MENU_LOCAL_TASK,
   );
 
@@ -276,6 +285,9 @@ function backup_migrate_theme() {
     'backup_migrate_ui_manual_quick_backup_form_inline' => array(
       'arguments' => array('form'),
     ),
+    'backup_migrate_ui_quick_schedule_form_inline' => array(
+      'arguments' => array('form'),
+    ),
     'backup_migrate_dependent' => array(
       'arguments' => array('element'),
     ),
@@ -315,6 +327,31 @@ function _backup_migrate_block_view($delta) {
   if (function_exists('_backup_migrate_block_view_' . $delta)) {
     return $function();
   }
+}
+
+/**
+ * Implementation of hook_backup_migrate_destinations().
+ */
+function backup_migrate_backup_migrate_schedules() {
+  backup_migrate_include('sources');
+
+  $sources = backup_migrate_get_sources();
+
+  $schedules = array();
+  foreach ($sources as $id => $source) {
+    $schedule = array(
+      'schedule_id' => $id,
+      'name' => $source->get('name'),
+      'source_id' => $id,
+      'destination_id' => 'scheduled',
+      'profile_id' => 'default',
+      'period' => variable_get('backup_migrate_default_schedule', 60*60*24),
+      'keep' => BACKUP_MIGRATE_SMART_DELETE,
+      'enabled' => FALSE,
+    );
+    $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
+  }
+  return $schedules;
 }
 
 
@@ -427,6 +464,132 @@ function backup_migrate_ui_manual_backup_load_profile_form_submit($form, &$form_
   }
 }
 
+/**
+ * The menu callback for quick schedules.
+ */
+function backup_migrate_ui_schedule() {
+  backup_migrate_include('sources', 'schedules', 'profiles');
+  $out = '';
+
+  $sources = backup_migrate_get_sources();
+  $schedules = backup_migrate_get_schedules();
+
+  $out = drupal_get_form('backup_migrate_ui_schedule_form', $sources, $schedules);
+  return $out;
+}
+
+/**
+ * The quick schedule form.
+ */
+function backup_migrate_ui_schedule_form(&$form_state, $sources, $schedules) {
+  $form = array();
+
+  $form['quickschedule'] = array('#tree' => TRUE);
+
+  // Add a quick schedule item for each source.
+  foreach ($sources as $id => $source) {
+    if (isset($schedules[$id])) {
+      $schedule = $schedules[$id];
+      $form['quickschedule'][$id] = array();
+      $form['quickschedule'][$id]['#theme'] = 'backup_migrate_ui_quick_schedule_form_inline';
+      $form['quickschedule'][$id]['enabled'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Automatically backup my !source', array('!source' => $source->get('name'))),
+        '#default_value' => $schedule->get('enabled'),
+      );
+      /*
+      $form['quickschedule'][$id]['source_id'] = array(
+        '#type' => 'item',
+        '#title' => t('Backup Source'),
+        '#value' => $source->get('name'),
+      );
+      */
+      $form['quickschedule'][$id]['settings'] = array(
+        '#type' => 'backup_migrate_dependent',
+        '#dependencies' => array(
+          'quickschedule[' . $id . '][enabled]' => TRUE,
+        ),
+      );
+      $options = array(
+        (60*60)       => t('Once an hour'),
+        (60*60*24)    => t('Once a day'),
+        (60*60*24*7)  => t('Once a week'),
+      );
+      $period = $schedule->get('period');
+      if (!isset($options[$period])) {
+        $options[$period] = $schedule->get('frequency_description');
+      }
+      $form['quickschedule'][$id]['settings']['period'] = array(
+        '#type' => 'select',
+        '#title' => t('Schedule Frequency'),
+        '#options' => $options,
+        '#default_value' => $period,
+      );
+      $form['quickschedule'][$id]['settings']['destination_id'] = array(
+        '#type' => 'select',
+        '#title' => t('Backup Destination'),
+        '#options' => _backup_migrate_get_destination_form_item_options('scheduled backup'),
+        '#default_value' => $schedule->get('period'),
+      );
+      $form['quickschedule'][$id]['settings']['profile_id'] = array(
+        '#type' => 'select',
+        '#title' => t('Settings Profile'),
+        '#default_value' => $schedule->get('profile_id'),
+        '#options' => _backup_migrate_get_profile_form_item_options(),
+      );
+
+      $keep = $schedule->get('keep');
+      $option_keys = array_unique(array(BACKUP_MIGRATE_SMART_DELETE, 30, 100, 500, BACKUP_MIGRATE_KEEP_ALL, $keep));
+      $options = array();
+      foreach ($option_keys as $i) {
+        $options[$i] = $schedule->generate_keep_description($i);
+      }
+      $form['quickschedule'][$id]['settings']['keep'] = array(
+        '#type' => 'select',
+        '#title' => t('Backup retention'),
+        '#options' => $options,
+        '#default_value' => $keep,
+      );
+      $form['quickschedule'][$id]['settings']['advanced'] = array(
+        '#type' => 'markup',
+        '#value' => l(t('Advanced Settings.'), BACKUP_MIGRATE_MENU_PATH . '/settings/schedule/edit/' . $id, array('query' => drupal_get_destination())),
+      );
+      // Set the parent for the setttings up a level.
+      foreach(element_children($form['quickschedule'][$id]['settings']) as $child) {
+        $form['quickschedule'][$id]['settings'][$child]['#parents'] = array('quickschedule', $id, $child);
+      }
+    }
+  }
+  if (element_children($form['quickschedule'])) {
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save Schedules'),
+    );
+  }
+  $form['advanced'] = array(
+    '#type' => 'markup',
+    '#value' => '<div class="clearblock backup-migrate-footer-message">' . t('For more scheduling options and do add additional schedules, try the <a href="!advancedurl">advanced schedule page</a>.', array('!advancedurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/schedule'))) . '</div>',
+  );
+  return $form;
+}
+
+/**
+ * Submit the quick schedule form.
+ */
+function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
+  backup_migrate_include('schedules');
+  if (user_access('adminsiter backup and migrate')) {
+    // Override the backups.
+    foreach ($form_state['values']['quickschedule'] as $id => $values) {
+      if ($schedule = backup_migrate_get_schedule($id)) {
+        $schedule->from_array($values);
+        $schedule->save();
+      }
+    }
+  }
+}
+
+
 /* Blocks */
 
 /**
@@ -499,7 +662,7 @@ function backup_migrate_ui_manual_quick_backup_form(&$form_state, $inline = TRUE
 
   $form['advanced'] = array(
     '#type' => 'markup',
-    '#value' => t('For more backup options, try the <a href="!advancedurl">advanced backup page</a>.', array('!advancedurl' => url('admin/content/backup_migrate/export/advanced'))),
+    '#value' => '<div class="clearblock backup-migrate-footer-message">' . t('For more backup options, try the <a href="!advancedurl">advanced backup page</a>.', array('!advancedurl' => url('admin/content/backup_migrate/export/advanced'))) . '</div>',
   );
 
 
@@ -576,6 +739,43 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
 }
 
 /**
+ * Theme the quick schedule form.
+ */
+function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
+  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+  // Remove the titles so that the pulldowns can be displayed inline.
+  unset($form['settings']['source_id']['#title']);
+  unset($form['settings']['period']['#title']);
+  unset($form['settings']['destination_id']['#title']);
+  unset($form['settings']['profile_id']['#title']);
+  unset($form['settings']['keep']['#title']);
+  unset($form['settings']['keep']['#field_prefix']);
+  unset($form['settings']['keep']['#field_suffix']);
+
+  $replacements = array(
+    '!from'       => drupal_render($form['settings']['source_id']),
+    '!to'         => drupal_render($form['settings']['destination_id']),
+    '!frequency'  => drupal_render($form['settings']['period']),
+    '!profile'    => drupal_render($form['settings']['profile_id']),
+    '!keep'       => drupal_render($form['settings']['keep']),
+  );
+  $form['settings'] = array('inline' => array(
+    '#type' => 'markup',
+    "#prefix" => '<div class="container-inline backup-migrate-quickschedule">',
+    "#suffix" => '</div>',
+    '#value'  => t('Backup !frequency to !to using !profile keeping !keep', $replacements),
+  )) + $form['settings'];
+  unset($form['settings']['period']);
+  unset($form['settings']['destination_id']);
+  unset($form['settings']['profile_id']);
+  unset($form['settings']['keep']);
+  return drupal_render($form);
+}
+
+
+/**
  * Theme the dependent form section.
  */
 function theme_backup_migrate_dependent($element) {
@@ -642,7 +842,7 @@ function backup_migrate_ui_manual_backup_form(&$form_state, $profile) {
     $form['save_options'] = array(
       '#type' => 'backup_migrate_dependent',
       '#dependencies' => array(
-        'save-settings' => TRUE,
+        'save_settings' => TRUE,
       ),
       '#weight' => 90,
     );
@@ -737,7 +937,15 @@ function backup_migrate_ui_manual_restore() {
 function backup_migrate_ui_manual_restore_form() {
   backup_migrate_include('filters', 'destinations', 'sources');
 
+  drupal_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
+
   $form = array();
+
+  $form['backup_migrate_restore_upload'] = array(
+    '#title' => t('Upload a Backup File'),
+    '#type' => 'file',
+    '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array("%size" => format_size(file_upload_max_size()))),
+  );
 
   $sources = _backup_migrate_get_source_form_item_options();
   if (count($sources) > 1) {
@@ -756,13 +964,6 @@ function backup_migrate_ui_manual_restore_form() {
     );
   }
 
-  $form['backup_migrate_restore_upload'] = array(
-    '#title' => t('Upload a Backup File'),
-    '#type' => 'file',
-    '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array("%size" => format_size(file_upload_max_size()))),
-  );
-  drupal_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
-
   $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
   // Add the advanced fieldset if there are any fields in it.
   if (@$form['advanced']) {
@@ -779,7 +980,7 @@ function backup_migrate_ui_manual_restore_form() {
   if (user_access('access backup files')) {
     $form[] = array(
       '#type' => 'markup',
-      '#value' => t('<p>Or you can restore one of the files in your <a href="!url">saved backup destinations.</a></p>', array("!url" => url("admin/content/backup_migrate/backups"))),
+      '#value' => t('<p>Or you can restore one of your <a href="!url">previously saved bacups.</a></p>', array("!url" => url("admin/content/backup_migrate/backups"))),
     );
   }
   $form['#attributes'] = array('enctype' => 'multipart/form-data');
