@@ -64,6 +64,13 @@ function backup_migrate_backup_migrate_destination_types() {
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
       'class' => 'backup_migrate_destination_browser_upload',
     ),
+    'nodesquirrel' => array(
+      'description' => t('Save the backup files to the NodeSqurrel.com backup service.'),
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.nodesquirrel.inc',
+      'class' => 'backup_migrate_destination_nodesquirrel',
+      'type_name' => t('NodeSquirrel.com'),
+      'can_create' => TRUE,
+    ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
