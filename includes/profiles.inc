@@ -114,7 +114,7 @@ function _backup_migrate_ui_backup_settings_form($profile) {
   $form['file']['timestamp_format_wrapper'] = array(
     '#type' => 'backup_migrate_dependent',
     '#dependencies' => array(
-      'append-timestamp' => TRUE,
+      'append_timestamp' => TRUE,
     ),
   );
   $form['file']['timestamp_format_wrapper']['timestamp_format'] = array(

@@ -169,8 +169,13 @@ function backup_migrate_crud_delete_confirm_form(&$form_state, $item) {
     '#type' => 'value',
     '#value' => $item,
   );
-  $message = $item->delete_confirm_message();
-  return confirm_form($form, t('Are you sure?'), $item->get_settings_path(), $message, t('Delete'), t('Cancel'));
+  if ($item->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
+    $message = $item->revert_confirm_message();
+    return confirm_form($form, t('Are you sure?'), $item->get_settings_path(), $message, t('Revert'), t('Cancel'));
+  } else {
+    $message = $item->delete_confirm_message();
+    return confirm_form($form, t('Are you sure?'), $item->get_settings_path(), $message, t('Delete'), t('Cancel'));
+  }  
 }
 
 /**
@@ -684,12 +689,18 @@ class backup_migrate_item {
    * Get the message to send to the user when confirming the deletion of the item.
    */
   function delete_confirm_message() {
-    return t('Are you sure you want to delete this !type?', array('!type' => t($item->singular)));
+    return t('Are you sure you want to delete the !type %name?', array('!type' => t($this->singular), '%name' => $this->get('name')));
   }
 
-  /* Static Functions */
- 
-   /**
+  /**
+   * Get the message to send to the user when confirming the deletion of the item.
+   */
+  function revert_confirm_message() {
+    return t('Are you sure you want to revert the !type %name back to the default settings?', array('!type' => t($this->singular), '%name' => $this->get('name')));
+  }
+
+  /* Static Functions */ 
+  /**
    * This function is not supposed to be called. It is just here to help the po extractor out.
    */
   function strings() {
@@ -729,7 +740,7 @@ class backup_migrate_item {
       'page arguments' => array('crud', 'backup_migrate_crud_ui_create', TRUE, $this->type_name),
       'access arguments' => array('administer backup and migrate'),
       'weight' => 2,
-      'type' => MENU_CALLBACK,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[$path .'/delete'] = array(
       'title' => 'Delete !type',
@@ -745,7 +756,7 @@ class backup_migrate_item {
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_edit', TRUE, $this->type_name),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_CALLBACK,
+      'type' => MENU_LOCAL_TASK,
     );
     $items[$path .'/export'] = array(
       'title' => 'Export !type',
@@ -753,7 +764,7 @@ class backup_migrate_item {
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_export', TRUE, $this->type_name),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_CALLBACK,
+      'type' => MENU_LOCAL_TASK,
     );
     return $items;
   }
