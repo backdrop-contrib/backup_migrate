@@ -26,7 +26,8 @@ Drupal.backup_migrate = {
                   return false;
                 };
                 if (!checkval(dependentval)) {
-                  dependent.hide();
+                  // Hide doesn't work inside collapsed fieldsets.
+                  dependent.css('display', 'none');
                 }
                 dependency.bind('load change click keypress focus', function() {
                   if (checkval(dependentval)) {

@@ -38,7 +38,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
     $form['advanced']['notify_success_email_wrapper'] = array(
       '#type' => 'backup_migrate_dependent',
       '#dependencies' => array(
-        'filters-notify-success-enable' => TRUE,
+        'filters[notify_success_enable]' => TRUE,
       ),
     );
     $form['advanced']['notify_success_email_wrapper']['notify_success_email'] = array(
@@ -54,7 +54,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
     $form['advanced']['notify_failure_email_wrapper'] = array(
       '#type' => 'backup_migrate_dependent',
       '#dependencies' => array(
-        'filters-notify-failure-enable' => TRUE,
+        'filters[notify_failure_enable]' => TRUE,
       ),
     );
     $form['advanced']['notify_failure_email_wrapper']['notify_failure_email'] = array(
