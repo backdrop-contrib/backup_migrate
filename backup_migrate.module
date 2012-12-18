@@ -602,7 +602,7 @@ function _backup_migrate_block_view_quick_backup() {
     // Messages should be sent to the browser.
     _backup_migrate_message_callback('_backup_migrate_message_browser');
     return array(
-      'subject' => t('Backup and Migrate'),
+      'subject' => t('Quick Backup'),
       'content' => drupal_get_form('backup_migrate_ui_manual_quick_backup_form', FALSE),
     );
   }
@@ -649,14 +649,14 @@ function backup_migrate_ui_manual_quick_backup_form(&$form_state, $inline = TRUE
 
   $form['quickbackup']['description'] = array(
     '#type' => 'fieldset',
-    "#title" => t("Add a note to the backup"),
+    "#title" => t("Add a note"),
     "#collapsible" => TRUE,
     "#collapsed" => TRUE,
     "#tree" => FALSE,
   );
   $form['quickbackup']['description']['description'] = array(
     '#type' => 'textarea',
-    "#title" => t("Description"),
+    "#title" => t("Note"),
     '#description' => t('This note will be saved with the backup file and shown on the listing page.'),
   );
 
