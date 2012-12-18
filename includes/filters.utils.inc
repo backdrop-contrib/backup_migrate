@@ -7,7 +7,7 @@
  */
 
 /**
- * A filter to send a notification email on success or failure of backup.
+ * A filter to run some basic utility functions.
  *
  * @ingroup backup_migrate_filters
  */
@@ -57,7 +57,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $form['advanced']['utils_site_offline_message_wrapper'] = array(
       '#type' => 'backup_migrate_dependent',
       '#dependencies' => array(
-        'filters-utils-site-offline' => TRUE,
+        'filters[utils_site_offline]' => TRUE,
       ),
     );
     $form['advanced']['utils_site_offline_message_wrapper']['utils_site_offline_message'] = array(
@@ -68,9 +68,9 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     );
     $form['advanced']['utils_description'] = array(
       '#type' => 'textarea',
-      '#title' => t('Description'),
+      '#title' => t('Add a note'),
       '#default_value' => !empty($settings['utils_description']) ? $settings['utils_description'] : NULL,
-      '#description' => t('Add a short description to the backup file.'),
+      '#description' => t('Add a short note to the backup file.'),
     );
     $form['advanced']['use_cli'] = array(
       "#type" => "checkbox",
