@@ -66,7 +66,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    */
   function backup_settings_default() {
      return array(
-      'exclude_filepaths' => "backup_migrate\nimagecache\ncss",
+      'exclude_filepaths' => "backup_migrate\nimagecache\ncss\njs\nctools\nimagefield_thumbs",
     );
   }
 
