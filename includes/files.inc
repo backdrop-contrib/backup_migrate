@@ -140,15 +140,30 @@ function _backup_migrate_filename_append_prepare($filename, $append_str) {
 /**
  * Construct a filename using token and some cleaning.
  */
-function _backup_migrate_construct_filename($filename, $timestamp='') {
+function _backup_migrate_construct_filename($settings) {
+  // Get the raw filename from the settings.
+  $filename = $settings->filename;
+
+  // Replace any tokens
   if (module_exists('token') && function_exists('token_replace')) {
     $filename = token_replace($filename, 'global');
   }
-  $filename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $filename);
+
+  // Remove illegal characters
+  $filename = _backup_migrate_clean_filename($filename);
+
+  // Generate a timestamp if needed.
+  $timestamp = '';
+  if ($settings->append_timestamp && $settings->timestamp_format) {
+    $timestamp = format_date(time(), 'custom', $settings->timestamp_format);
+  }
+
+  // Trim to length if needed to allow the timestamp to fit into the max filename.
   $filename = _backup_migrate_filename_append_prepare($filename, $timestamp);
   $filename .= '-' . $timestamp;
   $filename = trim($filename, '-');
 
+  // If there is no filename, then just call it untitled.
   if (drupal_strlen($filename) == 0) {
     $filename = 'untitled';
   }
@@ -163,8 +178,17 @@ function _backup_migrate_default_filename() {
     return '[site-name]';
   }
   else {
-    return _backup_migrate_construct_filename(variable_get('site_name', "backup_migrate"));
+    // Cleaning the string isn't strictly necessary but it looks better in the settings field.
+    return _backup_migrate_clean_filename(variable_get('site_name', "backup_migrate"));
   }
+}
+
+/**
+ * Clean up a filename to remove unsafe characters.
+ */
+function _backup_migrate_clean_filename($filename) {
+  $filename = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $filename);
+  return $filename;
 }
 
 /**
@@ -251,6 +275,13 @@ class backup_file {
     return $this->file_info;
   }
 
+
+  /**
+   * Get one or all pieces of info for the file.
+   */
+  function info_set($key, $value) {
+    $this->file_info[$key] = $value;
+  }
   /**
    * Get the file extension.
    */

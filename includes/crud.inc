@@ -35,24 +35,95 @@ function backup_migrate_crud_types() {
 }
 
 /**
+ * Get the info for a particular crud type.
+ */
+function backup_migrate_crud_type_info($type) {
+  $types = backup_migrate_crud_types();
+  if (isset($types[$type])) {
+    return $types[$type];
+  }
+  return NULL;
+}
+
+/**
+ * Get a list of avaiable classes of each crud type.
+ */
+function backup_migrate_crud_subtypes($type) {
+  $out = array();
+  if ($info = backup_migrate_crud_type_info($type)) {
+    // Include the function that contains the type base.
+    if (!empty($info['include'])) {
+      backup_migrate_include($info['include']);
+    }
+
+    // Allow modules (including this one) to declare backup and migrate subtypes.
+    // We don't use module_invoke_all so we can avoid the side-effects of array_merge_recursive.
+    $out = array();
+    foreach (module_implements('backup_migrate_' . $type . '_types') as $module) {
+      $function =  $module . '_backup_migrate_' . $type . '_types';
+      $result = $function();
+      if (isset($result) && is_array($result)) {
+        foreach ($result as $key => $val) {
+          $out[$key] = $val;
+        }
+      }
+    }
+  }
+
+  return $out;
+}
+
+/**
+ * Get the info for a particular crud subtype.
+ */
+function backup_migrate_crud_subtype_info($type, $subtype) {
+  $types = backup_migrate_crud_subtypes($type);
+  if (isset($types[$subtype])) {
+    return $types[$subtype];
+  }
+  return NULL;
+}
+
+/**
  * Get a generic object of the given type to be used for static-like functions.
  *
  * I'm not using actual static method calls since they don't work on variables prior to PHP 5.3.0
  */
-function backup_migrate_crud_type_load($type) {
-  $out = NULL;
-  $types = backup_migrate_crud_types();
-  if (!empty($types[$type])) {
-    $info = $types[$type];
-    if ($info['include']) {
+function backup_migrate_crud_type_load($type, $subtype = NULL) {
+  $out = $info = NULL;
+
+  if ($subtype) {
+    $info = backup_migrate_crud_subtype_info($type, $subtype);
+  }
+  else {
+    $info = backup_migrate_crud_type_info($type);
+  }
+
+  if (!empty($info)) {
+    if (!empty($info['include'])) {
       backup_migrate_include($info['include']);
     }
-    $out = new $info['class'];
-    $out = $out->create();
+    if (!empty($info['file'])) {
+      include_once './'. (isset($info['path']) ? $info['path'] : '') . $info['file'];
+    }
+
+    if (class_exists($info['class'])) {
+      $out = new $info['class'];
+      $out = $out->create(array('type' => $subtype));
+    }
   }
   return $out;
 }
 
+/**
+ * Page callback to create a new item.
+ */
+function backup_migrate_crud_create($type, $subtype = NULL) {
+  if ($item = backup_migrate_crud_type_load($type, $subtype)) {
+    return $item;
+  }
+  return NULL;
+}
 
 /**
  * Get the menu items handled by the CRUD code.
@@ -70,10 +141,10 @@ function backup_migrate_crud_menu() {
  * Page callback to create a new item.
  */
 function backup_migrate_crud_ui_create($type, $subtype = NULL) {
-  if ($type = backup_migrate_crud_type_load($type)) {
-    $item = $type->create(array('type' => $subtype));
+  if ($item = backup_migrate_crud_create($type, $subtype)) {
     return drupal_get_form('backup_migrate_crud_edit_form', $item);
   }
+  return drupal_not_found();
 }
 
 /**

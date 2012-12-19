@@ -13,7 +13,7 @@
  */
 
 class backup_migrate_destination_files extends backup_migrate_destination {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'restore', 'list files', 'configure', 'delete');
+  var $supported_ops = array('scheduled backup', 'manual backup', 'local backup', 'restore', 'list files', 'configure', 'delete');
 
   function type_name() {
     return t("Server Directory");

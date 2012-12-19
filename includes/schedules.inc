@@ -129,7 +129,7 @@ class backup_migrate_schedule extends backup_migrate_item {
     $out = parent::get_list_column_info();
     $out = array(
       'name'                  => array('title' => t('Name')),
-      'destination_name'      => array('title' => t('Destination'), 'html' => TRUE),
+      'destination_name'      => array('title' => t('Destinations'), 'html' => TRUE),
       'profile_name'          => array('title' => t('Profile'), 'html' => TRUE),
       'frequency_description' => array('title' => t('Frequency')),
       'keep_description'      => array('title' => t('Keep')),
@@ -145,7 +145,6 @@ class backup_migrate_schedule extends backup_migrate_item {
   function get_menu_items() {
     $items = parent::get_menu_items();
     $path = $this->get_settings_path();
-    $items[$path]['title'] = t('Automatic Backups');
     return $items;
   }
 
@@ -184,16 +183,60 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Get the destination object of the schedule.
    */
   function get_destination() {
+    $destinations = (array)$this->get_destinations();
+    return reset($destinations);
+  }
+
+  /**
+   * Get the destination object of the schedule.
+   */
+  function get_destination_ids() {
+    $out = array();
+    foreach (array('destination_id', 'destination_id_local', 'destination_id_remote') as $key) {
+      if ($id = $this->get($key)) {
+        $out[$key] = $id;
+      }
+    }
+    return $out;
+  }
+
+  /**
+   * Get the destination object of the schedule.
+   */
+  function get_destinations() {
     backup_migrate_include('destinations');
-    return backup_migrate_get_destination($this->get('destination_id'));
+    $out = array();
+    foreach ($this->get_destination_ids() as $id) {
+      $out[$id] = backup_migrate_get_destination($id);
+    }
+    return $out;
+  }
+
+  /**
+   * Get the destination object of the schedule.
+   */
+  function get_destination_remote() {
+    backup_migrate_include('destinations');
+    return backup_migrate_get_destination($this->get('destination_remote_id'));
+  }
+ /**
+   * Get the destination object of the schedule.
+   */
+  function get_destination_local() {
+    backup_migrate_include('destinations');
+    return backup_migrate_get_destination($this->get('destination_local_id'));
   }
 
   /**
    * Get the name of the destination.
    */
   function get_destination_name() {
-    if ($destination = $this->get_destination()) {
-      return check_plain($destination->get_name());
+    if ($destinations = $this->get_destinations()) {
+      $out = array();
+      foreach ((array)$destinations as $destination) {
+        $out[] = check_plain($destination->get_name());
+      }
+      return implode(', ', $out);
     }
     return '<div class="row-error">'. t("Missing") .'</div>';
   }
@@ -203,7 +246,15 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function get_profile() {
     backup_migrate_include('profiles');
-    return backup_migrate_get_profile($this->get('profile_id'));
+    if ($settings = backup_migrate_get_profile($this->get('profile_id'))) {
+      $settings->file_info = empty($settings->file_info) ? array() : $settings->file_info;
+      $settings->file_info += array(
+        'schedule_id'   => $this->get_id(),
+        'schedule_name' => $this->get('name'),
+      );      
+    }
+    return $settings;
+
   }
 
   /**
@@ -238,7 +289,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Format the number to keep in human-readable form.
    */
   function get_keep_description() {
-      return $this->generate_keep_description($this->keep);
+    return $this->generate_keep_description($this->keep);
   }
 
   /**
@@ -479,6 +530,13 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#default_value" => $this->get('destination_id'),
     );
     $form['destination_id']['#description'] .= ' '. l(t("Create new destination"), BACKUP_MIGRATE_MENU_PATH . "/destination/add");
+    $form['destination_id'] = array(
+      "#type" => "select",
+      "#title" => t("Destination"),
+      "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them."),
+      "#options" => $destination_options,
+      "#default_value" => $this->get('destination_id'),
+    );
 
     return $form;
   }
@@ -565,13 +623,8 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function run() {
     if ($settings = $this->get_profile()) {
-      $settings->destination_id = $this->destination_id;
-      $settings->source_id = $this->source_id;
-      $settings->file_info = empty($settings->file_info) ? array() : $settings->file_info;
-      $settings->file_info += array(
-        'schedule_id'   => $this->get_id(),
-        'schedule_name' => $this->get('name'),
-      );
+      $settings->source_id = $this->get('source_id');
+      $settings->destination_id = $this->get('destination_ids');
 
       backup_migrate_perform_backup($settings);
       $this->update_last_run(time());
@@ -605,20 +658,21 @@ class backup_migrate_schedule extends backup_migrate_item {
 
     $num_to_keep = $this->keep;
     // If num to keep is not 0 (0 is infinity).
-    $destination = $this->get_destination();
-    if ($destination && $destination->op('delete') && $destination_files = $destination->list_files()) {
-      if ($num_to_keep == BACKUP_MIGRATE_SMART_DELETE) {
-        $this->smart_delete_backups(
-          $destination, 
-          $destination_files,
-          variable_get('backup_migrate_smart_keep_subhourly', BACKUP_MIGRATE_SMART_KEEP_SUBHOURLY),
-          variable_get('backup_migrate_smart_keep_hourly',    BACKUP_MIGRATE_SMART_KEEP_HOURLY),
-          variable_get('backup_migrate_smart_keep_daily',     BACKUP_MIGRATE_SMART_KEEP_DAILY),
-          variable_get('backup_migrate_smart_keep_weekly',    BACKUP_MIGRATE_SMART_KEEP_WEEKLY)
-        );
-      }
-      else if ($num_to_keep != BACKUP_MIGRATE_KEEP_ALL) {
-        $this->delete_backups($destination, $destination_files, $num_to_keep);
+    foreach ((array)$this->get_destinations() as $destination) {
+      if ($destination && $destination->op('delete') && $destination_files = $destination->list_files()) {
+        if ($num_to_keep == BACKUP_MIGRATE_SMART_DELETE) {
+          $this->smart_delete_backups(
+            $destination, 
+            $destination_files,
+            variable_get('backup_migrate_smart_keep_subhourly', BACKUP_MIGRATE_SMART_KEEP_SUBHOURLY),
+            variable_get('backup_migrate_smart_keep_hourly',    BACKUP_MIGRATE_SMART_KEEP_HOURLY),
+            variable_get('backup_migrate_smart_keep_daily',     BACKUP_MIGRATE_SMART_KEEP_DAILY),
+            variable_get('backup_migrate_smart_keep_weekly',    BACKUP_MIGRATE_SMART_KEEP_WEEKLY)
+          );
+        }
+        else if ($num_to_keep != BACKUP_MIGRATE_KEEP_ALL) {
+          $this->delete_backups($destination, $destination_files, $num_to_keep);
+        }
       }
     }
   }

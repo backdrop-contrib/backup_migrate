@@ -295,6 +295,9 @@ function backup_migrate_theme() {
   return $themes;
 }
 
+
+/* Blocks */
+
 /**
  * Implementation of hook_block().
  */
@@ -327,6 +330,23 @@ function _backup_migrate_block_view($delta) {
   if (function_exists('_backup_migrate_block_view_' . $delta)) {
     return $function();
   }
+}
+
+/**
+ * Quick Backup block.
+ */
+function _backup_migrate_block_view_quick_backup() {
+  if (user_access('access backup and migrate') && user_access('perform backup')) {
+    drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+    // Messages should be sent to the browser.
+    _backup_migrate_message_callback('_backup_migrate_message_browser');
+    return array(
+      'subject' => t('Quick Backup'),
+      'content' => drupal_get_form('backup_migrate_ui_manual_quick_backup_form', FALSE),
+    );
+  }
+  return array();
 }
 
 /**
@@ -590,24 +610,6 @@ function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
 }
 
 
-/* Blocks */
-
-/**
- * Quick Backup block.
- */
-function _backup_migrate_block_view_quick_backup() {
-  if (user_access('access backup and migrate') && user_access('perform backup')) {
-    drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
-
-    // Messages should be sent to the browser.
-    _backup_migrate_message_callback('_backup_migrate_message_browser');
-    return array(
-      'subject' => t('Quick Backup'),
-      'content' => drupal_get_form('backup_migrate_ui_manual_quick_backup_form', FALSE),
-    );
-  }
-  return array();
-}
 
 /**
  * The quick backup form.
@@ -1016,6 +1018,7 @@ function backup_migrate_ui_export_form(&$form_state, $item) {
 function backup_migrate_ui_saved_backups() {
   backup_migrate_include('profiles', 'destinations', 'sources');
 
+  $remote = false;
   $now = $fetch_time = time();
   $out = '';
   $files = array();
@@ -1036,6 +1039,7 @@ function backup_migrate_ui_saved_backups() {
 
     // Add the files from this destination to the full list.
     foreach ($dest_files as $id => $file) {
+      $remote = $remote || $file->info('remote');
       $dest_files[$id]->file_info['description'] =  $file->info('description') . $label;
     }
     $files += $dest_files;
@@ -1054,6 +1058,11 @@ function backup_migrate_ui_saved_backups() {
     $out .= '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval($now - $fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
   }
 
+  // Add a remote backups warning if there are no remote backups.
+  if (!$remote && user_access('administer backup and migrate')) {
+      drupal_set_message(t('You do not have any off-site backups. For the highest level of protection, <a href="!addurl">create an off-site destination</a> to save your backups to.', array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'))), 'warning', FALSE);
+  }
+
   return $out;
 }
 
@@ -1069,12 +1078,8 @@ function backup_migrate_perform_backup(&$settings) {
     set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
 
-  $timestamp = '';
-  if ($settings->append_timestamp && $settings->timestamp_format) {
-    $timestamp = format_date(time(), 'custom', $settings->timestamp_format);
-  }
-  $filename = _backup_migrate_construct_filename($settings->filename, $timestamp);
-
+  // Create the temporary file object to be backed up into.
+  $filename = _backup_migrate_construct_filename($settings);
   $file = new backup_file(array('filename' => $filename));
   if (!$file) {
     backup_migrate_backup_fail("Could not run backup because a temporary file could not be created.", array(), $settings);

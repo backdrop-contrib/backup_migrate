@@ -12,33 +12,8 @@ backup_migrate_include('crud');
  * Get the available location types.
  */
 function backup_migrate_get_location_types() {
-  // We don't use module_invoke_all so we can avoid the side-effects of array_merge_recursive.
-  $out = array();
-  foreach (module_implements('backup_migrate_location_types') as $module) {
-    $function =  $module . '_backup_migrate_location_types';
-    $result = $function();
-    if (isset($result) && is_array($result)) {
-      foreach ($result as $key => $val) {
-        $out[$key] = $val;
-      }
-    }
-  }
-
-  return $out;
-}
-
-/**
- * Implementation of hook_backup_migrate_location_types().
- *
- * Get the built in Backup and Migrate location types.
- */
-function backup_migrate_backup_migrate_location_types() {
   backup_migrate_include('crud', 'destinations', 'sources');
-
-  $out = array();
-  $out += backup_migrate_backup_migrate_source_types();
-  $out += backup_migrate_backup_migrate_destination_types();
-  return $out;
+  return backup_migrate_crud_subtypes('destination') + backup_migrate_crud_subtypes('source');
 }
 
 /**
@@ -47,7 +22,7 @@ function backup_migrate_backup_migrate_location_types() {
  * Get the built in backup locations and those in the db.
  */
 function backup_migrate_backup_migrate_locations() {
-  $out              = array();
+  $out = array();
 
   // Allow the filter plugins to declare the default locations.
   backup_migrate_include('filters');

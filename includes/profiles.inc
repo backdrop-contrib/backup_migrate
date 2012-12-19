@@ -271,11 +271,22 @@ class backup_migrate_profile extends backup_migrate_item {
    * Get the destination of the profile.
    */
   function get_destination() {
+    $destinations = (array)$this->get_destinations();
+    return reset($destinations);
+  }
+
+  /**
+   * Get the destination of the profile.
+   */
+  function get_destinations() {
     backup_migrate_include('destinations');
-    if (!empty($this->destination_id) && (empty($this->destination) || $this->destination->destination_id !== $this->destination_id)) {
-      $this->destination = backup_migrate_get_destination($this->destination_id);
+    $destinations = array();
+
+    if (!empty($this->destination_id)) {
+      foreach ((array)$this->destination_id as $destination_id)
+      $destinations[] = backup_migrate_get_destination($destination_id);
     }
-    return empty($this->destination) ? NULL : $this->destination;
+    return $destinations;
   }
 
   /**

@@ -19,19 +19,7 @@ function backup_migrate_get_sources() {
  * Get the available source types.
  */
 function backup_migrate_get_source_types() {
-  // We don't use module_invoke_all so we can avoid the side-effects of array_merge_recursive.
-  $out = array();
-  foreach (module_implements('backup_migrate_source_types') as $module) {
-    $function =  $module . '_backup_migrate_source_types';
-    $result = $function();
-    if (isset($result) && is_array($result)) {
-      foreach ($result as $key => $val) {
-        $out[$key] = $val;
-      }
-    }
-  }
-
-  return $out;
+  return backup_migrate_crud_subtypes('source');
 }
 
 /**

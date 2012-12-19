@@ -12,19 +12,7 @@ backup_migrate_include('crud', 'locations');
  * Get the available destination types.
  */
 function backup_migrate_get_destination_types() {
-  // We don't use module_invoke_all so we can avoid the side-effects of array_merge_recursive.
-  $out = array();
-  foreach (module_implements('backup_migrate_destination_types') as $module) {
-    $function =  $module . '_backup_migrate_destination_types';
-    $result = $function();
-    if (isset($result) && is_array($result)) {
-      foreach ($result as $key => $val) {
-        $out[$key] = $val;
-      }
-    }
-  }
-
-  return $out;
+  return backup_migrate_crud_subtypes('destination');
 }
 
 /**
@@ -41,6 +29,7 @@ function backup_migrate_backup_migrate_destination_types() {
         'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
         'class' => 'backup_migrate_destination_files',
         'type_name' => t('Server Directory'),
+        'local' => TRUE,
         'can_create' => TRUE,
       ),
       'file_manual' => array(
@@ -70,6 +59,7 @@ function backup_migrate_backup_migrate_destination_types() {
       'class' => 'backup_migrate_destination_nodesquirrel',
       'type_name' => t('NodeSquirrel.com'),
       'can_create' => TRUE,
+      'remote' => TRUE,
     ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
@@ -77,6 +67,7 @@ function backup_migrate_backup_migrate_destination_types() {
       'class' => 'backup_migrate_destination_ftp',
       'type_name' => t('FTP Directory'),
       'can_create' => TRUE,
+      'remote' => TRUE,
     ),
     's3' => array(
       'description' => t('Save the backup files to a bucket on your !link.', array('!link' => l(t('Amazon S3 account'), 'http://aws.amazon.com/s3/'))),
@@ -84,6 +75,7 @@ function backup_migrate_backup_migrate_destination_types() {
       'class' => 'backup_migrate_destination_s3',
       'type_name' => t('Amazon S3 Bucket'),
       'can_create' => TRUE,
+      'remote' => TRUE,
     ),
     'email' => array(
       'type_name' => t('Email'),
@@ -91,6 +83,7 @@ function backup_migrate_backup_migrate_destination_types() {
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.email.inc',
       'class' => 'backup_migrate_destination_email',
       'can_create' => TRUE,
+      'remote' => TRUE,
     ),
   );
 
@@ -199,8 +192,10 @@ function backup_migrate_destination_file_exists($destination_id, $file_id) {
  * Send a file to the destination specified by the settings array.
  */
 function backup_migrate_destination_save_file($file, &$settings) {
-  if ($destination = $settings->get_destination()) {
-    $file = $destination->save_file($file, $settings);
+  if ($destinations = $settings->get_destinations()) {
+    foreach ($destinations as $destination) {
+      $file = $destination->save_file($file, $settings);      
+    }
     return $file;
   }
   return NULL;
@@ -614,7 +609,12 @@ class backup_migrate_destination extends backup_migrate_location {
         // Remove the metadata file from the list
         unset($files[$key . '.info']);
       }
+
+      // Add destination specific info.
+      $file->info_set('destination_id', $this->get('id'));
+      $file->info_set('remote', $this->op('remote backup'));
     }
+
 
     return $files;
   }
@@ -693,7 +693,25 @@ class backup_migrate_destination extends backup_migrate_location {
     }
     else {
       $types = backup_migrate_get_destination_types();
-      $items = array();
+      $items = array(
+        'remote' => array(
+          'title' => t('Offsite Destinations'),
+          'description' => t('For the highest level of protection, set up an offsite backup destination in a location separate from your website.'),
+          'items' => array(),
+         ),
+        'local' => array(
+          'title' => t('Local Destinations'),
+          'description' => t('Backing up locally is quick and convenient but does not provide the safety of an offsite backup.'),
+          'items' => array(),
+         ),
+        'other' => array(
+          'title' => t('Other Destinations'),
+          'description' => t('These destinations have not been classified because they were created for Backup and Migrate version 2. They may not work correctly with this version.'),
+          'items' => array(),
+         ),
+
+      );
+
       // If no (valid) node type has been provided, display a node type overview.
       $path = $this->get_settings_path();
       foreach ($types as $key => $type) {
@@ -701,11 +719,27 @@ class backup_migrate_destination extends backup_migrate_location {
           $type_url_str = str_replace('_', '-', $key);
           $out = '<dt>'. l($type['type_name'], $path . "/add/$type_url_str", array('attributes' => array('title' => t('Add a new @s destination.', array('@s' => $type['type_name']))))) .'</dt>';
           $out .= '<dd>'. filter_xss_admin($type['description']) .'</dd>';
-          $items[] = $out;
+
+          if (!empty($type['local'])) {
+            $items['local']['items'][] = $out;
+          }
+          if (!empty($type['remote'])) {
+            $items['remote']['items'][] = $out;
+          }
+          if (empty($type['local']) && empty($type['remote'])) {
+            $items['other']['items'][] = $out;
+          }
         }
       }
-      if (count($items)) {
-        $output = t('Choose the type of destination you would like to create:') .'<dl>'. implode('', $items) .'</dl>';
+      if (count($items['local']['items']) || count($items['remote']['items']) || count($items['other']['items'])) {
+        $output = '<p>' . t('Choose the type of destination you would like to create:') . '</p>';
+        foreach ($items as $group) {
+          if (count($group['items'])) {
+            $output .= '<h3>' . $group['title'] . '</h3>';
+            $output .= '<p class="description">' . $group['description'] . '</p>';
+            $output .= '<dl>'. implode('', $group['items']) .'</dl>';          
+          }
+        }
       }
       else {
         $output = t('No destination types available.');
