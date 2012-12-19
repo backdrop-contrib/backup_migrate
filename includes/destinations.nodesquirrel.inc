@@ -122,7 +122,6 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       'weight' => -1,
       'type' => MENU_LOCAL_TASK,
     );
-    dpm($items);
     return $items;
   }
 

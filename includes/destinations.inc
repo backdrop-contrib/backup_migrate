@@ -612,7 +612,7 @@ class backup_migrate_destination extends backup_migrate_location {
 
       // Add destination specific info.
       $file->info_set('destination_id', $this->get('id'));
-      $file->info_set('remote', $this->op('remote backup'));
+      $file->info_set('remote', $this->get('remote'));
     }
 
 
@@ -759,6 +759,12 @@ class backup_migrate_destination extends backup_migrate_location {
     return t('Are you sure you want to delete the destination %name? Backup files already saved to this destination will not be deleted.', array('%name' => $this->get_name()));
   }
 
+  /**
+   * Get a boolean representing if the destination is remote or local.
+   */
+  function get_remote() {
+    return $this->op('remote backup');
+  }
 
   /**
    * Get the action links for a destination.

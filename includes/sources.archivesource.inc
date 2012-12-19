@@ -72,7 +72,6 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         $db = $this->get_db();
 
         $file->push_type('sitearchive');
-        dpm($file);
         $gz = new Archive_Tar($file->filepath(), false);
 
         $gz->addModify(array($manifest), $file->name .'/', dirname($manifest));

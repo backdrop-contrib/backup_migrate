@@ -1017,14 +1017,17 @@ function backup_migrate_ui_export_form(&$form_state, $item) {
  */
 function backup_migrate_ui_saved_backups() {
   backup_migrate_include('profiles', 'destinations', 'sources');
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = false;
   $now = $fetch_time = time();
   $out = '';
   $files = array();
   foreach (backup_migrate_get_destinations('list files') as $destination) {
+    $dest_remote = $destination->get('remote');
     $label = l($destination->get_name(), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id());
-    $label = '<div class="backup-migrate-destination"><span class="backup-migrate-label">' . t('Location') . ':</span> ' . $label . '</div>';
+    $remote_tag = $dest_remote ? ' <strong class="backup-migrate-tag">(' . t('offsite') . ')</strong>' : '';
+    $label = '<div class="backup-migrate-destination"><span class="backup-migrate-label">' . t('Location') . ':</span> ' . $label . $remote_tag . '</div>';
     $dest_files = $destination->list_files();
 
     // Refresh the destination
@@ -1039,7 +1042,7 @@ function backup_migrate_ui_saved_backups() {
 
     // Add the files from this destination to the full list.
     foreach ($dest_files as $id => $file) {
-      $remote = $remote || $file->info('remote');
+      $remote = $remote || $dest_remote;
       $dest_files[$id]->file_info['description'] =  $file->info('description') . $label;
     }
     $files += $dest_files;
@@ -1060,7 +1063,7 @@ function backup_migrate_ui_saved_backups() {
 
   // Add a remote backups warning if there are no remote backups.
   if (!$remote && user_access('administer backup and migrate')) {
-      drupal_set_message(t('You do not have any off-site backups. For the highest level of protection, <a href="!addurl">create an off-site destination</a> to save your backups to.', array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'))), 'warning', FALSE);
+      drupal_set_message(t('You do not have any offsite backups. For the highest level of protection, <a href="!addurl">create an offsite destination</a> to save your backups to.', array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'))), 'warning', FALSE);
   }
 
   return $out;

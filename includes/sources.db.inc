@@ -213,23 +213,30 @@ class backup_migrate_destination_db extends backup_migrate_source_remote {
    * Switch to the current database. Pass true to switch back to the previous db.
    */
   function switch_db($switch_back = FALSE) {
-    static $db_stack = array();
-    global $db_url;
+    static $db_stack = array(), $db_url_stack = array();
   
     // If switch back is specified, pop the previous db and activate it.
     if ($switch_back && $db_stack) {
+      // Reset the db_url.
+      $GLOBALS['db_url'] = array_pop($db_url_stack);
+      // Set the active db to the first one on the stack.
       db_set_active(array_pop($db_stack));
       return;
     }
   
     // If there is a valid DB URL, switch to it.
     if ($url = $this->get_location()) {
+      // Add the current db_url to the stack.
+      $db_url_stack[] = $GLOBALS['db_url'];
+
       // Make the db_url into an array if needed.
-      if (!is_array($db_url)) {
-        $db_url = array('default' => $db_url);
+      if (!is_array($GLOBALS['db_url'])) {
+        $GLOBALS['db_url'] = array('default' => $GLOBALS['db_url']);
       }
+
       // Add the new db to the db_url array.
-      $db_url[$url] = $url;
+      $GLOBALS['db_url'][$url] = $url;
+
       // Switch to the new db and push the old one on the stack
       $db_stack[] = db_set_active($url);
     }

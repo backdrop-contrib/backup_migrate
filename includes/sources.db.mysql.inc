@@ -43,8 +43,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    */
   function sources() {
     $out = array();
-    global $db_url;
-    $urls = is_array($db_url) ? $db_url : array('default' => $db_url);
+    $urls = is_array($GLOBALS['db_url']) ? $GLOBALS['db_url'] : array('default' => $GLOBALS['db_url']);
     foreach ((array)$urls as $key => $url) {
       // Only mysql/mysqli supported by this destination.
       if (strpos($url, 'mysql') === 0) {
@@ -59,7 +58,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
           }
           else {
             $destination->set_id('db:'. $key);
-            $destination->set_name($key .": ". $destination->get_display_location());
+            $destination->set_name($destination->get_display_location());
           }
           $out[$destination->get_id()] = $destination;
         }
