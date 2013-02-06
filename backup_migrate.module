@@ -235,10 +235,14 @@ function backup_migrate_cron() {
   // Set the message mode to logging.
   _backup_migrate_message_callback('_backup_migrate_message_log');
 
+  // Clean up any previous abandoned tmp files before we attempt to back up.
+  backup_migrate_include('files');
+  _backup_migrate_temp_files_delete();
+
   backup_migrate_include('schedules');
   backup_migrate_schedules_cron();
 
-  backup_migrate_include('files');
+  // Clean up any tmp files from this run.
   _backup_migrate_temp_files_delete();
 }
 
