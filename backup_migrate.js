@@ -36,7 +36,7 @@ Drupal.backup_migrate = {
                   else {
                     dependent.slideUp();
                   }
-                });
+                }).load();
               })(dependent, dependency);
             });
           }

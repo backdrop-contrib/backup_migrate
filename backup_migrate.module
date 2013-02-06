@@ -514,9 +514,16 @@ function backup_migrate_ui_schedule_form(&$form_state, $sources, $schedules) {
   foreach ($sources as $id => $source) {
     if (isset($schedules[$id])) {
       $schedule = $schedules[$id];
-      $form['quickschedule'][$id] = array();
-      $form['quickschedule'][$id]['#theme'] = 'backup_migrate_ui_quick_schedule_form_inline';
-      $form['quickschedule'][$id]['enabled'] = array(
+      $key = preg_replace('/[^A-Za-z0-9\-_]/', '-', $id);
+      $form['quickschedule'][$key] = array();
+      $form['quickschedule'][$key]['#theme'] = 'backup_migrate_ui_quick_schedule_form_inline';
+
+      $form['quickschedule'][$key]['id'] = array(
+        '#type' => 'value',
+        '#value' => $id,
+      );
+
+      $form['quickschedule'][$key]['enabled'] = array(
         '#type' => 'checkbox',
         '#title' => t('Automatically backup my !source', array('!source' => $source->get('name'))),
         '#default_value' => $schedule->get('enabled'),
@@ -528,10 +535,10 @@ function backup_migrate_ui_schedule_form(&$form_state, $sources, $schedules) {
         '#value' => $source->get('name'),
       );
       */
-      $form['quickschedule'][$id]['settings'] = array(
+      $form['quickschedule'][$key]['settings'] = array(
         '#type' => 'backup_migrate_dependent',
         '#dependencies' => array(
-          'quickschedule[' . $id . '][enabled]' => TRUE,
+          'quickschedule[' . $key . '][enabled]' => TRUE,
         ),
       );
       $options = array(
@@ -543,19 +550,19 @@ function backup_migrate_ui_schedule_form(&$form_state, $sources, $schedules) {
       if (!isset($options[$period])) {
         $options[$period] = $schedule->get('frequency_description');
       }
-      $form['quickschedule'][$id]['settings']['period'] = array(
+      $form['quickschedule'][$key]['settings']['period'] = array(
         '#type' => 'select',
         '#title' => t('Schedule Frequency'),
         '#options' => $options,
         '#default_value' => $period,
       );
-      $form['quickschedule'][$id]['settings']['destination_id'] = array(
+      $form['quickschedule'][$key]['settings']['destination_id'] = array(
         '#type' => 'select',
         '#title' => t('Backup Destination'),
         '#options' => _backup_migrate_get_destination_form_item_options('scheduled backup'),
         '#default_value' => $schedule->get('period'),
       );
-      $form['quickschedule'][$id]['settings']['profile_id'] = array(
+      $form['quickschedule'][$key]['settings']['profile_id'] = array(
         '#type' => 'select',
         '#title' => t('Settings Profile'),
         '#default_value' => $schedule->get('profile_id'),
@@ -568,19 +575,19 @@ function backup_migrate_ui_schedule_form(&$form_state, $sources, $schedules) {
       foreach ($option_keys as $i) {
         $options[$i] = $schedule->generate_keep_description($i);
       }
-      $form['quickschedule'][$id]['settings']['keep'] = array(
+      $form['quickschedule'][$key]['settings']['keep'] = array(
         '#type' => 'select',
         '#title' => t('Backup retention'),
         '#options' => $options,
         '#default_value' => $keep,
       );
-      $form['quickschedule'][$id]['settings']['advanced'] = array(
+      $form['quickschedule'][$key]['settings']['advanced'] = array(
         '#type' => 'markup',
         '#value' => l(t('Advanced Settings.'), BACKUP_MIGRATE_MENU_PATH . '/settings/schedule/edit/' . $id, array('query' => drupal_get_destination())),
       );
       // Set the parent for the setttings up a level.
-      foreach(element_children($form['quickschedule'][$id]['settings']) as $child) {
-        $form['quickschedule'][$id]['settings'][$child]['#parents'] = array('quickschedule', $id, $child);
+      foreach(element_children($form['quickschedule'][$key]['settings']) as $child) {
+        $form['quickschedule'][$key]['settings'][$child]['#parents'] = array('quickschedule', $key, $child);
       }
     }
   }
