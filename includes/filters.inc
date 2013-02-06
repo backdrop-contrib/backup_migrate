@@ -143,7 +143,6 @@ function backup_migrate_filters_settings_form_set_parents($form) {
   return $form;
 }
 
-
 /**
  * Validate all the filters.
  */
@@ -158,12 +157,37 @@ function backup_migrate_filters_settings_form_submit($op, $form, &$form_state) {
   backup_migrate_filters_invoke_all($op .'_settings_form_submit', $form, $form_state);
 }
 
-
 /**
  * Get the default settings for the filters.
  */
 function backup_migrate_filters_settings_default($op) {
   return backup_migrate_filters_invoke_all($op .'_settings_default');
+}
+
+/**
+ * Get the backup settings for all of the filters.
+ */
+function backup_migrate_filters_before_action_form($settings, $op) {
+  $out = array();
+  $out += backup_migrate_filters_invoke_all('before_action_form', $op, $settings);
+  $out += backup_migrate_filters_invoke_all('before_' . $op .'_form', $settings);
+  return $out;
+}
+
+/**
+ * Get the backup settings for all of the filters.
+ */
+function backup_migrate_filters_before_action_form_validate($settings, $op, $form, &$form_state) {
+  backup_migrate_filters_invoke_all('before_action_form_validate', $op, $settings, $form, $form_state);
+  backup_migrate_filters_invoke_all('before_' . $op .'_form_validate', $settings, $form, $form_state);
+}
+
+/**
+ * Get the backup settings for all of the filters.
+ */
+function backup_migrate_filters_before_action_form_submit($settings, $op, $form, &$form_state) {
+  backup_migrate_filters_invoke_all('before_action_form_submit', $op, $settings, $form, $form_state);
+  backup_migrate_filters_invoke_all('before_' . $op .'_form_submit', $settings, $form, $form_state);
 }
 
 /**

@@ -8,6 +8,90 @@
 define('NODESQUIRREL_SECRET_KEY_PATTERN', '/^[0-9a-f]{32}\:?[0-9a-f]{32}$/');
 
 /**
+ * Check that a nodesquirel key is valid.
+ */
+function nodesquirrel_check_secret_key($secret_key) {
+  if ($destination = nodesquirrel_get_destination($secret_key)) {
+    if ($destination->confirm_destination()) {
+      return $destination;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Get the NS destination for the given key.
+ */
+function nodesquirrel_get_destination($secret_key) {
+  if ($secret_key) {
+    backup_migrate_include('destinations');
+    $destination = backup_migrate_create_destination('nodesquirrel', array('destination_id' => 'nodesquirrel'));
+    $destination->settings['secret_key'] = $secret_key;
+    return $destination;
+  }
+  return NULL;
+}
+
+
+/**
+ * Get a helper link to activate a site and create a tree.
+ */
+function nodesquirrel_get_activate_help_text() {
+  $activate_link = nodesquirrel_get_activate_link();
+  return array(
+    '#type' => 'item',
+    '#title' => t('Need a Secret Key?'),
+    '#value' => t('Visit !nodesquirrel.', array('!nodesquirrel' => $activate_link)),
+    '#descriptoin' => t('Don\'t worry if you don\'t have an account yet. You can create one when you get there.'),
+  );
+}
+
+/**
+ * Get a helper link to activate a site and create a tree.
+ */
+function nodesquirrel_get_activate_link() {
+  $activate_link = l('nodesquirrel.com/activate', variable_get('nodesquirrel_activate_url', 'http://manage.nodesquirrel.com/activate'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => variable_get('site_mail', ''), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
+  return $activate_link;
+}
+
+/**
+ * Get a helper link to activate a site and create a tree.
+ */
+function nodesquirrel_get_manage_link($destination) {
+  $url = variable_get('nodesquirrel_manage_url', 'http://manage.nodesquirrel.com') . '/backups/' . $destination->_get_destination();
+  return l($url, $url);
+}
+
+/**
+ * Get the path to the nodesquirrel settings tab.
+ */
+function nodesquirrel_settings_path() {
+  $path = BACKUP_MIGRATE_MENU_PATH . '/settings/destinations/nodesquirrel/edit';
+  return $path;
+}
+
+/**
+ * NodeSquirrel settings form.
+ */
+function backup_migrate_nodesquirrel_credentials_settings_form($key = '') {
+  $form['nodesquirrel_credentials'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('NodeSquirrel Credentials'),
+  );
+  $form['nodesquirrel_credentials']['nodesquirrel_secret_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secret Key'),
+    '#size' => 80,
+    '#default_value' => $key,
+  );
+  if (empty($key)) {
+    $form['nodesquirrel_credentials']['secret_key_help'] = nodesquirrel_get_activate_help_text();
+  }
+
+  return $form;
+}
+
+/**
  * NodeSquirrel settings form.
  */
 function backup_migrate_nodesquirrel_settings($form_state) {
@@ -18,14 +102,13 @@ function backup_migrate_nodesquirrel_settings($form_state) {
   $key = variable_get('nodesquirrel_secret_key', '');
   $destination = nodesquirrel_check_secret_key($key);
 
-
   $form['nodesquirrel_status'] = array(
     '#type' => 'fieldset',
-    '#title' => t('NodeSqurrel Status'),
+    '#title' => t('NodeSquirrel Status'),
   );
   $form['nodesquirrel_status']['status'] = array(
     '#type' => 'item',
-    '#title' => t('NodeSqurrel Status'),
+    '#title' => t('NodeSquirrel Status'),
     '#value' => t('Not Configured'),
   );
 
@@ -46,19 +129,7 @@ function backup_migrate_nodesquirrel_settings($form_state) {
     }
   }
 
-  $form['nodesquirrel_credentials'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('NodeSqurrel Credentials'),
-  );
-  $form['nodesquirrel_credentials']['nodesquirrel_secret_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Secret Key'),
-    '#size' => 80,
-    '#default_value' => variable_get('nodesquirrel_secret_key', ''),
-  );
-  if (empty($destination)) {
-    $form['nodesquirrel_credentials']['secret_key_help'] = nodesquirrel_get_activate_help_text();
-  }
+  $form += backup_migrate_nodesquirrel_credentials_settings_form($key);
 
   $schedule = variable_get('nodesquirrel_schedule', 60*60*24);
   $form['nodesquirrel_schedule'] = array(
@@ -108,7 +179,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     return $this->name;
   }
 
-/**
+  /**
    * Get the menu items for manipulating this type.
    */
   function get_menu_items() {
@@ -124,6 +195,55 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     );
     return $items;
   }
+
+  /**
+   * Declare any mysql databases defined in the settings.php file as a possible destination.
+   */
+  function destinations() {
+    $out = array();
+    $out['nodesquirrel'] = backup_migrate_create_destination('nodesquirrel', array('destination_id' => 'nodesquirrel'));
+    if ($secret_key = variable_get('nodesquirrel_secret_key', '')) {
+      $out['nodesquirrel']->settings['secret_key'] = $secret_key;
+    }
+    else {
+      $out['nodesquirrel']->supported_ops = array('manual backup', 'remote backup');
+    }
+    return $out;
+  }
+
+  /**
+   * Returns a form to be completed before saving to the destination can be complete.
+   */
+  function before_backup_form($settings) {
+    $key = $this->settings('secret_key');
+    if (empty($key)) {
+      return backup_migrate_nodesquirrel_credentials_settings_form();
+    }
+    return array();
+  }
+
+  /**
+   * Validate the before_backup_form form.
+   */
+  function before_backup_form_validate($settings, $form, $form_state) {
+    if (isset($form_state['values']['nodesquirrel_secret_key'])) {
+      $key = trim($form_state['values']['nodesquirrel_secret_key']);
+      if ($error = $this->vaidate_key($key)) {
+        form_set_error('secret_key', $error);
+      }
+    }
+  }
+
+  /**
+   * Submit the before_backup_form form.
+   */
+  function before_backup_form_submit($settings, $form, $form_state) {
+    if (isset($form_state['values']['nodesquirrel_secret_key'])) {
+      $this->settings['secret_key'] = $form_state['values']['nodesquirrel_secret_key'];
+      variable_set('nodesquirrel_secret_key', $this->settings['secret_key']);  
+    }
+  }
+
 
   /**
    * Save to the NodeSquirrel destination.
@@ -287,17 +407,24 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     return $form;
   }
 
-
-
   /**
    * Submit the configuration form. Glue the url together and add the old password back if a new one was not specified.
    */
   function edit_form_validate($form, &$form_state) {
     $key = trim($form_state['values']['settings']['secret_key']);
+    if ($error = $this->vaidate_key($key)) {
+      form_set_error('secret_key', $error);
+    }
+  }
+
+  /**
+   * Validate a secret key. Returns error text if the key is invalid.
+   */
+  function vaidate_key($key) {
+    $error = FALSE;
     if ($key) {
       if (!preg_match(NODESQUIRREL_SECRET_KEY_PATTERN, $key)) {
-        form_set_error('secret_key', 'The secret key you entered is not the right format. Please make sure you copy it exactly.');
-        return;
+        return 'The secret key you entered is not the right format. Please make sure you copy it exactly.';
       }
       $this->settings['secret_key'] = check_plain($key);
 
@@ -306,20 +433,25 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       if (!$limits) {
         $err = xmlrpc_error();
         if (!empty($err->code) && $err->code == '401') {
-          form_set_error('user', 'Could not login to server. Please check that your secret key is correct.');
+          return 'Could not log in to the NodeSquirrel server. Please check that your secret key is correct.';
         }
         else {
-          form_set_error('', 'There was an error retrieving the specified site. Please check that your secret key is correct.');
+          return 'Your site could not be found on NodeSquirrel. Please check that your secret key is correct.';
         }
       }
     }
+    else {
+      return 'You must enter a NodeSquirrel secret key.';
+    }
+    return FALSE;
   }
 
   /**
    * Submit the configuration form. Glue the url together and add the old password back if a new one was not specified.
    */
   function edit_form_submit($form, &$form_state) {
-    $form_state['values']['secret_key'] = check_plain($form_state['values']['secret_key']);
+    dpm($form_state);
+    $form_state['values']['secret_key'] = check_plain($form_state['values']['settings']['secret_key']);
     parent::edit_form_submit($form, $form_state);
   }
 
@@ -449,7 +581,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       );
       return $hash;
     }
-    _backup_migrate_message('You must enter a valid private key to use NodeSquirrel.', array(), 'error');
+    _backup_migrate_message('You must enter a valid secret key to use NodeSquirrel.', array(), 'error');
     return FALSE;
   }
 

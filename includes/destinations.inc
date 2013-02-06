@@ -25,7 +25,7 @@ function backup_migrate_backup_migrate_destination_types() {
   if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
     $out += array(
       'file' => array(
-        'description' => t('Save the backup files to any directory on the server which the web-server can write to.'),
+        'description' => t('Save the backup files to any directory on this server which the web-server can write to.'),
         'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
         'class' => 'backup_migrate_destination_files',
         'type_name' => t('Server Directory'),
@@ -191,14 +191,29 @@ function backup_migrate_destination_file_exists($destination_id, $file_id) {
 /**
  * Send a file to the destination specified by the settings array.
  */
+function backup_migrate_destination_confirm_destination(&$settings) {
+  if ($destinations = $settings->get_destinations()) {
+    foreach ($destinations as $key => $destination) {
+      // Check that the destination is ready to go.
+      if (!$destination->confirm_destination()) {
+        unset($destinations[$key]);
+      }
+    }
+  }
+  $settings->destinations = $destinations;
+  return count($destinations);
+}
+
+/**
+ * Send a file to the destination specified by the settings array.
+ */
 function backup_migrate_destination_save_file($file, &$settings) {
   if ($destinations = $settings->get_destinations()) {
     foreach ($destinations as $destination) {
-      $file = $destination->save_file($file, $settings);      
+      $file = $destination->save_file($file, $settings);
     }
-    return $file;
   }
-  return NULL;
+  return $file;
 }
 
 /**
@@ -249,11 +264,17 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
     }
     $files = $destination->list_files();
 
-    $out = _backup_migrate_ui_destination_display_file_list($files, $limit, $show_pager);
+    $fetch = $out = '';
 
+    // Get the fetch link.
     if ($destination->cache_files && $destination->fetch_time) {
-      $out .= '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
+      $fetch = '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
     }
+
+    $out .= $fetch;
+    $out .= _backup_migrate_ui_destination_display_file_list($files, $limit, $show_pager);
+    $out .= $fetch;
+
     return $out;
   }
 }
@@ -467,6 +488,19 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
 
 /* Utilities */
 
+/**
+ * Get pulldown to select existing source options.
+ */
+function _backup_migrate_get_destination_pulldown($op, $destination_id = NULL) {
+  $sources = _backup_migrate_get_source_form_item_options();
+  $form = array(
+    '#type' => 'select',
+    '#title' => t('Backup Destination'),
+    '#options' => _backup_migrate_get_destination_form_item_options($op),
+    '#default_value' => $destination_id,
+  );
+  return $form;
+}
 
 
 /**
@@ -701,7 +735,7 @@ class backup_migrate_destination extends backup_migrate_location {
          ),
         'local' => array(
           'title' => t('Local Destinations'),
-          'description' => t('Backing up locally is quick and convenient but does not provide the safety of an offsite backup.'),
+          'description' => t('Local backups are quick and convenient but do not provide the additional safety of offsite backups.'),
           'items' => array(),
          ),
         'other' => array(
@@ -847,6 +881,13 @@ class backup_migrate_destination extends backup_migrate_location {
    */
   function settings_form_submit($form_values) {
     return $form_values;
+  }
+
+  /**
+   * Check that a destination is valid.
+   */
+  function confirm_destination() {
+    return true;
   }
 
   /**

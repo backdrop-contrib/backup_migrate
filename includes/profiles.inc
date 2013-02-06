@@ -280,23 +280,38 @@ class backup_migrate_profile extends backup_migrate_item {
    */
   function get_destinations() {
     backup_migrate_include('destinations');
-    $destinations = array();
-
-    if (!empty($this->destination_id)) {
-      foreach ((array)$this->destination_id as $destination_id)
-      $destinations[] = backup_migrate_get_destination($destination_id);
+    if (empty($this->destinations)) {
+      $this->destinations = array();
+      if (!empty($this->destination_id)) {
+        foreach ((array)$this->destination_id as $destination_id)
+        $this->destinations[] = backup_migrate_get_destination($destination_id);
+      }
     }
-    return $destinations;
+    return $this->destinations;
   }
 
   /**
    * Get the name of the destination.
    */
   function get_destination_name() {
-    if ($destination = $this->get_destination()) {
-      return $destination->get_name();
+    $out = array();
+    foreach ($this->get_destinations() as $destination) {
+      $out[] = $destination->get_name();
+    }
+    if ($out) {
+      return implode(', ', $out);
     }
     return t("Missing");
+  }
+
+  /**
+   * Get the source and destinations specified in the given settings profile
+   */
+  function get_all_locations() {
+    $out = array();
+    $out += $this->get('destinations');
+    $out[] = $this->get('source');
+    return $out;
   }
 
   /**

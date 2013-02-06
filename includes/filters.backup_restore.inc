@@ -117,6 +117,49 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
   }
 
   /**
+   * Get the before-backup form for the active sources and destinations.
+   */
+  function before_action_form($op, $settings) {
+    $form = array();
+    $method = 'before_' . $op . '_form';
+    if ($source = $settings->get_source()) {
+      if (method_exists($source, $method)) {
+        $form += $source->{$method}($settings);
+      }
+    }
+    foreach ($settings->get_destinations() as $destination) {
+      if (method_exists($destination, $method)) {
+        $form += $destination->{$method}($settings);
+      }
+    }
+    return $form;
+  }
+
+  /**
+   * Get the before-backup form for the active sources and destinations.
+   */
+  function before_action_form_validate($op, $settings, $form, $form_state) {
+    $method = 'before_' . $op . '_form_validate';
+    foreach ($settings->get_all_locations() as $location) {
+      if (method_exists($location, $method)) {
+        $location->{$method}($settings, $form, $form_state);
+      }
+    }
+  }
+
+  /**
+   * Get the before-backup form for the active sources and destinations.
+   */
+  function before_action_form_submit($op, $settings, $form, $form_state) {
+    $method = 'before_' . $op . '_form_submit';
+    foreach ($settings->get_all_locations() as $location) {
+      if (method_exists($location, $method)) {
+        $location->{$method}($settings, $form, $form_state);
+      }
+    }
+  }
+
+  /**
    * Get the file types supported by this destination.
    */
   function file_types() {

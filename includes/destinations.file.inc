@@ -23,24 +23,29 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * File save destination callback.
    */
   function _save_file($file, $settings) {
-    if ($dir = $this->get_location()) {
-      if ($this->check_dir($dir)) {
-        $filepath = rtrim($dir, "/") ."/". $file->filename();
-        rename($file->filepath(), $filepath);
-
-        // chmod, chown and chgrp the file if needed.
-        if ($chmod = $this->settings('chmod')) {
-          if (!@chmod($filepath, octdec($chmod))) {
-            _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
-          }
-        }
-        if ($chgrp = $this->settings('chgrp')) {
-          if (!@chgrp($filepath, $chgrp)) {
-            _backup_migrate_message('Unable to set the file group for: @file', array('@file' => $filepath), 'error');
-          }
-        }
-        return $file;
+    if ($this->confirm_destination() && $dir = $this->get_location()) {
+      $filepath = rtrim($dir, "/") ."/". $file->filename();
+      // Copy the file if there are multiple destinations.
+      if (count($settings->get_destinations()) > 1) {
+        copy($file->filepath(), $filepath);
       }
+      // Otherwise we can move it and save a delete.
+      else {
+        rename($file->filepath(), $filepath);
+      }
+
+      // chmod, chown and chgrp the file if needed.
+      if ($chmod = $this->settings('chmod')) {
+        if (!@chmod($filepath, octdec($chmod))) {
+          _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
+        }
+      }
+      if ($chgrp = $this->settings('chgrp')) {
+        if (!@chgrp($filepath, $chgrp)) {
+          _backup_migrate_message('Unable to set the file group for: @file', array('@file' => $filepath), 'error');
+        }
+      }
+      return $file;
     }
   }
 
@@ -169,12 +174,21 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   }
 
   /**
+   * Check that a destination is valid.
+   */
+  function confirm_destination() {
+    if ($dir = $this->get_location()) {
+      return $this->check_dir($dir);
+    }
+    return FALSE;
+  }
+
+  /**
    * Prepare the destination directory for the backups.
    */
   function check_dir($directory) {
     $out = TRUE;
     $dirs = array();
-
     // If the directory doesn't exist try to create it.
     if (!is_dir($directory)) {
       foreach (explode('/', $directory) as $dir) {
@@ -184,12 +198,13 @@ class backup_migrate_destination_files extends backup_migrate_destination {
           $out = FALSE;
         }
       }
+    }
 
-      if (!$out || !file_check_directory($directory)) {
-        // Unable to create destination directory.
-        _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
-        return FALSE;
-      }
+    // Check the write perms on the directory.
+    if (!$out || !file_check_directory($directory)) {
+      // Unable to create destination directory.
+      _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions that directory and try again.", array('%directory' => $directory), "error");
+      return FALSE;
     }
 
     // If the destination directory is within the webroot, then secure it as best we can.
