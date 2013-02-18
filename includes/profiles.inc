@@ -282,11 +282,20 @@ class backup_migrate_profile extends backup_migrate_item {
     backup_migrate_include('destinations');
     if (empty($this->destinations)) {
       $this->destinations = array();
+      $ids = $weights = array();
       if (!empty($this->destination_id)) {
-        foreach ((array)$this->destination_id as $destination_id)
-        $this->destinations[] = backup_migrate_get_destination($destination_id);
+        foreach ((array)$this->destination_id as $destination_id) {
+          if (!in_array($destination_id, $ids) && $destination = backup_migrate_get_destination($destination_id)) {            
+            $this->destinations[] = $destination;
+            $weights[] = $destination->get('weight');
+            $ids[] = $destination_id;
+          }
+        }
       }
+      // Sort the destinations by weight.
+      array_multisort($weights, SORT_NUMERIC, $this->destinations);
     }
+
     return $this->destinations;
   }
 

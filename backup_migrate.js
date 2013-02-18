@@ -41,6 +41,43 @@ Drupal.backup_migrate = {
             });
           }
         }
+        for (key in Drupal.settings.backup_migrate.destination_selectors) {
+          var info = Drupal.settings.backup_migrate.destination_selectors[key];
+          (function(info) {
+            var selector = $('#' + info['destination_selector']);
+            var copy = $('#' + info['copy'])
+            var copy_selector = $('#' + info['copy_destination_selector']);
+            var copy_selector_options = {};
+
+            // Store a copy of the secondary selector options.
+            copy_selector.find('optgroup').each(function() {
+              var label = $(this).attr('label');
+              copy_selector_options[label] = [];
+              $(this).find('option').each(function() {
+                copy_selector_options[label].push(this); 
+              });
+              $(this).remove();
+            })
+
+            // Assign an action to the main selector to modify the secondary selector
+            selector.each(function() {
+              $(this).bind('load change click keypress focus', function() {
+                var group = $(this).find('option[value=' + $(this).val() + ']').parents('optgroup').attr('label');
+                if (group) {
+                  copy.parent().find('.backup-migrate-destination-copy-label').text(info['labels'][group]);
+                  copy_selector.empty();
+                  for (var key in copy_selector_options) {
+                    if (key != group) {
+                      copy_selector.append(copy_selector_options[key]);
+                      console.log($('#' + info['copy_destination_selector']).get(0));
+                    }
+                  }
+                }
+              }).load();
+            });
+          })(info);
+        }
+
       }
 
       $('#edit-filters-exclude-tables').after('<div class="description backup-migrate-checkbox-link"><a href="javascript:Drupal.backup_migrate.selectToCheckboxes(\''+ 'exclude_tables' +'\');">'+ Drupal.settings.backup_migrate.checkboxLinkText +'</a></div>');

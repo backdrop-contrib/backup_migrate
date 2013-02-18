@@ -87,8 +87,10 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       if ($handle = @opendir($dir)) {
         backup_migrate_include('files');
         while (FALSE !== ($file = readdir($handle))) {
-          $filepath = $dir ."/". $file;
-          $files[$file] = new backup_file(array('filepath' => $filepath));
+          if (substr($file, 0, 1) !== '.') {
+            $filepath = $dir ."/". $file;
+            $files[$file] = new backup_file(array('filepath' => $filepath));          
+          }
         }
       }
     }

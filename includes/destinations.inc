@@ -208,9 +208,15 @@ function backup_migrate_destination_confirm_destination(&$settings) {
  * Send a file to the destination specified by the settings array.
  */
 function backup_migrate_destination_save_file($file, &$settings) {
+  $saved_to = array();
   if ($destinations = $settings->get_destinations()) {
     foreach ($destinations as $destination) {
-      $file = $destination->save_file($file, $settings);
+      // Make sure the file only gets saved to each destination once.
+      $id = $destination->get('id');
+      if (!in_array($id, $saved_to)) {
+        $file = $destination->save_file($file, $settings);
+        $saved_to[] = $id;
+      }
     }
   }
   return $file;
@@ -491,25 +497,114 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
 /**
  * Get pulldown to select existing source options.
  */
-function _backup_migrate_get_destination_pulldown($op, $destination_id = NULL) {
-  $sources = _backup_migrate_get_source_form_item_options();
+function _backup_migrate_get_destination_pulldown($op, $destination_id = NULL, $copy_destination_id = NULL) {
+  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+
+  $destinations = _backup_migrate_get_destination_form_item_options($op);
   $form = array(
+    '#element_validate' => array('_backup_migrate_destination_pulldown_validate'),
+    '#after_build' => array('_backup_migrate_process_destination_pulldown'),
+  );
+  $form['destination_id'] = array(
     '#type' => 'select',
     '#title' => t('Backup Destination'),
-    '#options' => _backup_migrate_get_destination_form_item_options($op),
+    '#options' => $destinations,
     '#default_value' => $destination_id,
+    //'#process' => array('_backup_migrate_process_destination_pulldown'),
   );
+  if (user_access('administer backup and migrate')) {
+    $form['destination_id']['#description'] = l(t("Create new destination"), BACKUP_MIGRATE_MENU_PATH . "/destination/add");
+  }
+  $form['copy'] = array(
+    '#type' => 'checkbox',
+    '#title' => '<span class="backup-migrate-destination-copy-label">' . t('Save a copy to a second destination') . '</span>',
+    '#default_value' => !empty($copy_destination_id),
+  );
+  $form['copy_destination'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'copy' => TRUE,
+    ),
+  );
+  $form['copy_destination']['copy_destination_id'] = array(
+    '#type' => 'select',
+    '#title' => t('Second Backup Destination'),
+    '#options' => $destinations,
+    '#default_value' => $copy_destination_id,
+  );
+
+
+
   return $form;
 }
 
+
+function _backup_migrate_process_destination_pulldown($element) {
+  $id = $element['destination_id']['#id'];
+  $settings = array(
+    'backup_migrate' => array(
+      'destination_selectors' => array(
+        $id => array(
+          'destination_selector' => $id, 
+          'copy_destination_selector' => $element['copy_destination']['copy_destination_id']['#id'],
+          'copy' => $element['copy']['#id'],
+          'labels' => array(
+            t('Local') => t('Save an offsite copy'),            
+            t('Offsite') => t('Save a local copy'),
+          )
+        )
+      )
+    )
+  );
+  drupal_add_js($settings, 'setting');
+
+  return $element;
+}
+
+/**
+ * Validate the destination and second destination widget.
+ */
+function _backup_migrate_destination_pulldown_validate($element, &$form_state, $form) {
+  if (empty($element['copy']['#value']) || $element['copy_destination']['copy_destination_id']['#value'] == $element['destination_id']['#value']) {
+    _backup_migrate_destination_pulldown_set_value($form_state['values'], $element['copy_destination']['copy_destination_id']['#parents'], '');
+  }
+}
+
+/**
+ * Set the value of a form field given it's parent array.
+ */
+function _backup_migrate_destination_pulldown_set_value(&$values, $parents, $value) {
+  $key = array_shift($parents);
+  if (empty($parents)) {
+    $values[$key] = $value;
+  }
+  else {
+    _backup_migrate_destination_pulldown_set_value($values[$key], $parents, $value);
+  }
+}
 
 /**
  * Get the destination options as an options array for a form item.
  */
 function _backup_migrate_get_destination_form_item_options($op) {
-  $out = array();
+  $remote = $local = array();
   foreach (backup_migrate_get_destinations($op) as $key => $destination) {
-    $out[$key] = $destination->get_name();
+    if ($destination->op('remote backup')) {
+      $remote[$key] = $destination->get_name();
+    }
+    else {
+      $local[$key] = $destination->get_name();
+    }
+  }
+  $out = array();
+  if ($remote && $local) {
+    $out = array(
+      t('Local') => $local,
+      t('Offsite') => $remote,
+    );
+  } 
+  else {
+    $out = $remote + $local;
   }
   return $out;
 }
@@ -526,6 +621,7 @@ class backup_migrate_destination extends backup_migrate_location {
   var $cache_files = FALSE;
   var $fetch_time = NULL;
   var $cache_expire = 86400; // 24 hours
+  var $weight = 0;
 
   var $destination_type = "";
   var $supported_ops = array();
@@ -639,6 +735,7 @@ class backup_migrate_destination extends backup_migrate_location {
         $info_file = $this->load_file($files[$key . '.info']->file_id());
         $info = drupal_parse_info_file($info_file->filepath());
         // Allow the stored metadata to override the detected metadata.
+        unset($info['filename']);
         $file->file_info = $info + $file->file_info;
         // Remove the metadata file from the list
         unset($files[$key . '.info']);

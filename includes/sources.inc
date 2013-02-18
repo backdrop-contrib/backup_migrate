@@ -121,7 +121,6 @@ function _backup_migrate_get_source_form($source_id = 'db') {
  * Get pulldown to select existing source options.
  */
 function _backup_migrate_get_source_pulldown($source_id = NULL) {
-  backup_migrate_include('sources');
   $sources = _backup_migrate_get_source_form_item_options();
   $form = array(
     "#type" => "select",

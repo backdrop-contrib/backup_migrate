@@ -450,7 +450,6 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    * Submit the configuration form. Glue the url together and add the old password back if a new one was not specified.
    */
   function edit_form_submit($form, &$form_state) {
-    dpm($form_state);
     $form_state['values']['secret_key'] = check_plain($form_state['values']['settings']['secret_key']);
     parent::edit_form_submit($form, $form_state);
   }

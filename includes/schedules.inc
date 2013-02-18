@@ -24,6 +24,23 @@ define('BACKUP_MIGRATE_KEEP_DEFAULT', 100);
 backup_migrate_include('crud');
 
 /**
+ * Implementation of hook_backup_migrate_destination_types().
+ *
+ * Get the built in Backup and Migrate destination types.
+ */
+function backup_migrate_backup_migrate_schedule_types() {
+  $out = array();
+  $out += array(
+    'backup' => array(
+      'include' => 'schedule',
+      'type_name' => t('Backup Schedule'),
+      'class' => 'backup_migrate_schedule',
+    ),
+  );
+  return $out;
+}
+
+/**
  * Run the preconfigured schedules. Called on cron.
  */
 function backup_migrate_schedules_cron() {
@@ -35,7 +52,7 @@ function backup_migrate_schedules_cron() {
 }
 
 /**
- * Run the preconfigured schedules. Called on cron.
+ * Run the preconfigured schedules regardless of scheduled time settings.
  */
 function backup_migrate_schedules_run() {
   backup_migrate_include('profiles');
@@ -192,7 +209,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    */
   function get_destination_ids() {
     $out = array();
-    foreach (array('destination_id', 'destination_id_local', 'destination_id_remote') as $key) {
+    foreach (array('destination_id', 'copy_destination_id') as $key) {
       if ($id = $this->get($key)) {
         $out[$key] = $id;
       }
@@ -520,23 +537,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#default_value" => $keep > 0 ? $keep : BACKUP_MIGRATE_KEEP_DEFAULT,
     );
 
-
-    $destination_options = _backup_migrate_get_destination_form_item_options('scheduled backup');
-    $form['destination_id'] = array(
-      "#type" => "select",
-      "#title" => t("Destination"),
-      "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them."),
-      "#options" => $destination_options,
-      "#default_value" => $this->get('destination_id'),
-    );
-    $form['destination_id']['#description'] .= ' '. l(t("Create new destination"), BACKUP_MIGRATE_MENU_PATH . "/destination/add");
-    $form['destination_id'] = array(
-      "#type" => "select",
-      "#title" => t("Destination"),
-      "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them."),
-      "#options" => $destination_options,
-      "#default_value" => $this->get('destination_id'),
-    );
+    $form['destination'] = _backup_migrate_get_destination_pulldown('scheduled backup', $this->get('destination_id'), $this->get('copy_destination_id'));
 
     return $form;
   }

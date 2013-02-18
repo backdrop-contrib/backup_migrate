@@ -166,6 +166,13 @@ function backup_migrate_schema() {
         'default' => '0',
         'description' => t('The {backup_migrate_destination}.destination_id of the destination to back up to.'),
       ),
+      'copy_destination_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '0',
+        'description' => t('A second {backup_migrate_destination}.destination_id of the destination to copy the backup to.'),
+      ),
       'profile_id' => array(
         'type' => 'varchar',
         'length' => 32,
@@ -203,7 +210,6 @@ function backup_migrate_schema() {
         'description' => t('Whether the schedule should be run during built in cron, Elysia cron or not at all.'),
         'type' => 'varchar',
         'length' => 32,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 'builtin',
       ),
@@ -211,7 +217,6 @@ function backup_migrate_schema() {
         'description' => t('The cron schedule to run on.'),
         'type' => 'varchar',
         'length' => 255,
-        'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => '0 4 * * *',
       ),
@@ -277,6 +282,7 @@ function backup_migrate_uninstall() {
   drupal_uninstall_schema('backup_migrate');
 
   db_query("DELETE FROM {variable} WHERE name LIKE 'backup_migrate_%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'nodesquirrel_%'");
   cache_clear_all('variables', 'cache');
 }
 
@@ -524,4 +530,22 @@ function backup_migrate_update_6301() {
   return $ret;
 }
 
+/**
+ * Add a second destination to schedules.
+ */
+function backup_migrate_update_6302() {
+  $ret = array();
+
+  db_add_field($ret, 'backup_migrate_schedules', 'copy_destination_id', 
+    array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '0',
+        'description' => t('A second {backup_migrate_destination}.destination_id of the destination to copy the backup to.'),
+      )
+  );
+
+  return $ret;
+}
 
