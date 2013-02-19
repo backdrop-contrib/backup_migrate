@@ -310,6 +310,19 @@ class backup_file {
     return @$this->type['id'];
   }
 
+  function filesize() {
+    if (empty($this->file_info['filesize'])) {
+      $this->calculate_filesize();
+    }
+    return $this->file_info['filesize'];
+  }
+
+  function calculate_filesize() {
+    $this->file_info['filesize'] = '';
+    if (!empty($this->path) && file_exists($this->path)) {
+      $this->file_info['filesize'] = filesize($this->path);
+    }
+  }
 
   /**
    * Can this file be used to backup to.

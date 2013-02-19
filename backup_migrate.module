@@ -1268,11 +1268,12 @@ function backup_migrate_perform_backup(&$settings) {
 
   // Backup succeeded, 
   $time = timer_stop('backup_migrate_backup');
-  $message = '%source backed up successfully to %file in destination %dest in !time. !action';
+  $message = '%source backed up successfully to %file (%size) in destination %dest in !time. !action';
   $params = array(
     '%file' => $filename,
     '%dest' => $settings->get_destination_name(),
     '%source' => $settings->get_source_name(),
+    '%size' => format_size($file->filesize()),
     '!time' => backup_migrate_format_elapsed_time($time['time']),
     '!action' => !empty($settings->performed_action) ? $settings->performed_action : '',
   );
@@ -1343,12 +1344,12 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
   $time = timer_stop('backup_migrate_restore');
   if ($file) {
     $destination = backup_migrate_get_destination($destination_id);
-    $message = '%source restored from %dest file %file in !time ms. !action';
+    $message = '%source restored from %dest file %file in !time. !action';
     $params = array(
       '%file' => $file->filename(),
       '%source' => $settings->get_source_name(),
       '%dest' => $destination->get_name(),
-      '!time' => $time['time'],
+      '!time' => backup_migrate_format_elapsed_time($time['time']),
       '!action' => !empty($settings->performed_action) ? $settings->performed_action : '',
     );
     if ($destination && $destination->op('list files')) {

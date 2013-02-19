@@ -12,6 +12,7 @@
  * @ingroup backup_migrate_filters
  */
 class backup_migrate_filter_utils extends backup_migrate_filter {
+  var $op_weights = array('pre_backup' => -1000, 'post_backup' => 1000);
   var $saved_devel_query = NULL;
 
   /**
@@ -116,15 +117,15 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     return $form;
   }
 
-  function pre_backup($source, $file, $settings) {
+  function pre_backup($file, $settings) {
     $this->take_site_offline($settings);
     $this->disable_devel_query($settings);
   }
 
-  function post_backup($source, $file, $settings) {
+  function post_backup($file, $settings) {
     $this->enable_devel_query($settings);
     $this->take_site_online($settings);
-    $this->add_file_info($source, $file, $settings);
+    $this->add_file_info($file, $settings);
   }
 
   function pre_restore($file, $settings) {
@@ -159,7 +160,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   /**
    * Add the backup metadata to the file.
    */
-  function add_file_info($source, $file, $settings) {
+  function add_file_info($file, $settings) {
     $file->file_info['description']       = $settings->filters['utils_description'];
     $file->file_info['datestamp']         = time();
     $file->file_info['generator']         = 'Backup and Migrate (http://drupal.org/project/backup_migrate)';
@@ -167,7 +168,9 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $file->file_info['siteurl']           = url('', array('absolute' => TRUE));
     $file->file_info['sitename']          = variable_get('site_name', '');
     $file->file_info['drupalversion']     = VERSION;
+    $file->calculate_filesize();
 
+    $source = $settings->get('source');
     $file->file_info['bam_sourceid']      = $source->get('id');
     $file->file_info['bam_sourcetype']    = $source->get('type');
     $file->file_info['bam_sourcename']    = $source->get('name');
@@ -176,7 +179,6 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     if (!empty($settings->file_info)) {
       $file->file_info += $settings->file_info;
     }
-
   }
 
   /**

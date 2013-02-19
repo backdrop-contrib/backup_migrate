@@ -257,7 +257,6 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
     if (!$file) {
       _backup_migrate_message("Could not compress backup file. Try backing up without compression.", array(), 'error');
     }
-
     return $file;
   }
 

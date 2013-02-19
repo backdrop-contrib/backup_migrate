@@ -99,12 +99,15 @@ function backup_migrate_filters_invoke_all() {
  * Filter a backup file before sending it to the destination.
  */
 function backup_migrate_filters_backup($file, &$settings) {
+  backup_migrate_filters_invoke_all('pre_backup', $file, $settings);
   $filters = backup_migrate_get_filters('backup');
   foreach ($filters as $filter) {
     if ($file) {
       $file = $filter->backup($file, $settings);
     }
   }
+  backup_migrate_filters_invoke_all('post_backup', $file, $settings);
+
   return $file;
 }
 
@@ -112,12 +115,14 @@ function backup_migrate_filters_backup($file, &$settings) {
  * Filter a backup file before sending it to the destination.
  */
 function backup_migrate_filters_restore($file, &$settings) {
+  backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
   $filters = backup_migrate_get_filters('restore');
   foreach ($filters as $filter) {
     if ($file) {
       $file = $filter->restore($file, $settings);
     }
   }
+  backup_migrate_filters_invoke_all('post_restore', $file, $settings);
   return $file;
 }
 
@@ -290,6 +295,20 @@ class backup_migrate_filter {
   }
 
   /**
+   * This function is called immediately prior to backup.
+   */
+  function pre_backup($file, $settings) {
+
+  }
+
+  /**
+   * This function is called immediately post backup.
+   */
+  function post_backup($file, $settings) {
+
+  }
+ 
+  /**
    * This function is called on a backup file before importing it.
    */
   function restore($file, $settings) {
@@ -297,16 +316,16 @@ class backup_migrate_filter {
   }
 
   /**
-   * This function is called immediately prior to backup.
+   * This function is called immediately prior to restore.
    */
-  function pre_backup($source, $file, $settings) {
+  function pre_restore($file, $settings) {
 
   }
 
   /**
-   * This function is called immediately post backup.
+   * This function is called immediately post restore.
    */
-  function post_backup($source, $file, $settings) {
+  function post_restore($file, $settings) {
 
   }
 }
