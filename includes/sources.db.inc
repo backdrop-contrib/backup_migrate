@@ -42,9 +42,8 @@ class backup_migrate_destination_db extends backup_migrate_source_remote {
    */
   function edit_form() {
     $form = parent::edit_form();
-    $form['scheme']['#title'] = t('Database type');
-//    $form['scheme']['#options'] = array($GLOBALS['db_type'] => $GLOBALS['db_type']);
-    $form['scheme']['#description'] = t('The type of the database. Drupal only supports one database type at a time, so this must be the same as the current database type.');
+    $form['scheme']['#default_value'] = $this->default_scheme();
+    $form['scheme']['#access'] = FALSE;
     $form['path']['#title'] = t('Database name');
     $form['path']['#description'] = t('The name of the database. The database must exist, it will not be created for you.');
     $form['user']['#description'] = t('Enter the name of a user who has write access to the database.');

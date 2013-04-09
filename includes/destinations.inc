@@ -847,7 +847,7 @@ class backup_migrate_destination extends backup_migrate_location {
       );
     }
     else {
-      $types = backup_migrate_get_destination_types();
+      $types = backup_migrate_get_destination_subtypes();
       $items = array(
         'remote' => array(
           'title' => t('Offsite Destinations'),
@@ -1089,11 +1089,10 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
   function edit_form() {
     $form = parent::edit_form();
     $form['scheme'] = array(
-      "#type" => "select",
+      "#type" => "textfield",
       "#title" => t("Scheme"),
-      "#default_value" => @$this->dest_url['scheme'] ? $this->dest_url['scheme'] : 'mysql',
+      "#default_value" => @$this->dest_url['scheme'] ? $this->dest_url['scheme'] : '',
       "#required" => TRUE,
-      "#options" => array($GLOBALS['db_type'] => $GLOBALS['db_type']),
       "#weight" => 0,
     );
     $form['host'] = array(

@@ -30,7 +30,6 @@ function backup_migrate_get_source($id) {
   return empty($sources[$id]) ? NULL : $sources[$id];
 }
 
-
 /**
  * Implementation of hook_backup_migrate_source_subtypes().
  *
@@ -205,11 +204,10 @@ class backup_migrate_source_remote extends backup_migrate_source {
   function edit_form() {
     $form = parent::edit_form();
     $form['scheme'] = array(
-      "#type" => "select",
+      "#type" => "textfield",
       "#title" => t("Scheme"),
-      "#default_value" => @$this->dest_url['scheme'] ? $this->dest_url['scheme'] : 'mysql',
+      "#default_value" => @$this->dest_url['scheme'] ? $this->dest_url['scheme'] : '',
       "#required" => TRUE,
-      "#options" => array($GLOBALS['db_type'] => $GLOBALS['db_type']),
       "#weight" => 0,
     );
     $form['host'] = array(

@@ -38,6 +38,14 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     );
   }
 
+  /**
+   * Return the scheme for this db type.
+   */
+  function default_scheme() {
+    return 'mysql';
+  }
+
+
  /**
    * Declare any mysql databases defined in the settings.php file as a possible destination.
    */
