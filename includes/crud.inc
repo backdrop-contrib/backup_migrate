@@ -59,8 +59,8 @@ function backup_migrate_crud_subtypes($type) {
     // Allow modules (including this one) to declare backup and migrate subtypes.
     // We don't use module_invoke_all so we can avoid the side-effects of array_merge_recursive.
     $out = array();
-    foreach (module_implements('backup_migrate_' . $type . '_types') as $module) {
-      $function =  $module . '_backup_migrate_' . $type . '_types';
+    foreach (module_implements('backup_migrate_' . $type . '_subtypes') as $module) {
+      $function =  $module . '_backup_migrate_' . $type . '_subtypes';
       $result = $function();
       if (isset($result) && is_array($result)) {
       foreach ($result as $key => $val) {
@@ -109,7 +109,7 @@ function backup_migrate_crud_type_load($type, $subtype = NULL) {
 
     if (class_exists($info['class'])) {
       $out = new $info['class'];
-      $out = $out->create(array('type' => $subtype));
+      $out = $out->create(array('subtype' => $subtype));
     }
   }
   return $out;

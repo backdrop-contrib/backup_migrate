@@ -11,16 +11,16 @@ backup_migrate_include('crud', 'locations');
 /**
  * Get the available destination types.
  */
-function backup_migrate_get_destination_types() {
+function backup_migrate_get_destination_subtypes() {
   return backup_migrate_crud_subtypes('destination');
 }
 
 /**
- * Implementation of hook_backup_migrate_destination_types().
+ * Implementation of hook_backup_migrate_destination_subtypes().
  *
  * Get the built in Backup and Migrate destination types.
  */
-function backup_migrate_backup_migrate_destination_types() {
+function backup_migrate_backup_migrate_destination_subtypes() {
   $out = array();
   if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
     $out += array(
@@ -169,7 +169,7 @@ function backup_migrate_get_destination($id) {
  * Create a destination object of the given type with the given params.
  */
 function backup_migrate_create_destination($destination_type, $params = array()) {
-  $params['type'] = $destination_type;
+  $params['subtype'] = $destination_type;
   return backup_migrate_crud_create_item('destination', $params);
 }
 
@@ -841,9 +841,9 @@ class backup_migrate_destination extends backup_migrate_location {
         "#default_value" => $this->get_name(),
         "#required" => TRUE,
       );
-      $form['type'] = array(
+      $form['subtype'] = array(
         "#type" => "value",
-        "#default_value" => $this->destination_type,
+        "#default_value" => $this->get('subtype'),
       );
     }
     else {

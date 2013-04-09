@@ -172,7 +172,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
 
     $source = $settings->get('source');
     $file->file_info['bam_sourceid']      = $source->get('id');
-    $file->file_info['bam_sourcetype']    = $source->get('type');
+    $file->file_info['bam_sourcetype']    = $source->get('subtype');
     $file->file_info['bam_sourcename']    = $source->get('name');
 
     // Add any additional info that has been added to the settings by other plugins.

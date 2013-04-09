@@ -28,7 +28,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
   }
 
   /**
-   * Get the default destinations for this filter.
+   * Get the default sources for this filter.
    */
   function sources() {
     $out = array();
@@ -212,7 +212,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     static $destinations = NULL;
     if (!is_array($destinations)) {
       $destinations = array();
-      $types = backup_migrate_get_destination_types();
+      $types = backup_migrate_get_destination_subtypes();
       // If no (valid) node type has been provided, display a node type overview.
       foreach ($types as $key => $type) {
         // Include the necessary file if specified by the type.
@@ -233,7 +233,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     static $sources = NULL;
     if (!is_array($sources)) {
       $sources = array();
-      $types = backup_migrate_get_source_types();
+      $types = backup_migrate_get_source_subtypes();
       // If no (valid) node type has been provided, display a node type overview.
       foreach ($types as $key => $type) {
         // Include the necessary file if specified by the type.

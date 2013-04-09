@@ -121,7 +121,7 @@ function backup_migrate_schema() {
         'length' => 255,
         'not null' => TRUE
       ),
-      'type' => array(
+      'subtype' => array(
         'description' => 'The type of the destination.',
         'type' => 'varchar',
         'length' => 32,
@@ -178,7 +178,7 @@ function backup_migrate_schema() {
         'length' => 255,
         'not null' => TRUE
       ),
-      'type' => array(
+      'subtype' => array(
         'description' => 'The type of the source.',
         'type' => 'varchar',
         'length' => 32,
@@ -608,4 +608,8 @@ function backup_migrate_update_7303() {
         array('primary key' => array($id))
     );
   }
+  foreach (array('backup_migrate_sources', 'backup_migrate_destinations') as $table) {
+    db_change_field($table, 'type', 'subtype', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  }
 }
+

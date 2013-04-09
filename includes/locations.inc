@@ -11,7 +11,7 @@ backup_migrate_include('crud');
 /**
  * Get the available location types.
  */
-function backup_migrate_get_location_types() {
+function backup_migrate_get_location_subtypes() {
   backup_migrate_include('crud', 'destinations', 'sources');
   return backup_migrate_crud_subtypes('destination') + backup_migrate_crud_subtypes('source');
 }
@@ -90,7 +90,7 @@ class backup_migrate_location extends backup_migrate_item {
   var $title_plural = 'Locations';
   var $title_singular = 'Location';
 
-  var $location_type = "";
+  var $subtype = "";
   var $supported_ops = array();
 
   /**
@@ -134,14 +134,6 @@ class backup_migrate_location extends backup_migrate_item {
     return $this->name = $name;
   }
 
-  function set_type($type) {
-    $this->type = $type;
-  }
-
-  function get_type() {
-    return @$this->location_type;
-  }
-
   function set_location($location) {
     $this->location = $location;
   }
@@ -165,8 +157,8 @@ class backup_migrate_location extends backup_migrate_item {
   /**
    * Get the type name of this location for display to the user.
    */
-  function get_location_type_name() {
-    if ($type = $this->location_type) {
+  function get_subtype_name() {
+    if ($type = $this->get('subtype')) {
       $types = $this->location_types();
       return isset($types[$type]['type_name']) ? $types[$type]['type_name'] : $type;
     }
@@ -186,7 +178,7 @@ class backup_migrate_location extends backup_migrate_item {
       );
       $form['type'] = array(
         "#type" => "value",
-        "#default_value" => $this->location_type,
+        "#default_value" => $this->get('subtype'),
       );
     }
     else {
@@ -219,7 +211,7 @@ class backup_migrate_location extends backup_migrate_item {
    * Get the available location types.
    */
   function location_types() {
-    return backup_migrate_get_location_types();
+    return backup_migrate_get_location_subtypes();
   }
 
   /**
@@ -236,7 +228,7 @@ class backup_migrate_location extends backup_migrate_item {
     $out = parent::get_list_column_info();
     $out = array(
       'name'                  => array('title' => t('Name')),
-      'location_type_name'    => array('title' => t('Type')),
+      'subtype_name'    => array('title' => t('Type')),
       'display_location'      => array('title' => t('Location')),
     ) + $out;
     return $out;
@@ -364,17 +356,17 @@ class backup_migrate_location extends backup_migrate_item {
    */
   function create($params = array()) {
     $out = NULL;
-    $types = backup_migrate_get_location_types();
+    $types = backup_migrate_get_location_subtypes();
     // Get the type passed in in the params, or if none, check the url for a valid type name.
     // This is to allow new location type to be specified in the path.
-    $location_type = !empty($params['type']) ? $params['type'] : NULL;
+    $location_type = !empty($params['subtype']) ? $params['subtype'] : NULL;
 
     if ($location_type && ($type = @$types[$location_type])) {
       // Include the necessary file if specified by the type.
       if (!empty($type['file'])) {
         require_once './'. $type['file'];
       }
-      $out = new $type['class']($params + array('location_type' => $location_type));
+      $out = new $type['class']($params + array('subtype' => $location_type));
     }
 
     if (empty($out)) {

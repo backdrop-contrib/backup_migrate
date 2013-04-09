@@ -18,7 +18,7 @@ function backup_migrate_get_sources() {
 /**
  * Get the available source types.
  */
-function backup_migrate_get_source_types() {
+function backup_migrate_get_source_subtypes() {
   return backup_migrate_crud_subtypes('source');
 }
 
@@ -32,11 +32,11 @@ function backup_migrate_get_source($id) {
 
 
 /**
- * Implementation of hook_backup_migrate_source_types().
+ * Implementation of hook_backup_migrate_source_subtypes().
  *
  * Get the built in Backup and Migrate source types.
  */
-function backup_migrate_backup_migrate_source_types() {
+function backup_migrate_backup_migrate_source_subtypes() {
   $out = array();
   $out += array(
     'db' => array(
@@ -168,7 +168,7 @@ class backup_migrate_source extends backup_migrate_location {
    * Get the available location types.
    */
   function location_types() {
-    return backup_migrate_get_source_types();
+    return backup_migrate_get_source_subtypes();
   }
 
 }
