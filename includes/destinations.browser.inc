@@ -56,6 +56,9 @@ class backup_migrate_destination_browser_upload extends backup_migrate_destinati
  */
 class backup_migrate_destination_browser_download extends backup_migrate_destination_browser {
   var $supported_ops = array('manual backup');
+  // Browser downloads must always be the last destination as they must end the current process when they are done.
+  var $weight = 1000;
+
   function __construct() {
     $params = array();
     $params['name'] = "Download";

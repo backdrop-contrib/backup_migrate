@@ -12,7 +12,7 @@
  * @ingroup backup_migrate_destinations
  */
 class backup_migrate_destination_email extends backup_migrate_destination {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'configure');
+  var $supported_ops = array('scheduled backup', 'manual backup', 'remote backup', 'configure');
 
   /**
    * Save to (ie. email the file) to the email destination.

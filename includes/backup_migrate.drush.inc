@@ -54,7 +54,7 @@ function backup_migrate_drush_command() {
     'callback' => 'backup_migrate_drush_destination_files',
     'description' => dt('Get a list of previously created backup files.'),
     'arguments' => array(
-      'destination'   => "Required. The id of destination to list backups from. Use 'drush bam-destinations' to get a list of destinations.",
+      'destination'   => "Optional. The id of destination to list backups from. Use 'drush bam-destinations' to get a list of destinations.",
     ),
   );
   return $items;
@@ -190,42 +190,53 @@ function backup_migrate_drush_profiles() {
  */
 function backup_migrate_drush_destination_files($destination_id = NULL) {
   backup_migrate_include('destinations');
+  $destinations = array();
 
   // Set the message mode to drush output.
   _backup_migrate_message_callback('_backup_migrate_message_drush');
-
-  if (!$destination_id) {
-    _backup_migrate_message("You must specify an existing destination. Try using 'drush bam-destinations' to get a list of available destinations.", array('@destination' => $destination_id), 'error');
-    return;
-  }
-  if (!$destination = backup_migrate_get_destination($destination_id)) {
+  if ($destination_id && !$destination = backup_migrate_get_destination($destination_id)) {
     _backup_migrate_message("Could not find the destination '@destination'. Try using 'drush bam-destinations' to get a list of available destinations.", array('@destination' => $destination_id), 'error');
     return;
   }
 
-  $out = array(array(
+  // Single destination required.
+  if ($destination) {
+    $destinations = array($destination);
+  }
+  // List all destinations
+  else {
+    $destinations = backup_migrate_get_destinations('list files');
+  }
+
+  // Load all the files.
+  $rows = $sort = array();
+  foreach ($destinations as $destination) {
+    $destination->file_cache_clear();
+    $dest_files = $destination->list_files();
+    foreach ($dest_files as $id => $file) {
+      $info = $file->info();
+      $rows[] = array(
+        check_plain($info['filename']),
+        $destination->get_id(),
+        format_date($info['filetime'], 'small'),
+        format_interval(time() - $info['filetime'], 1),
+        format_size($info['filesize']),
+      );
+      $sort[] = $info['filetime'];
+    }
+  }
+
+  $headers = array(array(
     dt('Filename'),
+    dt('Destination'),
     dt('Date'),
     dt('Age'),
     dt('Size'),
   ));
 
-  $files      = $destination->list_files();
-  $i          = 0;
-  foreach ((array)$files as $file) {
-    // Show only files that can be restored from.
-    if ($file->is_recognized_type()) {
-      $info = $file->info();
-      $out[] = array(
-        check_plain($info['filename']),
-        format_date($info['filetime'], 'small'),
-        format_interval(time() - $info['filetime'], 1),
-        format_size($info['filesize']),
-      );
-    }
-  }
-  if (count($out) > 1) {
-    drush_print_table($out, TRUE);
+  if (count($rows)) {
+    array_multisort($sort, SORT_DESC, $rows);
+    drush_print_table(array_merge($headers, $rows), TRUE);
   }
   else {
     drush_print(dt('There are no backup files to display.'));

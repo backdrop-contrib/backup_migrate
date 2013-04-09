@@ -12,7 +12,7 @@
  * @ingroup backup_migrate_destinations
  */
 class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'restore', 'list files', 'configure', 'delete');
+  var $supported_ops = array('scheduled backup', 'manual backup', 'remote backup', 'restore', 'list files', 'configure', 'delete');
   var $ftp = NULL;
 
   /**
@@ -133,7 +133,7 @@ function drupal_ftp_connect(&$ftp) {
     $ftp = drupal_ftp_ftp_object();
   }
 
-  if (empty($ftp->__conn) && !drupal_ftp_connected($ftp)) {
+  if (!$ftp->__conn && !drupal_ftp_connected($ftp)) {
     // Attempt to connect to the remote server
     $ftp->__conn = @ftp_connect($ftp->__server, $ftp->__port);
 
