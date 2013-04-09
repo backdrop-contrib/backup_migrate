@@ -146,7 +146,7 @@ function _backup_migrate_construct_filename($settings) {
 
   // Replace any tokens
   if (module_exists('token') && function_exists('token_replace')) {
-    $filename = token_replace($filename, 'global');
+    $filename = token_replace($filename);
   }
 
   // Remove illegal characters
