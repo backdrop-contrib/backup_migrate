@@ -275,7 +275,7 @@ function backup_migrate_crud_ui_export($type, $item_id = NULL) {
 /**
  * Ask confirmation for deletion of a destination.
  */
-function backup_migrate_crud_export_form(&$form_state, $export) {
+function backup_migrate_crud_export_form($form, &$form_state, $export) {
   $form['export'] = array(
     '#title' => t('Exported content'),
     '#type' => 'textarea',
