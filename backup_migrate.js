@@ -79,44 +79,43 @@
               });
             })(info);
           }
-
+          // Add the convert to checkboxes functionality to all multiselects.
+          $('select[multiple]').each(function () {
+            var self = this;
+            $(self).after(
+              $('<div class="description backup-migrate-checkbox-link"></div>').append(
+                $('<a>'+ Drupal.settings.backup_migrate.checkboxLinkText +'</a>').click(function() {
+                  var $select = $(self);
+                  var $checkboxes = $('<div></div>').addClass('backup-migrate-tables-checkboxes');
+                  $('option', $select).each(function(i) {
+                    $checkboxes.append(
+                      $('<div class="form-item"></div>').append(
+                        $('<label class="option backup-migrate-table-select">' + this.value + '</label>').prepend(
+                          $('<input type="checkbox" class="backup-migrate-tables-checkbox" name="'+ $select.attr('name') +'"'+ (this.selected ? 'checked="checked"' : '') +' value="'+ this.value +'"/>')
+                            .bind('click change load', function() {
+                                if (this.checked) {
+                                  $(this).parent().addClass('checked');
+                                }
+                                else {
+                                  $(this).parent().removeClass('checked');
+                                }
+                              }).load()
+                        )
+                      )
+                    );
+                  });
+                  $select.parent().find('.backup-migrate-checkbox-link').remove();
+                  $select.before($checkboxes);
+                  $select.hide();
+                })
+              )
+            );
+          });
         }
-
-        $('#edit-filters-exclude-tables').after('<div class="description backup-migrate-checkbox-link"><a href="javascript:Drupal.backup_migrate.selectToCheckboxes(\''+ 'exclude_tables' +'\');">'+ Drupal.settings.backup_migrate.checkboxLinkText +'</a></div>');
-        $('#edit-filters-nodata-tables').after('<div class="description backup-migrate-checkbox-link"><a href="javascript:Drupal.backup_migrate.selectToCheckboxes(\''+ 'nodata_tables' +'\');">'+ Drupal.settings.backup_migrate.checkboxLinkText +'</a></div>');
       }
-    },
-
-    processCheckboxes : function(ctxt) {
-      $("input.backup-migrate-tables-checkbox", ctxt).each(function() {
-        this.do_click = function() {
-          if (this.checked) {
-            $(this).parent().addClass('checked');
-          }
-          else {
-            $(this).parent().removeClass('checked');
-          }
-        };
-        $(this).bind("click", function() { this.do_click() });
-        this.do_click();
-      });
-    },
-
-    selectToCheckboxes : function(field) {
-      var field_id = 'edit-filters-'+ field.replace('_', '-') ;
-      var $select = $('#'+ field_id);
-      var $checkboxes = $('<div></div>').addClass('backup-migrate-tables-checkboxes');
-      $('option', $select).each(function(i) {
-        $checkboxes.append('<div class="form-item"><label class="option backup-migrate-table-select"><input type="checkbox" class="backup-migrate-tables-checkbox" id="edit-'+ field_id +'-'+ this.value +'" name="'+ $select.attr('name') +'"'+ (this.selected ? 'checked="checked"' : '') +' value="'+ this.value +'"/>'+this.value+'</label></div>');
-      });
-      $select.parent().find('.backup-migrate-checkbox-link').remove();
-      $select.before($checkboxes);
-      $select.hide();
-      Drupal.backup_migrate.processCheckboxes($checkboxes);
     }
-  };
-
-  Drupal.behaviors.union_responsive = {
+  }
+  Drupal.behaviors.backup_migrate = {
     attach: function(context) {
       Drupal.backup_migrate.autoAttach(context);
     }

@@ -9,7 +9,7 @@
   font-size: 0.85em;
 }
 
-.backup-migrate-tables-checkboxes .form-item label {
+.backup-migrate-tables-checkboxes .form-item {
   width: 15em;
   float: left;
   overflow: hidden;
@@ -17,9 +17,10 @@
   height: 1.75em;
   margin: .25em .25em 0 0;
 }
-.backup-migrate-tables-checkboxes .form-item label.checked {
-  background-color: #eee;
+.backup-migrate-tables-checkboxes .form-item label input {
+  margin-right: .5em;
 }
+
 div.backup-migrate-tables-checkboxes {
   height: 20em;
   overflow: auto;
