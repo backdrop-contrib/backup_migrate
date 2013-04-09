@@ -775,12 +775,13 @@ class backup_migrate_item {
       '#type' => 'value',
       '#value' => $this,
     );
+    $name = $this->get('name');
     $form['name'] = array(
-        "#type" => "textfield",
-        "#title" => t("!type name", array('!type' => $this->title_singular)),
-        "#default_value" => $this->get_name(),
-        "#required" => TRUE,
-      );
+      "#type" => "textfield",
+      "#title" => t("!type name", array('!type' => $this->title_singular)),
+      "#default_value" => empty($name) ? t('Untitled !type', array('!type' => $this->title_singular)) : $name,
+      "#required" => TRUE,
+    );
     $form['id'] = array(
       '#type' => 'value',
       '#value' => $this->get_id(),

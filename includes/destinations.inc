@@ -623,8 +623,8 @@ class backup_migrate_destination extends backup_migrate_location {
   var $default_values = array('settings' => array());
   var $singular = 'destination';
   var $plural = 'destinations';
-  var $title_plural = 'Destination';
-  var $title_singular = 'Destinations';
+  var $title_plural = 'Destinations';
+  var $title_singular = 'Destination';
   var $cache_files = FALSE;
   var $fetch_time = NULL;
   var $cache_expire = 86400; // 24 hours
@@ -835,12 +835,6 @@ class backup_migrate_destination extends backup_migrate_location {
   function edit_form() {
     if (get_class($this) !== 'backup_migrate_destination') {
       $form = parent::edit_form();
-      $form['name'] = array(
-        "#type" => "textfield",
-        "#title" => t("Destination name"),
-        "#default_value" => $this->get_name(),
-        "#required" => TRUE,
-      );
       $form['subtype'] = array(
         "#type" => "value",
         "#default_value" => $this->get('subtype'),

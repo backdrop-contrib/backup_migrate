@@ -170,13 +170,7 @@ class backup_migrate_location extends backup_migrate_item {
   function edit_form() {
     if (!empty($this->supported_ops)) {
       $form = parent::edit_form();
-      $form['name'] = array(
-        "#type" => "textfield",
-        "#title" => t("!type name", array('!type' => $this->title_singular)),
-        "#default_value" => $this->get_name(),
-        "#required" => TRUE,
-      );
-      $form['type'] = array(
+      $form['subtype'] = array(
         "#type" => "value",
         "#default_value" => $this->get('subtype'),
       );

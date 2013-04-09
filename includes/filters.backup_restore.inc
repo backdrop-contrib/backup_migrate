@@ -47,7 +47,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
     backup_migrate_include('sources');
     $out = array();
     foreach (backup_migrate_get_sources() as $source) {
-      $out['destinations'][$source->get_id()] = $source->backup_settings_default();
+      $out['sources'][$source->get_id()] = $source->backup_settings_default();
     }
     return $out;
   }

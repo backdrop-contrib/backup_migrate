@@ -563,7 +563,21 @@ function backup_migrate_update_7300() {
     db_create_table('backup_migrate_sources', $schema['backup_migrate_sources']);
   }
 
-  // @TODO: Move custom destinations to sources.
+  // Move custom destinations to sources.
+  $result = db_query("SELECT * FROM {backup_migrate_destinations} WHERE type in ('filesource', 'db')", array(), array('fetch' => PDO::FETCH_ASSOC));
+  foreach ($result as $item) {
+    $item['source_id'] = $item['destination_id'];
+    drupal_write_record('backup_migrate_source', $item);
+  }
+
+  // Change 'destination' settings to 'source' settings
+  $result = db_query('SELECT * FROM {backup_migrate_profiles}', array(), array('fetch' => PDO::FETCH_ASSOC));
+  foreach ($result as $item) {
+    $item['filters'] = unserialize($item['filters']);
+    $item['filters']['sources'] = $item['filters']['destinations'];
+    unset($item['filters']['destinations']);
+    drupal_write_record('backup_migrate_profiles', $item, array('profile_id'));
+  }
 }
 
 /**
@@ -572,7 +586,6 @@ function backup_migrate_update_7300() {
 function backup_migrate_update_7301() {
   db_change_field('backup_migrate_schedules', 'cron', 'cron', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
   db_add_field('backup_migrate_schedules', 'cron_schedule', array('description' => 'The cron schedule to run on.', 'type' => 'varchar', 'length' => 255, 'default' => '0 4 * * *', 'not null' => TRUE));
-
 }
 
 /**
