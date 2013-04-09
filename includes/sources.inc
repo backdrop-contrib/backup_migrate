@@ -150,6 +150,8 @@ class backup_migrate_source extends backup_migrate_location {
   var $type_name = 'source';
   var $singular = 'source';
   var $plural = 'sources';
+  var $title_plural = 'Sources';
+  var $title_singular = 'Source';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.

@@ -257,7 +257,7 @@ function backup_migrate_ui_destination_display_files($destination_id = NULL) {
 
   $rows = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
-    drupal_set_title(t('%title Files', array('%title' => $destination->get_name())));
+    drupal_set_title(t('@title Files', array('@title' => $destination->get_name())));
     return _backup_migrate_ui_destination_display_files($destination, 20, TRUE);
   }
   drupal_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
@@ -279,7 +279,7 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
 
     // Get the fetch link.
     if ($destination->cache_files && $destination->fetch_time) {
-      $fetch = '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => 'refresh=true')))) .'</div>';
+      $fetch = '<div class="description">'. t('This listing was fetched !time ago. !refresh', array('!time' => format_interval(time() - $destination->fetch_time, 1), '!refresh' => l(t('fetch now'), $_GET['q'], array('query' => array('refresh' => 'true'))))) .'</div>';
     }
 
     $out .= $fetch;
@@ -623,6 +623,8 @@ class backup_migrate_destination extends backup_migrate_location {
   var $default_values = array('settings' => array());
   var $singular = 'destination';
   var $plural = 'destinations';
+  var $title_plural = 'Destination';
+  var $title_singular = 'Destinations';
   var $cache_files = FALSE;
   var $fetch_time = NULL;
   var $cache_expire = 86400; // 24 hours
@@ -888,9 +890,8 @@ class backup_migrate_destination extends backup_migrate_location {
         $output = '<p>' . t('Choose the type of destination you would like to create:') . '</p>';
         foreach ($items as $group) {
           if (count($group['items'])) {
-            $output .= '<h3>' . $group['title'] . '</h3>';
-            $output .= '<p class="description">' . $group['description'] . '</p>';
-            $output .= '<dl>'. implode('', $group['items']) .'</dl>';          
+            $group['body'] = '<dl>'. implode('', $group['items']) .'</dl>';
+            $output .= theme('backup_migrate_group', $group);
           }
         }
       }

@@ -192,6 +192,8 @@ class backup_migrate_profile extends backup_migrate_item {
   var $type_name = "profile";
   var $singular = 'settings profile';
   var $plural = 'settings profiles';
+  var $title_plural = 'Settings Profiles';
+  var $title_singular = 'Settings Profile';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.

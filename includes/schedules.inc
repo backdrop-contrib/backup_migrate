@@ -101,6 +101,8 @@ class backup_migrate_schedule extends backup_migrate_item {
   var $type_name = 'schedule';
   var $singular = 'schedule';
   var $plural = 'schedules';
+  var $title_plural = 'Schedules';
+  var $title_singular = 'Schedule';
   var $default_values = array();
 
   /**
@@ -224,7 +226,9 @@ class backup_migrate_schedule extends backup_migrate_item {
     backup_migrate_include('destinations');
     $out = array();
     foreach ($this->get_destination_ids() as $id) {
-      $out[$id] = backup_migrate_get_destination($id);
+      if ($dest = backup_migrate_get_destination($id)) {
+        $out[$id] = $dest;
+      }
     }
     return $out;
   }

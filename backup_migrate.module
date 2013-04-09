@@ -318,6 +318,9 @@ function backup_migrate_theme() {
       'arguments' => array('element'),
       'render element' => 'element',
     ),
+    'backup_migrate_group' => array(
+      'variables' => array('title' => '', 'body' => '', 'description' => ''),
+    ),
   );
   return $themes;
 }
@@ -871,6 +874,23 @@ function theme_backup_migrate_dependent($vars) {
 
   return '<div id="edit-' . $id . '" class="backup-migrate-form-dependent">' . drupal_render_children($element) . '</div>';
 }
+
+/**
+ * Theme the dependent form section.
+ */
+function theme_backup_migrate_group($vars) {
+  $output = '';
+  if (!empty($vars['title'])) {
+    $output .= '<h2 class="backup-migrate-group-title">' . $vars['title'] . '</h2>';
+  }
+  if (!empty($vars['description'])) {
+    $output .= '<div class="backup-migrate-group-description backup-migrate-description description">' . $vars['description'] . '</div>';
+  }
+  $output .= '<div class="backup-migrate-group-body">' . $vars['body'] . '</div>';
+  $output = '<div class="backup-migrate-group">' . $output . '</div>';
+  return $output;
+}
+
 
 /**
  * The backup/export form.

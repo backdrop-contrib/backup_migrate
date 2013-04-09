@@ -87,6 +87,8 @@ class backup_migrate_location extends backup_migrate_item {
   var $default_values = array('settings' => array());
   var $singular = 'location';
   var $plural = 'locations';
+  var $title_plural = 'Locations';
+  var $title_singular = 'Location';
 
   var $location_type = "";
   var $supported_ops = array();
@@ -178,7 +180,7 @@ class backup_migrate_location extends backup_migrate_item {
       $form = parent::edit_form();
       $form['name'] = array(
         "#type" => "textfield",
-        "#title" => t("location name"),
+        "#title" => t("!type name", array('!type' => $this->title_singular)),
         "#default_value" => $this->get_name(),
         "#required" => TRUE,
       );
