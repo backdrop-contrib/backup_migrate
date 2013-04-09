@@ -392,6 +392,19 @@ function backup_migrate_backup_migrate_schedules() {
 }
 
 
+/**
+ * Implementation of hook_ctools_plugin_api().
+ *
+ * Tell CTools that we support the default_mymodule_presets API.
+ */
+function mymodule_ctools_plugin_api($owner, $api) {
+  if ($owner == 'backup_migrate') {
+    return array('version' => 1);
+  }
+}
+
+
+
 /* Menu Callbacks */
 
 /**

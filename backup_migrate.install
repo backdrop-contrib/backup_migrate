@@ -20,8 +20,29 @@ function backup_migrate_requirements($phase) {
  */
 function backup_migrate_schema() {
   $schema['backup_migrate_profiles'] = array(
+    'export' => array(
+      'key' => 'machine_name',
+      'key name' => 'Profile ID',
+      'admin_title' => 'name',
+      'primary key' => 'profile_id',
+      'identifier' => 'item', // Exports will be defined as $preset
+      'default hook' => 'exportables_backup_migrate_profiles',  // Function hook name.
+      'api' => array(
+        'owner' => 'backup_migrate',
+        'api' => 'backup_migrate_exportables',  // Base name for api include files.
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
     'fields' => array(
       'profile_id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'no export' => TRUE, // Do not export database-only keys.
+      ),
+      'machine_name' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -65,8 +86,29 @@ function backup_migrate_schema() {
     'primary key' => array('profile_id'),
   );
   $schema['backup_migrate_destinations'] = array(
+    'export' => array(
+      'key' => 'machine_name',
+      'key name' => 'Destination ID',
+      'admin_title' => 'name',
+      'primary key' => 'destination_id',
+      'identifier' => 'item', // Exports will be defined as $preset
+      'default hook' => 'exportables_backup_migrate_destinations',  // Function hook name.
+      'api' => array(
+        'owner' => 'backup_migrate',
+        'api' => 'backup_migrate_exportables',  // Base name for api include files.
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
     'fields' => array(
       'destination_id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'no export' => TRUE, // Do not export database-only keys.
+      ),
+      'machine_name' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -101,8 +143,29 @@ function backup_migrate_schema() {
     'primary key' => array('destination_id'),
   );
   $schema['backup_migrate_sources'] = array(
+    'export' => array(
+      'key' => 'machine_name',
+      'key name' => 'Source ID',
+      'admin_title' => 'name',
+      'primary key' => 'source_id',
+      'identifier' => 'item', // Exports will be defined as $preset
+      'default hook' => 'exportables_backup_migrate_sources',  // Function hook name.
+      'api' => array(
+        'owner' => 'backup_migrate',
+        'api' => 'backup_migrate_exportables',  // Base name for api include files.
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
     'fields' => array(
       'source_id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'no export' => TRUE, // Do not export database-only keys.
+      ),
+      'machine_name' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -138,8 +201,29 @@ function backup_migrate_schema() {
   );
 
   $schema['backup_migrate_schedules'] = array(
+    'export' => array(
+      'key' => 'machine_name',
+      'key name' => 'Source ID',
+      'admin_title' => 'name',
+      'primary key' => 'schedule_id',
+      'identifier' => 'item', // Exports will be defined as $preset
+      'default hook' => 'exportables_backup_migrate_schedules',  // Function hook name.
+      'api' => array(
+        'owner' => 'backup_migrate',
+        'api' => 'backup_migrate_exportables',  // Base name for api include files.
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
     'fields' => array(
       'schedule_id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'no export' => TRUE, // Do not export database-only keys.
+      ),
+      'machine_name' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -504,4 +588,24 @@ function backup_migrate_update_7302() {
         'description' => 'A second {backup_migrate_destination}.destination_id of the destination to copy the backup to.',
       )
   );
+}
+
+/**
+ * Add a second destination to schedules.
+ */
+function backup_migrate_update_7303() {
+  foreach (array('backup_migrate_sources' => 'source_id', 'backup_migrate_destinations' => 'destination_id', 'backup_migrate_schedules' => 'schedule_id', 'backup_migrate_profiles' => 'profile_id') as $table => $id) {
+    db_drop_primary_key($table);
+    db_change_field($table, $id, 'machine_name', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+    db_add_field($table, $id, 
+      array(
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+          'no export' => TRUE, // Do not export database-only keys.
+        ),
+        array('primary key' => array($id))
+    );
+  }
 }

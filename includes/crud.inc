@@ -184,6 +184,15 @@ function backup_migrate_crud_ui_edit($type, $item_id = NULL) {
 }
 
 /**
+ * Does a crud item with the given name exist.
+ * 
+ * Callback for the 'machine_name' form type.
+ */
+function backup_migrate_crud_item_exists($machine_name, $element, $form_state) {
+  return $form_state['values']['item']->item_exists($machine_name);
+}
+
+/**
  * A form callback to edit an item.
  */
 function backup_migrate_crud_edit_form($form, $form_state, $item) {
@@ -458,7 +467,7 @@ class backup_migrate_item {
    * Delete the item from the database.
    */  
   function delete() {
-    $keys = (array)$this->get_primary_key();
+    $keys = (array)$this->get_machine_name_field();
     db_query('DELETE FROM {' . $this->db_table . '} WHERE ' . $keys[0] . ' = :id', array(':id' => $this->get_id()));
   }
 
@@ -556,6 +565,17 @@ class backup_migrate_item {
   }
 
   /**
+   * Get the machine name field name from the schema.
+   */
+  function get_machine_name_field() {
+    $schema = $this->get_schema();
+    if (isset($schema['export']['key'])) {
+      return $schema['export']['key'];
+    }
+    return @$schema['primary key'];
+  }
+
+  /**
    * Get the schema for the item type.
    */
   function get_schema() {
@@ -568,7 +588,7 @@ class backup_migrate_item {
    * We only handle single field keys since that's all we need.
    */
   function get_id() {
-    $keys = (array)$this->get_primary_key();
+    $keys = (array)$this->get_machine_name_field();
     return !empty($keys[0]) && !empty($this->{$keys[0]}) ? (string)$this->{$keys[0]} : '';
   }
 
@@ -576,7 +596,7 @@ class backup_migrate_item {
    * Set the primary id for this item (if any is set).
    */
   function set_id($id) {
-    $keys = (array)$this->get_primary_key();
+    $keys = (array)$this->get_machine_name_field();
     if (!empty($keys[0])) {
       return $this->{$keys[0]} = $id;
     }
@@ -593,13 +613,12 @@ class backup_migrate_item {
     for ($i = 4; $i < 32; $i++) {
       $new_id = substr($id, 0, $i);
       if (!$this->item($new_id)) {
-        $this->set_id($new_id);
-        return;
+        return $new_id;
       }
     }
     // If we get here, then all 28 increasingly complex ids were already taken so we'll try again.
     // this could theoretially lead to an infinite loop, but the odds are incredibly low.
-    $this->generate_id();
+    return $this->generate_id();
   }
 
   /**
@@ -608,12 +627,16 @@ class backup_migrate_item {
   function unique_id() {
     $id = $this->get_id();
 
+    // Unset the autoincrement field so it can be regenerated.
+    foreach ((array)$this->get_primary_key() as $key) {
+      $this->{$key} = NULL;    
+    }
+
     // If the item doesn't have an ID or if it's id is already taken, generate random one.
     if (!$id || $this->item($id)) {
-      $this->generate_id();
+      $this->set_id($this->generate_id());
     }
   }
-
 
   /**
    * Get the name of the item.
@@ -752,10 +775,27 @@ class backup_migrate_item {
       '#type' => 'value',
       '#value' => $this,
     );
+    $form['name'] = array(
+        "#type" => "textfield",
+        "#title" => t("!type name", array('!type' => $this->title_singular)),
+        "#default_value" => $this->get_name(),
+        "#required" => TRUE,
+      );
     $form['id'] = array(
       '#type' => 'value',
       '#value' => $this->get_id(),
     );
+
+    $form['machine_name'] = array(
+      '#type' => 'machine_name',
+      '#default_value' => $this->get_id(),
+      '#maxlength' => 21,
+      '#machine_name' => array(
+        'source' => array('name'),
+        'exists' => 'backup_migrate_crud_item_exists',
+      ),
+    );
+
     $form['actions'] = array('#prefix' => '<div class="container-inline">', '#suffix' => '</div>', '#weight' => 99);
     $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save !type', array('!type' => t($this->singular))));
     $form['actions']['cancel'] = array('#value' => l(t('Cancel'), $this->get_settings_path()));
@@ -867,6 +907,18 @@ class backup_migrate_item {
     // Allow other modules to declare destinations programatically.
     $items = module_invoke_all($this->db_table);
 
+    // Get CTools exported versions.
+    if (function_exists('ctools_include')) {
+      ctools_include('export');
+      $defaults = ctools_export_load_object($this->db_table);
+      foreach ($defaults as $info) {
+        $info = (array)$info;
+        if (!empty($info) && $item = $this->create($info)) {
+          $items[$item->get_id()] = $item;
+        }
+      }
+    }
+
     // Get any items stored as a variable. This allows destinations to be defined in settings.php
     $defaults = (array)variable_get($this->db_table .'_defaults', array());
     foreach ($defaults as $info) {
@@ -899,5 +951,13 @@ class backup_migrate_item {
   function item($item_id) {
     $items = $this->all_items();
     return !empty($items[$item_id]) ? $items[$item_id] : NULL;
+  }
+
+  /**
+   * A particular item.
+   */
+  function item_exists($item_id) {
+    $items = $this->all_items();
+    return !empty($items[$item_id]);
   }
 }
