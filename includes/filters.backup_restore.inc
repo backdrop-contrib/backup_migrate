@@ -86,7 +86,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
    */
   function backup_settings_form($settings) {
     backup_migrate_include('sources');
-    $out = array('destinations' => array(
+    $out = array('sources' => array(
       '#tree' => TRUE,
     ));
     foreach (backup_migrate_get_sources()  as $source) {
@@ -178,8 +178,8 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
    */
   function backup($file, &$settings) {
     if ($source = $settings->get_source()) {
-      if (!empty($settings->filters['destinations'][$source->get_id()])) {
-        $settings->filters = (array)($settings->filters['destinations'][$source->get_id()]) + $settings->filters;
+      if (!empty($settings->filters['sources'][$source->get_id()])) {
+        $settings->filters = (array)($settings->filters['sources'][$source->get_id()]) + $settings->filters;
       }
 
       $file = $source->backup_to_file($file, $settings);
@@ -194,8 +194,8 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
    */
   function restore($file, &$settings) {
     if ($source = $settings->get_source()) {
-      if (!empty($settings->filters['destinations'][$source->get_id()])) {
-        $settings->filters = (array)($settings->filters['destinations'][$source->get_id()]) + $settings->filters;
+      if (!empty($settings->filters['sources'][$source->get_id()])) {
+        $settings->filters = (array)($settings->filters['sources'][$source->get_id()]) + $settings->filters;
       }
       $num = $source->restore_from_file($file, $settings);
       return $num ? $file : FALSE;
