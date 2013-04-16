@@ -125,7 +125,9 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function post_backup($file, $settings) {
     $this->enable_devel_query($settings);
     $this->take_site_online($settings);
-    $this->add_file_info($file, $settings);
+    if ($file) {
+      $this->add_file_info($file, $settings);    
+    }
   }
 
   function pre_restore($file, $settings) {
