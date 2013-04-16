@@ -215,12 +215,12 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     if ($handle = @opendir($dir)) {
       while (($file = readdir($handle)) !== FALSE) {
         if ($file != '.' && $file != '..' && !in_array($file, $exclude)) {
-          $file = realpath($dir . '/' . $file);
-          $path = str_replace($base_dir, '', $file);
+          $real = realpath($dir . '/' . $file);
+          $path = str_replace($base_dir, '', $real);
           // If the path is not excluded.
           if (!in_array($path, $exclude)) {
-            if (is_dir($file)) {
-              $subdir = $this->get_files_to_backup($file, $settings, $exclude, $base_dir);
+            if (is_dir($real)) {
+              $subdir = $this->get_files_to_backup($real, $settings, $exclude, $base_dir);
               // If there was an error reading the subdirectory then abort the backup.
               if ($subdir === FALSE) {
                 closedir($handle);
@@ -233,11 +233,11 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
               $out = array_merge($out, $subdir);
             }
             else {
-              if (is_readable($file)) {
+              if (is_readable($real)) {
                 $out[] = $path;
               }
               else {
-                backup_migrate_backup_fail('The directory cannot be backed up because the file %file cannot be read by the web server.', array('%file' => str_replace($base_dir, '', $file)), $settings);
+                backup_migrate_backup_fail('The directory cannot be backed up because the file %file cannot be read by the web server.', array('%file' => $dir . '/' . $file), $settings);
                 closedir($handle);
                 return FALSE;
               }
