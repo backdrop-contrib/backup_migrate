@@ -478,7 +478,7 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
 /**
  * Ask confirmation for file deletion.
  */
-function backup_migrate_ui_destination_delete_file_confirm(&$form_state, $destination_id, $file_id) {
+function backup_migrate_ui_destination_delete_file_confirm($form, &$form_state, $destination_id, $file_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
   return confirm_form($form, t('Are you sure you want to delete the backup file?'), BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/'. $destination_id, t('Are you sure you want to delete the backup file %file_id? <strong>This action cannot be undone.</strong>', array('%file_id' => $file_id)), t('Delete'), t('Cancel'));
