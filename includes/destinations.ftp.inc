@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * Functions to handle the FTP backup destination.
@@ -51,7 +50,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
     backup_migrate_include('files');
     $files = array();
     $this->ftp_object();
-    $ftp_files = drupal_ftp_file_list('.', $this->ftp);
+    $ftp_files = (array)drupal_ftp_file_list('.', $this->ftp);
     foreach ($ftp_files as $file) {
       $files[$file['filename']] = new backup_file($file);
     }
