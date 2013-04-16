@@ -140,14 +140,10 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         'database-file-driver' => 'mysql',
       ),
     );
-    if (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PRIVATE) {
-      $info['Site 0']['files-private'] = 'docroot/' . file_directory_path();
-      $info['Site 0']['files-mode'] = 'private';
+    if ($private = variable_get('file_private_path', FALSE)) {
+      $info['Site 0']['files-private'] = 'docroot/' . $private;
     }
-    else {
-      $info['Site 0']['files-public'] = 'docroot/' . file_directory_path();
-      $info['Site 0']['files-mode'] = 'public';
-    }
+    $info['Site 0']['files-public'] = 'docroot/' . variable_get('file_public_path', FALSE);
     $ini = $this->_array_to_ini($info);
 
     $tmpdir = backup_migrate_temp_directory();
