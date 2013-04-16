@@ -31,6 +31,14 @@ function backup_migrate_get_source($id) {
 }
 
 /**
+ * Create a source object of the given type with the given params.
+ */
+function backup_migrate_create_source($subtype, $params = array()) {
+  $params['subtype'] = $subtype;
+  return backup_migrate_crud_create_item('source', $params);
+}
+
+/**
  * Implementation of hook_backup_migrate_source_subtypes().
  *
  * Get the built in Backup and Migrate source types.
@@ -42,14 +50,14 @@ function backup_migrate_backup_migrate_source_subtypes() {
       'type_name' => t('Database'),
       'description' => t('Import the backup directly into another database. Database sources can also be used as a source to backup from.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/sources.db.inc',
-      'class' => 'backup_migrate_destination_db',
+      'class' => 'backup_migrate_source_db',
       'can_create' => FALSE,
     ),
     'mysql' => array(
       'type_name' => t('MySQL Database'),
       'description' => t('Import the backup directly into another MySQL database. Database sources can also be used as a source to backup from.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/sources.db.mysql.inc',
-      'class' => 'backup_migrate_destination_db_mysql',
+      'class' => 'backup_migrate_source_db_mysql',
       'can_create' => TRUE,
     ),
     'filesource' => array(

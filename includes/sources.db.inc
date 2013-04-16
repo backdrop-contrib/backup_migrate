@@ -11,7 +11,7 @@
  *
  * @ingroup backup_migrate_destinations
  */
-class backup_migrate_destination_db extends backup_migrate_source_remote {
+class backup_migrate_source_db extends backup_migrate_source_remote {
   var $supported_ops = array('configure', 'source');
   var $db_target = 'default';
   var $connection = null;

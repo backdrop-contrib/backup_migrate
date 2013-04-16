@@ -4,16 +4,16 @@ backup_migrate_include('sources.db');
 
 /**
  * @file
- * Functions to handle the direct to database destination.
+ * Functions to handle the direct to database source.
  */
 
 /**
- * A destination type for saving to a database server.
+ * A source type for backing up from database server.
  *
  * @ingroup backup_migrate_destinations
  */
 
-class backup_migrate_destination_db_mysql extends backup_migrate_destination_db {
+class backup_migrate_source_db_mysql extends backup_migrate_source_db {
   function type_name() {
     return t("MySQL Database");
   }
@@ -47,7 +47,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
 
 
  /**
-   * Declare any mysql databases defined in the settings.php file as a possible destination.
+   * Declare any mysql databases defined in the settings.php file as a possible source.
    */
   function sources() {
     $out = array();
@@ -80,7 +80,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   }
 
   /**
-   * Get the file type for to backup this destination to.
+   * Get the file type for to backup this source to.
    */
   function get_file_type_id() {
     return 'mysql';
