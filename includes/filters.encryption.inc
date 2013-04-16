@@ -24,7 +24,7 @@ class backup_migrate_filter_encryption extends backup_migrate_filter {
   /**
    * This function is called on a backup file before importing it.
    */
-  function restore($file, &$settings) {
+  function restore($file, $settings) {
     return $this->file_decrypt($file);
   }
 

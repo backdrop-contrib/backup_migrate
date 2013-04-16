@@ -17,14 +17,14 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
   /**
    * This function is called on a backup file after the backup has been completed.
    */
-  function backup($file, &$settings) {
+  function backup($file, $settings) {
     return $this->_backup_migrate_file_compress($file, $settings);
   }
 
   /**
    * This function is called on a backup file before importing it.
    */
-  function restore($file, &$settings) {
+  function restore($file, $settings) {
     return $this->_backup_migrate_file_decompress($file, $settings);
   }
 

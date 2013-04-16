@@ -176,7 +176,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
   /**
    * Backup the data from the source specified in the settings.
    */
-  function backup($file, &$settings) {
+  function backup($file, $settings) {
     if ($source = $settings->get_source()) {
       if (!empty($settings->filters['sources'][$source->get_id()])) {
         $settings->filters = (array)($settings->filters['sources'][$source->get_id()]) + $settings->filters;
@@ -192,7 +192,7 @@ class backup_migrate_filter_backup_restore extends backup_migrate_filter {
   /**
    * Restore the data from to source specified in the settings.
    */
-  function restore($file, &$settings) {
+  function restore($file, $settings) {
     if ($source = $settings->get_source()) {
       if (!empty($settings->filters['sources'][$source->get_id()])) {
         $settings->filters = (array)($settings->filters['sources'][$source->get_id()]) + $settings->filters;
