@@ -257,6 +257,7 @@ class backup_file {
     $this->path = $path;
     $params = array(
       'filename' => basename($path),
+      'file_id' => basename($path)
     );
     if (file_exists($path)) {
       $params['filesize'] = filesize($path);

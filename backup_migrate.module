@@ -1393,7 +1393,9 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
       '!action' => !empty($settings->performed_action) ? $settings->performed_action : '',
     );
     if ($destination && $destination->op('list files')) {
-      $params['!links'] = t('<a href="!restoreurl">Restore again</a>', array('!restoreurl' => url(BACKUP_MIGRATE_MENU_PATH . '/destination/list/restorefile/'. $destination_id ."/". $file->filename())));
+      $path = $destination->get_settings_path();
+      dpm($file);
+      $params['!links'] = t('<a href="!restoreurl">Restore again</a>', array('!restoreurl' => url($path . '/list/restorefile/' . $destination->get_id() .'/'. $file->file_id())));
     }
     backup_migrate_restore_succeed($message, $params, $settings);
   }
