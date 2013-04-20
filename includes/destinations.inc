@@ -412,7 +412,7 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
 /**
  * Ask confirmation for file restore.
  */
-function backup_migrate_ui_destination_restore_file_confirm(&$form_state, $destination_id, $file_id) {
+function backup_migrate_ui_destination_restore_file_confirm($form, &$form_state, $destination_id, $file_id) {
   $sources = _backup_migrate_get_source_form_item_options();
   if (count($sources) > 1) {
     $form['source_id'] = array(
