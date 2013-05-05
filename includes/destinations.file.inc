@@ -276,8 +276,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Check if a file can be read remotely via http.
    */
   function test_file_readable_remotely($path, $contents) {
-    $url = file_create_url($path);
-    // TODO: Proper checking for absolute paths.
+    $url = $GLOBALS['base_url'] . '/' . str_replace('\\', '/', $path);
     $result = drupal_http_request($url);
     if (!empty($result->data) && strpos($result->data, $contents) !== FALSE) {
       return TRUE;
