@@ -44,7 +44,7 @@ function backup_migrate_schema() {
       ),
       'machine_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
         'description' => 'The primary identifier for a profile.',
@@ -110,7 +110,7 @@ function backup_migrate_schema() {
       ),
       'machine_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
         'description' => 'The primary identifier for a destination.',
@@ -225,7 +225,7 @@ function backup_migrate_schema() {
       ),
       'machine_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
         'description' => 'The primary identifier for a profile.',
@@ -239,13 +239,13 @@ function backup_migrate_schema() {
       'source_id' => array(
         'description' => 'The {backup_migrate_destination}.destination_id of the source to backup from.',
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'default' => 'db',
         'not null' => TRUE
       ),
       'destination_id' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
         'description' => 'The {backup_migrate_destination}.destination_id of the destination to back up to.',
@@ -259,7 +259,7 @@ function backup_migrate_schema() {
       ),
       'profile_id' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
         'description' => 'The primary identifier for a profile.',
@@ -341,7 +341,7 @@ function backup_migrate_update_2001() {
   }
   // Add the source field
   if (!db_field_exists('backup_migrate_profiles', 'source_id')) {
-    db_add_field('backup_migrate_profiles', 'source_id', array('description' => t('The {backup_migrate_destination}.destination_id of the source to backup from.'), 'type' => 'varchar', 'length' => 32, 'default' => 'db', 'not null' => TRUE));
+    db_add_field('backup_migrate_profiles', 'source_id', array('description' => t('The {backup_migrate_destination}.destination_id of the source to backup from.'), 'type' => 'varchar', 'length' => 255, 'default' => 'db', 'not null' => TRUE));
   }
   // Remove the compression field.
   if (db_field_exists('backup_migrate_profiles', 'compression')) {
@@ -365,7 +365,7 @@ function backup_migrate_update_2003() {
   $ret = array();
   $spec = array(
     'type' => 'varchar',
-    'length' => 32,
+    'length' => 255,
     'not null' => TRUE,
     'default' => '0',
     'description' => 'The primary identifier for a profile.',
@@ -382,7 +382,7 @@ function backup_migrate_update_2004() {
   $ret = array();
   $spec = array(
     'type' => 'varchar',
-    'length' => 32,
+    'length' => 255,
     'not null' => TRUE,
     'default' => '0',
   );
@@ -427,7 +427,7 @@ function backup_migrate_update_2005() {
 
   // Add the source field to the schedule
   if (!db_field_exists('backup_migrate_schedules', 'source_id')) {
-    db_add_field('backup_migrate_schedules', 'source_id', array('description' => t('The db source to backup from.'), 'type' => 'varchar', 'length' => 32, 'default' => 'db', 'not null' => TRUE));
+    db_add_field('backup_migrate_schedules', 'source_id', array('description' => t('The db source to backup from.'), 'type' => 'varchar', 'length' => 255, 'default' => 'db', 'not null' => TRUE));
   }
 
   // Copy source data from profiles to schedules.
