@@ -218,7 +218,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    */
   function check_web_dir($directory) {
     // If the directory is specified with an absolute path, strip the site root.
-    $directory = substr(realpath($directory), strlen(realpath($_SERVER['DOCUMENT_ROOT']) . base_path()));
+    $directory = substr(drupal_realpath($directory), strlen(drupal_realpath($_SERVER['DOCUMENT_ROOT']) . base_path()));
 
     // Check if the file has already been tested.
     if (is_file($directory .'/tested.txt')) {
