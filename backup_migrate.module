@@ -382,7 +382,7 @@ function backup_migrate_backup_migrate_schedules() {
       'source_id' => $id,
       'destination_id' => 'scheduled',
       'profile_id' => 'default',
-      'period' => variable_get('backup_migrate_default_schedule', 60*60*24),
+      'period' => variable_get('backup_migrate_default_schedule', 60*60),
       'keep' => BACKUP_MIGRATE_SMART_DELETE,
       'enabled' => FALSE,
     );
