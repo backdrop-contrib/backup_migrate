@@ -320,7 +320,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL,
 
       // Add the description as a new row.
       if (!empty($info['description'])) {
-        $description .= ' <div title="'.check_plain($info['description']).'" class="backup-migrate-description">'. $info['description'] .'</div>';
+        $description .= ' <div title="'.check_plain($info['description']).'" class="backup-migrate-description">'. check_plain($info['description']) .'</div>';
       }
       // Add the backup source.
       if (!empty($info['bam_sourcename'])) {
@@ -330,6 +330,12 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL,
       if (!empty($info['tags'])) {
         $tags = check_plain(implode(', ', (array)$info['tags']));
         $description .= ' <div title="'. $tags .'" class="backup-migrate-tags"><span class="backup-migrate-label">'. t('Tags:') .' </span>'. $tags .'</div>';
+      }
+      // Add the other info.
+      if (!empty($info['bam_other_safe'])) {
+        foreach ($info['bam_other_safe'] as $label => $data) {
+          $description .= ' <div class="backup-migrate-tags"><span class="backup-migrate-label">' . $label . ' </span>' . $data . '</div>';        
+        }
       }
 
       // Show only files that can be restored from.

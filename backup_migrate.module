@@ -1210,10 +1210,9 @@ function backup_migrate_ui_saved_backups() {
   $out = '';
   $files = array();
   foreach (backup_migrate_get_destinations('list files') as $destination) {
-    $dest_remote = $destination->get('remote');
-    $label = l($destination->get_name(), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id());
-    $remote_tag = $dest_remote ? ' <strong class="backup-migrate-tag">(' . t('offsite') . ')</strong>' : '';
-    $label = '<div class="backup-migrate-destination"><span class="backup-migrate-label">' . t('Location') . ':</span> ' . $label . $remote_tag . '</div>';
+    $location = l($destination->get_name(), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id());
+    $location .= $destination->get('remote') ? ' <strong class="backup-migrate-tag">(' . t('offsite') . ')</strong>' : '';
+
     $dest_files = $destination->list_files();
 
     // Refresh the destination
@@ -1228,8 +1227,7 @@ function backup_migrate_ui_saved_backups() {
 
     // Add the files from this destination to the full list.
     foreach ($dest_files as $id => $file) {
-      $remote = $remote || $dest_remote;
-      $dest_files[$id]->file_info['description'] =  $file->info('description') . $label;
+      $dest_files[$id]->file_info['bam_other_safe'][t('Location:')] = $location;
     }
     $files = array_merge($files, array_values($dest_files));
   }
