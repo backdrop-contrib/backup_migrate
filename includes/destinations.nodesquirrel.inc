@@ -92,9 +92,16 @@ function backup_migrate_nodesquirrel_credentials_settings_form($key = '') {
 }
 
 /**
+ * NodeSquirrel settings page callback.
+ */
+function backup_migrate_nodesquirrel_settings() {
+  return drupal_get_form('backup_migrate_nodesquirrel_settings_form');
+}
+
+/**
  * NodeSquirrel settings form.
  */
-function backup_migrate_nodesquirrel_settings($form_state) {
+function backup_migrate_nodesquirrel_settings_form($form_state) {
   _backup_migrate_message_callback('_backup_migrate_message_browser');
 
   $form = array();
@@ -109,50 +116,27 @@ function backup_migrate_nodesquirrel_settings($form_state) {
   $form['nodesquirrel_status']['status'] = array(
     '#type' => 'item',
     '#title' => t('NodeSquirrel Status'),
-    '#value' => t('Not Configured'),
+    '#markup' => t('Not Configured'),
   );
 
   // Warn the user if the key they entered is invalid.
   if ($key && empty($destination)) {
-    $form['nodesquirrel_status']['status']['#value'] = t('Your secret key does not seem to be valid. Please check that you entered it correctly or visit !ns to generate a new key.', array('!ns' => nodesquirrel_get_activate_link()));
+    $form['nodesquirrel_status']['status']['#markup'] = t('Your secret key does not seem to be valid. Please check that you entered it correctly or visit !ns to generate a new key.', array('!ns' => nodesquirrel_get_activate_link()));
   }
   else if (!empty($destination)) {
     $form['nodesquirrel_status']['manage'] = array(
       '#type' => 'item',
       '#title' => t('Management Console'),
-      '#value' => nodesquirrel_get_manage_link($destination),
+      '#markup' => nodesquirrel_get_manage_link($destination),
       '#description' => t('You can use the NodeSquirrel management console to add and edit your sites, reset your secret key, download and delete backups, and modify your NodeSquirrel account.'),
     );
-    $form['nodesquirrel_status']['status']['#value'] = t('Ready to Backup');
+    $form['nodesquirrel_status']['status']['#markup'] = t('Ready to Backup');
     if (user_access('perform backup')) {
-      $form['nodesquirrel_status']['status']['#value'] .= ' ' . l('(' . t('backup now') . ')', nodesquirrel_settings_path());
+      $form['nodesquirrel_status']['status']['#markup'] .= ' ' . l('(' . t('backup now') . ')', BACKUP_MIGRATE_MENU_PATH);
     }
   }
 
   $form += backup_migrate_nodesquirrel_credentials_settings_form($key);
-
-  $schedule = variable_get('nodesquirrel_schedule', 60*60*24);
-  $form['nodesquirrel_schedule'] = array(
-    '#type' => 'select',
-    '#title' => t('Automatic Backups'),
-    '#options' => array(
-      ''            => t('- None - '),
-      (60*60)       => t('Hourly'),
-      (60*60*24)    => t('Daily'),
-      (60*60*24*7)  => t('Weekly'),
-    ),
-    '#default_value' => variable_get('nodesquirrel_schedule', 60*60*24),
-    '#description' => t('Set up a schedule to back up to NodeSquirrel. You can customize this schedule in the !schedule. Not seeing your automatic backups? Make sure !cron is set to run at the same frequency or higher.', array('!schedule' => l(t('Schedules tab'), nodesquirrel_settings_path() . '/schedule'), '!cron' => l(t('cron'), 'http://drupal.org/cron'))),
-  );
-
-  // If the schedule has been overriden it must be edited in the schedule tab.
-  backup_migrate_include('crud');
-  $item = backup_migrate_crud_get_item('schedule', 'nodesquirrel');
-  if ($item && $item->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
-    $form['nodesquirrel_schedule']['#options'] = array('' => t('- Overriden -'));
-    $form['nodesquirrel_schedule']['#disabled'] = TRUE;
-    $form['nodesquirrel_schedule']['#description'] = t('Your NodeSquirrel schedule has been overriden and must be edited in the !schedule.', array('!schedule' => l(t('Schedules tab'), nodesquirrel_settings_path() . '/schedule/list/edit/nodesquirrel')));
-  }
 
   return system_settings_form($form);
 }
@@ -184,13 +168,13 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    */
   function get_menu_items() {
     $items = array();
-    $path = BACKUP_MIGRATE_MENU_PATH . '/settings/nodesquirrel';
+    $path = BACKUP_MIGRATE_MENU_PATH . '/nodesquirrel';
     $items[$path] = array(
-      'title' => t('NodeSquirrel Settings'),
+      'title' => t('NodeSquirrel'),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('destinations.nodesquirrel', 'backup_migrate_nodesquirrel_settings'),
       'access arguments' => array('administer backup and migrate'),
-      'weight' => -1,
+      'weight' => 10,
       'type' => MENU_LOCAL_TASK,
     );
     return $items;
