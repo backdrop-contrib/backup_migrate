@@ -54,7 +54,7 @@ function backup_migrate_backup_migrate_destination_subtypes() {
       'class' => 'backup_migrate_destination_browser_upload',
     ),
     'nodesquirrel' => array(
-      'description' => t('Save the backup files to the NodeSqurrel.com backup service.'),
+      'description' => t('Save the backup files to the NodeSquirrel.com backup service.'),
       'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.nodesquirrel.inc',
       'class' => 'backup_migrate_destination_nodesquirrel',
       'type_name' => t('NodeSquirrel.com'),
