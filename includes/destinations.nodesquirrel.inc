@@ -25,7 +25,7 @@ function nodesquirrel_check_secret_key($secret_key) {
 function nodesquirrel_get_destination($secret_key) {
   if ($secret_key) {
     backup_migrate_include('destinations');
-    $destination = backup_migrate_create_destination('nodesquirrel', array('destination_id' => 'nodesquirrel'));
+    $destination = backup_migrate_create_destination('nodesquirrel', array('machine_name' => 'nodesquirrel'));
     $destination->settings['secret_key'] = $secret_key;
     return $destination;
   }
@@ -201,7 +201,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    */
   function destinations() {
     $out = array();
-    $out['nodesquirrel'] = backup_migrate_create_destination('nodesquirrel', array('destination_id' => 'nodesquirrel'));
+    $out['nodesquirrel'] = backup_migrate_create_destination('nodesquirrel', array('machine_name' => 'nodesquirrel'));
     if ($secret_key = variable_get('nodesquirrel_secret_key', '')) {
       $out['nodesquirrel']->settings['secret_key'] = $secret_key;
     }
