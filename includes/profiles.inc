@@ -8,6 +8,25 @@
 
 backup_migrate_include('crud');
 
+
+/**
+ * Implementation of hook_backup_migrate_profile_subtypes().
+ *
+ * Get the built in Backup and Migrate profile types.
+ */
+function backup_migrate_backup_migrate_profile_subtypes() {
+  $out = array();
+  $out += array(
+    'backup' => array(
+      'include' => 'profiles',
+      'type_name' => t('Backup Settings Profile'),
+      'class' => 'backup_migrate_profile',
+    ),
+  );
+  return $out;
+}
+
+
 /**
  * Get all the available backup profiles.
  */

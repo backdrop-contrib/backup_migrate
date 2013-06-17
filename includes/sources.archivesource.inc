@@ -24,7 +24,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
    */
   function sources() {
     $out  = array();
-    $out['archive'] = backup_migrate_create_destination('archive', array('source_id' => 'archive', 'location' => '.', 'name' => t('Entire Site (code, files & DB)'), 'show_in_list' => FALSE));
+    $out['archive'] = backup_migrate_create_destination('archive', array('machine_name' => 'archive', 'location' => '.', 'name' => t('Entire Site (code, files & DB)'), 'show_in_list' => FALSE));
     return $out;
   }
 
