@@ -308,7 +308,7 @@ function backup_migrate_crud_ui_import() {
 /**
  * Ask confirmation for deletion of a item.
  */
-function backup_migrate_crud_import_form(&$form_state) {
+function backup_migrate_crud_import_form($form, &$form_state) {
   $form['code'] = array(
     '#type' => 'textarea',
     '#title' => t('Paste Exported Code Here'),
