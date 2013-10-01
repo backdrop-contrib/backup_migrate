@@ -175,7 +175,7 @@ function _backup_migrate_construct_filename($settings) {
  */
 function _backup_migrate_default_filename() {
   if (module_exists('token')) {
-    return '[site-name]';
+    return '[site:name]';
   }
   else {
     // Cleaning the string isn't strictly necessary but it looks better in the settings field.
