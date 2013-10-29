@@ -155,13 +155,15 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     );
 
     // Ignore the excluded and no-data tables.
+    $db = $this->dest_url['path'];
     if (!empty($settings->filters['exclude_tables'])) {
-      $db = $this->dest_url['path'];
       foreach ((array)$settings->filters['exclude_tables'] as $table) {
         if (isset($alltables[$table])) {
           $command .= ' --ignore-table='. $db .'.'. $table;
         }
       }
+    }
+    if (!empty($settings->filters['nodata_tables'])) {
       foreach ((array)$settings->filters['nodata_tables'] as $table) {
         if (isset($alltables[$table])) {
           $nodata_tables[] = $table;
@@ -412,4 +414,3 @@ SET NAMES utf8;
 ";
   }
 }
-
