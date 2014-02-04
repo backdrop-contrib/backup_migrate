@@ -70,6 +70,14 @@ function nodesquirrel_settings_path() {
   return $path;
 }
 
+
+/**
+ * NodeSquirrel settings page callback.
+ */
+function backup_migrate_nodesquirrel_settings() {
+  return drupal_get_form('backup_migrate_nodesquirrel_settings_form');
+}
+
 /**
  * NodeSquirrel settings form.
  */
@@ -92,21 +100,28 @@ function backup_migrate_nodesquirrel_credentials_settings_form($key = '') {
 }
 
 /**
- * NodeSquirrel settings page callback.
+ * Return a form element with some help text describing NodeSquirrel.
  */
-function backup_migrate_nodesquirrel_settings() {
-  return drupal_get_form('backup_migrate_nodesquirrel_settings_form');
+function backup_migrate_nodesquirrel_info_form() {
+  $form = array();
+
+  $form['nodesquirrel_info'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('What is NodeSquirrel?'),
+  );
+  $form['nodesquirrel_info']['intro'] = array(
+    '#type' => 'markup',
+    '#markup' => t('<p>!nodesquirrel is the cloud backup service built by the maintainers of Backup and Migrate. It is secure, reliable and affordable and was designed to work with Backup and Migrate and Drupal.</p><p>NodeSquirrel is a paid service and the profits help support the development of Backup and Migrate.</p><p>Find out more at <a href="http://nodesquirrel.com">nodesquirrel.com</a></p>', array('!nodesquirrel' => l(t('NodeSquirrel'), 'http://nodesquirrel.com'), '!add' => l(t('add other offsite destinations'), BACKUP_MIGRATE_MENU_PATH . '/destination/list/add'), '!bam' => l(t('Backup and Migrate project page'), 'http://drupal.org/project/backup_migrate'))),
+    );
+  return $form;
 }
 
 /**
- * NodeSquirrel settings form.
+ * Display the NodeSquirrel status on the configuration form.
  */
-function backup_migrate_nodesquirrel_settings_form($form_state) {
-  _backup_migrate_message_callback('_backup_migrate_message_browser');
-
+function backup_migrate_nodesquirrel_status_form($key) {
   $form = array();
 
-  $key = variable_get('nodesquirrel_secret_key', '');
   $destination = nodesquirrel_check_secret_key($key);
 
   $form['nodesquirrel_status'] = array(
@@ -136,6 +151,22 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
     }
   }
 
+  return $form;
+}
+
+
+/**
+ * NodeSquirrel settings form.
+ */
+function backup_migrate_nodesquirrel_settings_form($form_state) {
+  _backup_migrate_message_callback('_backup_migrate_message_browser');
+
+  $form = array();
+
+  $key = variable_get('nodesquirrel_secret_key', '');
+
+  $form += backup_migrate_nodesquirrel_info_form();
+  $form += backup_migrate_nodesquirrel_status_form($key);
   $form += backup_migrate_nodesquirrel_credentials_settings_form($key);
 
   return system_settings_form($form);
@@ -199,11 +230,13 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    * Returns a form to be completed before saving to the destination can be complete.
    */
   function before_backup_form($settings) {
+    $form = array();
     $key = $this->settings('secret_key');
     if (empty($key)) {
-      return backup_migrate_nodesquirrel_credentials_settings_form();
+      $form += backup_migrate_nodesquirrel_info_form();
+      $form += backup_migrate_nodesquirrel_credentials_settings_form();
     }
-    return array();
+    return $form;
   }
 
   /**

@@ -62,3 +62,6 @@ html.js #backup-migrate-ui-manual-quick-backup-form fieldset.collapsed,
 .backup-migrate-form-dependent .form-item {
   margin-top: 0;
 }
+.backup-migrate-footer-message {
+  margin-bottom: 1em;
+}

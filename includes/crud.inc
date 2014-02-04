@@ -134,8 +134,8 @@ function backup_migrate_crud_menu() {
     $item = backup_migrate_crud_type_load($type);
     $items += (array)$item->get_menu_items();
     foreach (backup_migrate_crud_subtypes($type) as $subtype => $info) {
-      $subtype = backup_migrate_crud_type_load($type, $subtype);
-      $items += (array)$item->get_menu_items();
+      $subitem = backup_migrate_crud_type_load($type, $subtype);
+      $items += (array)$subitem->get_menu_items();
     }
   }
   return $items;
