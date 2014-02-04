@@ -270,36 +270,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    */
   function check_libs() {
     $result = true;
-
-    // Extend inlcude path with path to this module's includes directory.
-    $includes_directory = './' . drupal_get_path('module', 'backup_migrate_files') . '/includes';
-    $include_path_old = set_include_path($includes_directory . ';' . get_include_path());
-
-    // Check if PEAR.php is present in a non-fatal way and error gracefully if it isn't.
-    include_once 'PEAR.php';
-    if (!class_exists('PEAR')) {
-      _backup_migrate_message('PEAR is not installed correctly. See the README.txt file in the backup_migrate_files module directory for help.', array(), 'error');
-      $result = false;
-    }
-
-    // Check if Tar.php is present in a non-fatal way and error gracefully if it isn't.
-    if ($result) {
-      // Try to get version in this module's includes directory first, but prevent warning texts being output.
-      if (file_exists($includes_directory . '/Tar.php')) {
-        include_once DRUPAL_ROOT . '/' . $includes_directory . '/Tar.php';
-      }
-      if (!class_exists('Archive_Tar')) {
-        // Try to get via PEAR directory structure.
-        include_once 'Archive/Tar.php';
-        if (!class_exists('Archive_Tar')) {
-          _backup_migrate_message('Archive_Tar is not installed correctly. See the README.txt file in the backup_migrate_files module directory for help.', array(), 'error');
-          $result = false;
-        }
-      }
-    }
-
-    // Restore include path.
-    set_include_path($include_path_old);
+    // Drupal 7 has Archive_Tar built in so there should be no need to include anything here.
     return $result;
   }
 
