@@ -549,7 +549,9 @@ function _backup_migrate_get_destination_pulldown($op, $destination_id = NULL, $
   return $form;
 }
 
-
+/**
+ * Return the destination pulldown with an option to save a second copy.
+ */
 function _backup_migrate_process_destination_pulldown($element) {
   $id = $element['destination_id']['#id'];
   $settings = array(
@@ -560,8 +562,8 @@ function _backup_migrate_process_destination_pulldown($element) {
           'copy_destination_selector' => $element['copy_destination']['copy_destination_id']['#id'],
           'copy' => $element['copy']['#id'],
           'labels' => array(
-            t('Local') => t('Save an offsite copy'),            
-            t('Offsite') => t('Save a local copy'),
+            t('Local') => t('Save an offsite copy to'),
+            t('Offsite') => t('Save a local copy to'),
           )
         )
       )
