@@ -70,6 +70,14 @@ function nodesquirrel_settings_path() {
   return $path;
 }
 
+
+/**
+ * NodeSquirrel settings page callback.
+ */
+function backup_migrate_nodesquirrel_settings() {
+  return drupal_get_form('backup_migrate_nodesquirrel_settings_form');
+}
+
 /**
  * NodeSquirrel settings form.
  */
@@ -92,21 +100,29 @@ function backup_migrate_nodesquirrel_credentials_settings_form($key = '') {
 }
 
 /**
- * NodeSquirrel settings page callback.
+ * Return a form element with some help text describing NodeSquirrel.
  */
-function backup_migrate_nodesquirrel_settings() {
-  return drupal_get_form('backup_migrate_nodesquirrel_settings_form');
+function backup_migrate_nodesquirrel_info_form() {
+  $form = array();
+
+  $form['nodesquirrel_info'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('What is NodeSquirrel?'),
+  );
+
+  $form['nodesquirrel_info']['intro'] = array(
+    '#type' => 'markup',
+    '#markup' => t('<p>NodeSquirrel is the cloud backup service for Drupal built by the maintainers of Backup and Migrate. It is secure, reliable and affordable.</p><p>NodeSquirrel is a paid service and profits help support Backup and Migrate.</p><p>Find out more at !nodesquirrel</p>', array('!nodesquirrel' => l('nodesquirrel.com', 'http://www.nodesquirrel.com'), '!add' => l(t('add other offsite destinations'), BACKUP_MIGRATE_MENU_PATH . '/destination/list/add'), '!bam' => l(t('Backup and Migrate project page'), 'http://drupal.org/project/backup_migrate'))),
+    );
+  return $form;
 }
 
 /**
- * NodeSquirrel settings form.
+ * Display the NodeSquirrel status on the configuration form.
  */
-function backup_migrate_nodesquirrel_settings_form($form_state) {
-  _backup_migrate_message_callback('_backup_migrate_message_browser');
-
+function backup_migrate_nodesquirrel_status_form($key) {
   $form = array();
 
-  $key = variable_get('nodesquirrel_secret_key', '');
   $destination = nodesquirrel_check_secret_key($key);
 
   $form['nodesquirrel_status'] = array(
@@ -116,7 +132,7 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
   $form['nodesquirrel_status']['status'] = array(
     '#type' => 'item',
     '#title' => t('NodeSquirrel Status'),
-    '#markup' => t('Not Configured'),
+    '#markup' => t('Not Configured. Enter your Secret Key below to get started.'),
   );
 
   // Warn the user if the key they entered is invalid.
@@ -136,6 +152,22 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
     }
   }
 
+  return $form;
+}
+
+
+/**
+ * NodeSquirrel settings form.
+ */
+function backup_migrate_nodesquirrel_settings_form($form_state) {
+  _backup_migrate_message_callback('_backup_migrate_message_browser');
+
+  $form = array();
+
+  $key = variable_get('nodesquirrel_secret_key', '');
+
+  $form += backup_migrate_nodesquirrel_info_form();
+  $form += backup_migrate_nodesquirrel_status_form($key);
   $form += backup_migrate_nodesquirrel_credentials_settings_form($key);
 
   return system_settings_form($form);
@@ -199,11 +231,13 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    * Returns a form to be completed before saving to the destination can be complete.
    */
   function before_backup_form($settings) {
+    $form = array();
     $key = $this->settings('secret_key');
     if (empty($key)) {
-      return backup_migrate_nodesquirrel_credentials_settings_form();
+      $form += backup_migrate_nodesquirrel_info_form();
+      $form += backup_migrate_nodesquirrel_credentials_settings_form();
     }
-    return array();
+    return $form;
   }
 
   /**
@@ -366,8 +400,14 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function edit_form() {
     $form = parent::edit_form();
 
+    // If this is a new destination but the default NS destination has not been created yet, 
+    // redirect to the NS config screen.
+    if (!$this->get_id() && !variable_get('nodesquirrel_secret_key', '')) {
+      drupal_goto(BACKUP_MIGRATE_MENU_PATH . '/nodesquirrel');
+    }
+
     $form['settings'] = array('#tree' => TRUE);
-    $activate_link = l('nodesquirrel.com/activate', variable_get('nodesquirrel_activate_url', 'http://manage.nodesquirrel.com/activate'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => variable_get('site_mail', ''), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
+    $activate_link = nodesquirrel_get_activate_link();
 
     // Retrieve the key from the settings or get it from the get string if this is an auto-config action.
     $key = $this->settings('secret_key');
@@ -385,7 +425,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     $form['settings']['secret_key_help'] = array(
       '#type' => 'item',
       '#title' => t('Need a Secret Key?'),
-      '#value' => t('Visit !nodesquirrel.', array('!nodesquirrel' => $activate_link)),
+      '#markup' => t('Visit !nodesquirrel.', array('!nodesquirrel' => $activate_link)),
     );
 
     return $form;
