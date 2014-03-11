@@ -207,7 +207,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    * Get a list of files to backup from the given set if dirs. Exclude any that match the array $exclude.
    */
   function get_files_to_backup($dir, $settings, $exclude = array(), $base_dir = '') {
-    $out = array();
+    $out = $errors = array();
     if (!file_exists($dir)) {
       backup_migrate_backup_fail('Directory %dir does not exist.', array('%dir' => $dir), $settings);
       return FALSE;
@@ -237,9 +237,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
                 $out[] = $path;
               }
               else {
-                backup_migrate_backup_fail('The directory cannot be backed up because the file %file cannot be read by the web server.', array('%file' => $dir . '/' . $file), $settings);
-                closedir($handle);
-                return FALSE;
+                $errors[] = $dir . '/' . $file;
               }
             }
           }
@@ -251,6 +249,25 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       backup_migrate_backup_fail('Could not open directory %dir', array('%dir' => $dir), $settings);
       return FALSE;
     }
+
+    // Alert the user to any errors there might have been.
+    if ($errors) {
+      if (count($errors < 5)) {
+        $filesmsg = t('The following files: !files', array('!files' => theme('item_list', array('items' => $errors))));
+      }
+      else {
+        $filesmsg = t('!count files', array('!count' => count($errors)));
+      }
+
+      if (empty($settings->filters['ignore_errors'])) {
+        backup_migrate_backup_fail('The backup could not be completed because !files could not be read. If you want to skip unreadable files use the \'Ignore Errors\' setting under \'Advanced Options\' in \'Advanced Backup\' or in your schedule settings profile.', array('!files' => $filesmsg), 'error');
+        $out = FALSE;
+      }
+      else {
+        backup_migrate_backup_fail('!files could not be read and were skipped', array('!files' => $filesmsg), 'error');
+      }
+    }
+
     return $out;
   }
 

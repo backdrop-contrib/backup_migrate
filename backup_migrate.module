@@ -915,6 +915,8 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
   $form += _backup_migrate_get_source_form('db');
   $form += _backup_migrate_ui_backup_settings_form($profile);
 
+  $form_state['profile'] = $profile;
+
   $form['profile_id'] = array(
     "#type" => "value",
     '#default_value' => $profile->get_id(),
@@ -996,7 +998,8 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
  */
 function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
   // Create a profile with the given settings.
-  $profile = backup_migrate_crud_create_item('profile', $form_state['values']);
+  $profile = $form_state['profile'];
+  $profile->from_array($form_state['values']);
 
   // Save the settings profile if the save box is checked.
   if ($form_state['values']['save_settings'] && user_access('administer backup and migrate')) {

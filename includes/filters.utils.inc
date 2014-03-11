@@ -79,6 +79,12 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       "#default_value" => !empty($settings['use_cli']),
       "#description" => t("Use the command line tools (mysqldump, tar, gzip etc.) if available. This can be faster for large sites but will not work on all servers. EXPERIMENTAL"),
     );
+    $form['advanced']['ignore_errors'] = array(
+      "#type" => "checkbox",
+      "#title" => t("Ignore errors"),
+      "#default_value" => !empty($settings['ignore_errors']),
+      "#description" => t("Will attempt to complete backup even if certain recoverable errors occur. This may make the backup files invalid. Enable this if you have unreadable files that you want to ignore during backup."),
+    );
 
     return $form;
   }
@@ -114,6 +120,12 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       "#default_value" => !empty($settings['use_cli']),
       "#description" => t("Use the command line tools (mysqldump, tar, gzip etc.) if available. This can be faster for large sites but will not work on all servers. EXPERIMENTAL"),
     );
+    // $form['advanced']['ignore_errors'] = array(
+    //   "#type" => "checkbox",
+    //   "#title" => t("Ignore errors"),
+    //   "#default_value" => !empty($settings['ignore_errors']),
+    //   "#description" => t("Will attempt to complete restore even if certain recoverable errors occur. This may could corrupt your site."),
+    // );
     return $form;
   }
 
