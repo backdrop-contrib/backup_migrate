@@ -1003,6 +1003,7 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
 
   // Save the settings profile if the save box is checked.
   if ($form_state['values']['save_settings'] && user_access('administer backup and migrate')) {
+    // @TODO: This no longer works.
     if (@$form_state['values']['create_new']) {
       // Reset the id and storage so a new item will be saved.
       $profile->set_id(NULL);
