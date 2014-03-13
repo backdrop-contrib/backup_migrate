@@ -68,7 +68,7 @@ function backup_migrate_backup_migrate_profiles() {
   $out = array();
 
   // Get the module default profile.
-  $out['default'] = backup_migrate_crud_create_item('profile', array('name' => t("Default Settings"), 'profile_id' => 'default'));
+  $out['default'] = backup_migrate_crud_create_item('profile', array('name' => t("Default Settings"), 'machine_name' => 'default'));
 
   return $out;
 }

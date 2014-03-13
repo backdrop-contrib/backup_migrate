@@ -913,14 +913,14 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
   $form = array();
 
   $form += _backup_migrate_get_source_form('db');
-  $form += _backup_migrate_ui_backup_settings_form($profile);
 
   $form_state['profile'] = $profile;
 
-  $form['profile_id'] = array(
+  $form['machine_name'] = array(
     "#type" => "value",
     '#default_value' => $profile->get_id(),
   );
+
   $form['storage'] = array(
     "#type" => "value",
     '#default_value' => $profile->storage,
@@ -932,9 +932,11 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
     "#collapsed" => FALSE,
     "#tree" => FALSE,
     "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them. Select 'Download' to download the file to your desktop."),
-    '#weight' => 70,
+    // '#weight' => 70,
   );
   $form['destination']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', variable_get('backup_migrate_destination_id', 'download'));
+
+  $form += _backup_migrate_ui_backup_settings_form($profile);
 
   if (user_access('administer backup and migrate')) {
     $form['save_settings'] = array(
@@ -1003,7 +1005,6 @@ function backup_migrate_ui_manual_backup_form_submit($form, &$form_state) {
 
   // Save the settings profile if the save box is checked.
   if ($form_state['values']['save_settings'] && user_access('administer backup and migrate')) {
-    // @TODO: This no longer works.
     if (@$form_state['values']['create_new']) {
       // Reset the id and storage so a new item will be saved.
       $profile->set_id(NULL);
