@@ -1,9 +1,6 @@
-
 (function($) {
-
-  Drupal.backup_migrate = {
-    callbackURL : "",  
-    autoAttach  : function() {
+  Drupal.behaviors.backupMigrate = {
+    attach: function(context) {
       if (Drupal.settings.backup_migrate !== undefined) { 
         if (Drupal.settings.backup_migrate.dependents !== undefined) {
           for (key in Drupal.settings.backup_migrate.dependents) {
@@ -113,11 +110,6 @@
           });
         }
       }
-    }
-  }
-  Drupal.behaviors.backup_migrate = {
-    attach: function(context) {
-      Drupal.backup_migrate.autoAttach(context);
     }
   }
 })(jQuery);

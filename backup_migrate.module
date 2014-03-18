@@ -206,7 +206,38 @@ function backup_migrate_element_info() {
     '#dependencies' => array(),
     '#theme' => 'backup_migrate_dependent',
   );
+  $types['backup_migrate_file_list'] = array(
+    '#theme' => 'backup_migrate_file_list',
+    '#process' => array('form_process_backup_migrate_file_list'),
+    '#multiple' => FALSE,
+    '#files' => array(),
+    '#display_options' => array(),
+    '#default_value' => 0,
+  );
   return $types;
+}
+
+/**
+ * Callback function for backup_migrate_file_list '#process' callback.
+ */
+function form_process_backup_migrate_file_list($element) {
+  if (count($element['#files']) > 0) {
+    $weight = 0;
+    $options = array();
+    $max = $count = $element['#display_options']['limit'];
+
+    $files = $element['#files'];
+    foreach ($files as $id => $file) {
+      $options[$id] = $file->info('filename');
+    }
+    $element['files'] = array(
+      '#type' => 'radios',
+      '#options' => $options,
+      '#default_value' => $element['#default_value'],
+      '#parents' => $element['#parents'],
+    );
+  }
+  return $element;
 }
 
 /**
@@ -315,6 +346,10 @@ function backup_migrate_theme() {
       'render element' => 'form',
     ),
     'backup_migrate_dependent' => array(
+      'arguments' => array('element'),
+      'render element' => 'element',
+    ),
+    'backup_migrate_file_list' => array(
       'arguments' => array('element'),
       'render element' => 'element',
     ),
@@ -887,6 +922,24 @@ function theme_backup_migrate_dependent($vars) {
   return '<div id="edit-' . $id . '" class="backup-migrate-form-dependent">' . drupal_render_children($element) . '</div>';
 }
 
+
+/**
+ * Theme file list form widget.
+ */
+function theme_backup_migrate_file_list($vars) {
+  $element = $vars['element'];
+
+  // Render the radios so they can be placed in the file list rendering.
+  $vars['element']['#display_options']['form_elements'] = array();
+  foreach (element_children($vars['element']['files']) as $id) {
+    $vars['element']['files'][$id]['#title'] = '';
+    $vars['element']['#display_options']['form_elements'][$id] = render($vars['element']['files'][$id]);
+  }
+
+  $out = _backup_migrate_ui_destination_display_file_list($vars['element']['#files'], $vars['element']['#display_options']);
+  return $out;
+}
+
 /**
  * Theme the dependent form section.
  */
@@ -937,6 +990,18 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
   $form['destination']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', variable_get('backup_migrate_destination_id', 'download'));
 
   $form += _backup_migrate_ui_backup_settings_form($profile);
+
+  // Make the source settings dependent on the source selected.
+  // Except don't because it looks super weird.
+  // foreach (element_children($form['sources']) as $source) {
+  //   $form['sources'][$source] = array(
+  //     '#type' => 'backup_migrate_dependent',
+  //     '#dependencies' => array(
+  //       'source_id' => $source,
+  //     ),
+  //     'settings' => $form['sources'][$source]
+  //   );
+  // }
 
   if (user_access('administer backup and migrate')) {
     $form['save_settings'] = array(
@@ -1132,10 +1197,54 @@ function backup_migrate_ui_manual_restore_form() {
 
   $form = array();
 
+  $from_default = (isset($_GET['page']) || isset($_GET['sort'])) ? 'saved' : 'upload';
+  $form['backup_migrate_restore_from_upload'] = array(
+    "#type" => "radio",
+    "#title" => t('Restore from an uploaded file'),
+    '#return_value' => 'upload',
+    '#parents' => array('from'),
+    '#default_value' => $from_default,
+  );
+
   $form['backup_migrate_restore_upload'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'from' => 'upload',
+    ),
+  );
+
+  $form['backup_migrate_restore_upload']['backup_migrate_restore_upload'] = array(
     '#title' => t('Upload a Backup File'),
     '#type' => 'file',
-    '#description' => t("Upload a backup file created by this version of this module. For other database backups please use another tool for import. Max file size: %size", array("%size" => format_size(file_upload_max_size()))),
+    '#description' => t("Upload a backup file created by Backup and Migrate. For other database or file backups please use another tool for import. Max file size: %size", array("%size" => format_size(file_upload_max_size()))),
+  );
+
+  $form['backup_migrate_restore_from_saved'] = array(
+    "#type" => "radio",
+    "#title" => t('Restore from a saved backup'),
+    '#return_value' => 'saved',
+    '#parents' => array('from'),
+    '#default_value' => $from_default,
+  );
+
+  $form['backup_migrate_restore_saved'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'from' => 'saved',
+    ),
+  );
+
+  list($files, $fetch_time, $remote) = backup_migrate_get_saved_backups();
+  $form['backup_migrate_restore_saved']['file'] = array(
+    '#type' => 'backup_migrate_file_list',
+    '#display_options' => array(
+      'limit' => 5, 
+      'pager' => FALSE, 
+      'more' => BACKUP_MIGRATE_MENU_PATH . '/backups', 
+      'operations' => FALSE,
+    ),
+    '#default_value' => reset(array_keys($files)),
+    '#files' => $files,
   );
 
   $sources = _backup_migrate_get_source_form_item_options();
@@ -1182,11 +1291,19 @@ function backup_migrate_ui_manual_restore_form() {
  * The restore submit. Do the restore.
  */
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
+  backup_migrate_include('destinations');
   $validators = array('file_validate_extensions' => array('gz zip sql mysql bz bz2'));
-  if ($file = file_save_upload('backup_migrate_restore_upload', $validators)) {
-    backup_migrate_include('destinations');
-    backup_migrate_perform_restore('upload', $file->uri, $form_state['values']);
+
+  $values = $form_state['values'];
+  if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators)) {
+    backup_migrate_perform_restore('upload', $file->uri, $values);
   }
+  else if ($values['from'] == 'saved' && $file = $values['file']) {
+    list($destination, $file_id) = explode('/', $file, 2);
+    $file = 
+    backup_migrate_perform_restore($destination, $file_id, $form_state['values']);
+  }
+
   $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH . '/restore';
 }
 
@@ -1211,33 +1328,12 @@ function backup_migrate_ui_saved_backups() {
 
   $remote = FALSE;
   $now = $fetch_time = time();
+  $refresh = isset($_GET['refresh']);
   $out = '';
-  $files = array();
-  foreach (backup_migrate_get_destinations('list files') as $destination) {
-    $location = l($destination->get_name(), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination->get_id());
-    $location .= $destination->get('remote') ? ' <strong class="backup-migrate-tag">(' . t('offsite') . ')</strong>' : '';
-
-    $dest_files = $destination->list_files();
-
-    // Refresh the destination
-    if (isset($_GET['refresh'])) {
-      $destination->file_cache_clear();
-    }
-
-    // Get the file fetch time.
-    if ($destination->cache_files && $destination->fetch_time) {
-      $fetch_time = min($destination->fetch_time, $fetch_time);
-    }
-
-    // Add the files from this destination to the full list.
-    foreach ($dest_files as $id => $file) {
-      $dest_files[$id]->file_info['bam_other_safe'][t('Location:')] = $location;
-    }
-    $files = array_merge($files, array_values($dest_files));
-  }
+  list($files, $fetch_time, $remote) = backup_migrate_get_saved_backups($refresh);
 
   // Redirect if refreshing instead of displaying.
-  if (isset($_GET['refresh'])) {
+  if ($refresh) {
     drupal_goto($_GET['q']);
   }
 
@@ -1250,7 +1346,7 @@ function backup_migrate_ui_saved_backups() {
 
   // Render the list.
   $out .= $fetch;
-  $out .= _backup_migrate_ui_destination_display_file_list($files, 20, TRUE);
+  $out .= _backup_migrate_ui_destination_display_file_list($files, array('limit' => 20, 'pager' => TRUE));
   $out .= $fetch;
 
   // Add a remote backups warning if there are no remote backups.
@@ -1263,6 +1359,50 @@ function backup_migrate_ui_saved_backups() {
   }
 
   return $out;
+}
+
+/**
+ * List the previously created backups from accross multiple destinations.
+ */
+function backup_migrate_get_saved_backups($refresh = FALSE) {
+  backup_migrate_include('profiles', 'destinations', 'sources');
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+  $remote = FALSE;
+  $now = $fetch_time = time();
+  $out = '';
+  $files = $sort = array();
+  foreach (backup_migrate_get_destinations('list files') as $destination) {
+    $dest_id = $destination->get_id();
+    $dest_files = $destination->list_files();
+    if ($dest_files) {
+      $location = l($destination->get_name(), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $dest_id);
+      if ($destination->get('remote')) {
+        $location .= $destination->get('remote') ? ' <strong class="backup-migrate-tag">(' . t('offsite') . ')</strong>' : '';
+        $remote = TRUE;
+      }
+
+      // Refresh the destination
+      if ($refresh) {
+        $destination->file_cache_clear();
+      }
+
+      // Get the file fetch time.
+      if ($destination->cache_files && $destination->fetch_time) {
+        $fetch_time = min($destination->fetch_time, $fetch_time);
+      }
+
+      // Add the files from this destination to the full list.
+      foreach ($dest_files as $id => $file) {
+        $dest_files[$id]->file_info['bam_other_safe'][t('Location:')] = $location;
+        $sort[$dest_id . '/' . $id] = $file->info('filetime');
+        $files[$dest_id . '/' . $id] = $file;
+      }
+    }
+  }
+  array_multisort($sort, SORT_DESC, $files);
+
+  return array($files, $fetch_time, $remote);
 }
 
 /**

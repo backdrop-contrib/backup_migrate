@@ -113,7 +113,6 @@ function backup_migrate_backup_migrate_destinations() {
     $out['download']  = backup_migrate_create_destination('browser_download');
   }
   $out['upload']    = backup_migrate_create_destination('browser_upload');
-
   // Expose the configured databases as sources.
   backup_migrate_include('filters');
   $out              += backup_migrate_filters_invoke_all('destinations');
@@ -283,7 +282,7 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
     }
 
     $out .= $fetch;
-    $out .= _backup_migrate_ui_destination_display_file_list($files, $limit, $show_pager);
+    $out .= _backup_migrate_ui_destination_display_file_list($files, array('limit' => 20, 'pager' => TRUE));
     $out .= $fetch;
 
     return $out;
@@ -293,8 +292,17 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
 /**
  * List the backup files in the given destination.
  */
-function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL, $show_pager = FALSE) {
+function _backup_migrate_ui_destination_display_file_list($files, $options = array()) {
   drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+  // Set soem default options
+  $options += array(
+    'pager' => TRUE,
+    'more' => FALSE,
+    'operations' => TRUE,
+    'limit' => NULL,
+    'form_elements' => NULL,
+  );
 
   $rows = $sort = array();
   if ($files) {
@@ -302,7 +310,126 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL,
       array('data' => 'Filename', 'field' => 'filename'),
       array('data' => 'Created', 'field' => 'filetime', 'sort' => 'desc'),
       array('data' => 'Size', 'field' => 'filesize'),
+    );
+    if ($options['operations']) {
+      $headers[] = array('data' => 'Operations');
+    }
+    if ($options['form_elements']) {
+      array_unshift($headers, '');
+    }
+
+    $sort_order = tablesort_get_order($headers);
+    $sort_key   = $sort_order['sql'] ? $sort_order['sql'] : 'filetime';
+    $sort_dir   = tablesort_get_sort($headers) == 'desc' ? SORT_DESC : SORT_ASC;
+
+    $i          = 0;
+    foreach ((array)$files as $id => $file) {
+      $info = $file->info();
+
+      // If there's a datestamp, it should override the filetime as it's probably more reliable.
+      $info['filetime'] = !empty($info['datestamp']) ? $info['datestamp'] : $info['filetime'];
+
+      $description = '';
+
+      // Add the description as a new row.
+      if (!empty($info['description'])) {
+        $description .= ' <div title="' . check_plain($info['description']) . '" class="backup-migrate-description">' . check_plain($info['description']) . '</div>';
+      }
+      // Add the backup source.
+      if (!empty($info['bam_sourcename'])) {
+        $description .= ' <div title="'. check_plain($info['bam_sourcename']) .'" class="backup-migrate-tags"><span class="backup-migrate-label">'. t('Source:') .' </span>' . check_plain($info['bam_sourcename']) . '</div>';
+      }
+      // Add the tags as a new row.
+      if (!empty($info['tags'])) {
+        $tags = check_plain(implode(', ', (array)$info['tags']));
+        $description .= ' <div title="' . $tags . '" class="backup-migrate-tags"><span class="backup-migrate-label">' . t('Tags:') . ' </span>' . $tags . '</div>';
+      }
+      // Add the other info.
+      if (!empty($info['bam_other_safe'])) {
+        foreach ($info['bam_other_safe'] as $label => $data) {
+          $description .= ' <div class="backup-migrate-tags"><span class="backup-migrate-label">' . $label . ' </span>' . $data . '</div>';        
+        }
+      }
+
+      // Show only files that can be restored from.
+      $sort[] = $info[$sort_key];
+      $row = array(
+        check_plain($info['filename']) . $description,
+        t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 2))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
+        format_size($info['filesize']),
+      );
+      if ($options['operations']) {
+        $row[] = array('data' => implode(' &nbsp; ', $file->destination->get_file_links($file->file_id())), 'class' => 'backup-migrate-actions');
+      }
+      if (isset($options['form_elements'][$id])) {
+        array_unshift($row, $options['form_elements'][$id]);
+      }
+
+      $rows[] = $row;
+
+    }
+
+    array_multisort($sort, $sort_dir, $rows);
+
+    // Show only some of them if it's limited.
+    $showing = $pager = $more = '';
+    if ($options['limit']) {
+      $limit = $options['limit'];
+      $total = count($rows);
+      $end = $limit;
+      $start = 0;
+
+      if ($options['pager']) {
+        $page = isset($_GET['page']) ? $_GET['page'] : '';
+        $start = $page * $limit;
+
+        $element = 0;
+        $GLOBALS['pager_total'][$element] = ceil($total / $limit);
+        $GLOBALS['pager_page_array'][$element] = $page;
+        $tags = array(
+          t('« newest'),
+          t('« newer'),
+          '',
+          t('older »'),
+          t('oldest »'),
+          );
+        $pager = theme('pager', $tags, $limit, $element, array(), ceil($total/$limit));
+
+        $end = min($total - 1, $start + $limit);
+      }
+      if ($total > $limit && $options['more']) {
+        $more = ' ' . l(t('view all'), $options['more']);
+      }
+      $showing = t('Showing @start to @end of @total files.', array('@start' => $start + 1, '@end' => $end + 1, '@total' => $total));
+
+      // Limit the number of rows shown.
+      $rows = array_slice($rows, $start, $limit, TRUE);
+    }
+
+    $out = theme("table", array('header' => $headers, 'rows' => $rows, 'class' => 'backup-migrate-listing backup-migrate-listing-files'));
+    $out .= $showing;
+    $out .= $pager;
+    $out .= $more;
+  }
+  else {
+    $out = t('There are no backup files to display.');
+  }
+  return $out;
+}
+
+/**
+ * List the backup files in the given destination.
+ */
+function _backup_migrate_ui_destination_display_file_list_options($files, $limit = NULL) {
+  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+
+  $rows = $sort = array();
+  if ($files) {
+    $headers = array(
       '',
+      array('data' => 'Filename', 'field' => 'filename'),
+      array('data' => 'Created', 'field' => 'filetime', 'sort' => 'desc'),
+      array('data' => 'Size', 'field' => 'filesize'),
     );
 
     $sort_order = tablesort_get_order($headers);
@@ -341,10 +468,10 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL,
       // Show only files that can be restored from.
       $sort[] = $info[$sort_key];
       $rows[] = array(
+        'radio',
         check_plain($info['filename']) . $description,
         t('!time ago', array('!time' => format_interval(time() - $info['filetime'], 2))) . '<div class="backup-migrate-date">' . format_date($info['filetime'], 'small') . '</div>',
         format_size($info['filesize']),
-        array('data' => implode(" | ", $file->destination->get_file_links($file->file_id())), 'class' => 'backup-migrate-actions'),
       );
     }
 
@@ -354,26 +481,10 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL,
     $showing = $pager = '';
     if ($limit) {
       $total = count($rows);
+      $end = $limit;
       $start = 0;
 
-      if ($show_pager) {
-        $page = isset($_GET['page']) ? $_GET['page'] : '';
-        $start = $page * $limit;
 
-        $element = 0;
-        $GLOBALS['pager_total'][$element] = ceil($total / $limit);
-        $GLOBALS['pager_page_array'][$element] = $page;
-        $tags = array(
-          t('« newest'),
-          t('« newer'),
-          '',
-          t('older »'),
-          t('oldest »'),
-          );
-        $pager = theme('pager', $tags, $limit, $element, array(), ceil($total/$limit));
-
-        $end = min($total - 1, $start + $limit);
-      }
       $showing = t('Showing @start to @end of @total files.', array('@start' => $start + 1, '@end' => $end + 1, '@total' => $total));
 
       // Limit the number of rows shown.
@@ -382,13 +493,13 @@ function _backup_migrate_ui_destination_display_file_list($files, $limit = NULL,
 
     $out = theme("table", array('header' => $headers, 'rows' => $rows, 'class' => 'backup-migrate-listing backup-migrate-listing-files'));
     $out .= $showing;
-    $out .= $pager;
   }
   else {
     $out = t('There are no backup files to display.');
   }
   return $out;
 }
+
 
 /**
  * Download a file to the browser.
@@ -1082,8 +1193,6 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
     $this->location = $location;
     $this->set_url($location);
   }
-
-
 
   /**
    * Destination configuration callback.
