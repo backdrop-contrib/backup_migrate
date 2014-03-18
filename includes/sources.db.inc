@@ -111,7 +111,7 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
    * Get the form for the backup settings for this destination.
    */
   function backup_settings_form($settings) {
-    $tables  = $this->get_table_names();
+    $objects  = $this->get_object_names();
     $form['#description'] = t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Drupal install, so <strong>do not change these settings unless you know what you're doing</strong>.");
     $form['exclude_tables'] = array(
       "#type" => "select",
@@ -125,7 +125,7 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
       "#type" => "select",
       "#multiple" => TRUE,
       "#title" => t("Exclude the data from the following tables"),
-      "#options" => $tables,
+      "#options" => $objects,
       "#default_value" => $settings['nodata_tables'],
       "#description" => t("The selected tables will have their structure backed up but not their contents. This is useful for excluding cache data to reduce file size."),
     );
@@ -228,6 +228,18 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
    */
   function _restore_db_from_file($file, $settings) {
     // Must be overridden.
+  }
+
+  /**
+   * Get a list of objects in the database.
+   */
+  function get_object_names() {
+    // Must be overridden.
+    $out = $this->_get_table_names();
+    if (method_exists($this, '_get_view_names')) {
+      $out += $this->_get_view_names();
+    }
+    return $out;
   }
 
   /**
