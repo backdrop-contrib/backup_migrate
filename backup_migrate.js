@@ -68,7 +68,6 @@
                     for (var key in copy_selector_options) {
                       if (key != group) {
                         copy_selector.append(copy_selector_options[key]);
-                        console.log($('#' + info['copy_destination_selector']).get(0));
                       }
                     }
                   }
