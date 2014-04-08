@@ -117,7 +117,7 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
       "#type" => "select",
       "#multiple" => TRUE,
       "#title" => t("Exclude the following tables altogether"),
-      "#options" => $tables,
+      "#options" => $objects,
       "#default_value" => $settings['exclude_tables'],
       "#description" => t("The selected tables will not be added to the backup file."),
     );

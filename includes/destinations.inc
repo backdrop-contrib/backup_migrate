@@ -218,12 +218,13 @@ function backup_migrate_destination_save_file($file, &$settings) {
       // Make sure the file only gets saved to each destination once.
       $id = $destination->get('id');
       if (!in_array($id, $saved_to)) {
-        $file = $destination->save_file($file, $settings);
-        $saved_to[] = $id;
+        if ($destination->save_file($file, $settings)) {
+          $saved_to[] = $id;
+        }
       }
     }
   }
-  return $file;
+  return $saved_to ? $file : FALSE;
 }
 
 /**
