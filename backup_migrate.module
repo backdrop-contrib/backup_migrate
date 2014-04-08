@@ -1235,6 +1235,8 @@ function backup_migrate_ui_manual_restore_form() {
   );
 
   list($files, $fetch_time, $remote) = backup_migrate_get_saved_backups();
+  $keys = array_keys($files);
+  $default = reset($keys);
   $form['backup_migrate_restore_saved']['file'] = array(
     '#type' => 'backup_migrate_file_list',
     '#display_options' => array(
@@ -1243,7 +1245,7 @@ function backup_migrate_ui_manual_restore_form() {
       'more' => BACKUP_MIGRATE_MENU_PATH . '/backups', 
       'operations' => FALSE,
     ),
-    '#default_value' => reset(array_keys($files)),
+    '#default_value' => $default,
     '#files' => $files,
   );
 
@@ -1417,18 +1419,18 @@ function backup_migrate_perform_backup(&$settings) {
     set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
   }
 
+  // Confirm the destinations are valid
+  $valid = backup_migrate_destination_confirm_destination($settings);
+  if (!$valid) {
+    backup_migrate_backup_fail("Could not run backup because a there was no valid destination to save to.", array(), $settings);
+    return FALSE;
+  }
+
   // Create the temporary file object to be backed up into.
   $filename = _backup_migrate_construct_filename($settings);
   $file = new backup_file(array('filename' => $filename));
   if (!$file) {
     backup_migrate_backup_fail("Could not run backup because a temporary file could not be created.", array(), $settings);
-    return FALSE;
-  }
-
-  // Confirm the destinations are valid
-  $valid = backup_migrate_destination_confirm_destination($settings);
-  if (!$valid) {
-    backup_migrate_backup_fail("Could not run backup because a there was no valid destination to save to.", array(), $settings);
     return FALSE;
   }
 
@@ -1809,3 +1811,36 @@ function backup_migrate_exec($command, $args = array()) {
   return $result == 0;
 }
 
+/**
+ * A custom version of format size which treats 1GB as 1000 MB rather than 1024 MB
+ * This is a more standard and expected version for storage (as opposed to memory).
+ */
+function backup_migrate_format_size($size, $langcode = LANGUAGE_NONE) {
+  $precision = 2;
+  $multiply = pow(10, $precision);
+
+  if ($size == 0) {
+    return t('0 bytes', array(), array('langcode' => $langcode));
+  }
+  if ($size < 1024) {
+    return format_plural($size, '1 byte', '@count bytes', array(), array('langcode' => $langcode));
+  }
+  else {
+    $size = ceil($size * $multiply / 1024);
+    $string = '@size KB';
+    if ($size >= (1024 * $multiply)) {
+      $size = ceil($size / 1024);
+      $string = '@size MB';
+    }
+    if ($size >= 1000 * $multiply) {
+      $size = ceil($size / 1000);
+      $string = '@size GB';
+    }
+    if ($size >= 1000 * $multiply) {
+      $size = ceil($size / 1000);
+      $string = '@size TB';
+    }
+    return t($string, array('@size' => round($size/$multiply, $precision)), array('langcode' => $langcode));
+  }
+
+}
