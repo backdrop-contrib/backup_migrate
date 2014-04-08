@@ -108,7 +108,13 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       '#default_value' => !empty($settings['utils_site_offline']) ? $settings['utils_site_offline'] : NULL,
       '#description' => t('Take the site offline during restore and show a maintenance message. Site will be taken back online once the restore is complete.'),
     );
-    $form['advanced']['utils_site_offline_message'] = array(
+    $form['advanced']['utils_site_offline_message_wrapper'] = array(
+      '#type' => 'backup_migrate_dependent',
+      '#dependencies' => array(
+        'filters[utils_site_offline]' => TRUE,
+      ),
+    );
+    $form['advanced']['utils_site_offline_message_wrapper']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Site off-line message'),
       '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : variable_get('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => variable_get('site_name', 'Drupal')))),
