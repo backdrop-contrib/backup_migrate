@@ -795,7 +795,7 @@ class backup_migrate_item {
     $form['machine_name'] = array(
       '#type' => 'machine_name',
       '#default_value' => $this->get_id(),
-      '#maxlength' => 21,
+      '#maxlength' => 255,
       '#machine_name' => array(
         'source' => array('name'),
         'exists' => 'backup_migrate_crud_item_exists',
