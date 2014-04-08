@@ -82,12 +82,12 @@ function backup_migrate_drush_help($section) {
  * Backup the default database.
  */
 function backup_migrate_drush_backup($source_id = 'db', $destination_id = 'manual', $profile_id = 'default') {
-  backup_migrate_include('profiles', 'destinations');
+  backup_migrate_include('profiles', 'destinations', 'sources');
 
   // Set the message mode to logging.
   _backup_migrate_message_callback('_backup_migrate_message_drush');
 
-  if (!backup_migrate_get_destination($source_id)) {
+  if (!backup_migrate_get_source($source_id)) {
     _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam-sources' to get a list of available sources or use 'db' to backup the Drupal database.", array('@source' => $source_id), 'error');
     return;
   }
@@ -111,17 +111,13 @@ function backup_migrate_drush_backup($source_id = 'db', $destination_id = 'manua
  * Restore to the default database.
  */
 function backup_migrate_drush_restore($source_id = '', $destination_id = '', $file_id = '') {
-  drush_print(dt('Restoring will delete some or all of your data and cannot be undone. ALWAYS TEST YOUR BACKUPS ON A NON-PRODUCTION SERVER!'));
-  if (!drush_confirm(dt('Are you sure you want to restore the database?'))) {
-    return drush_user_abort();
-  }
 
-  backup_migrate_include('profiles', 'destinations');
+  backup_migrate_include('profiles', 'destinations', 'sources');
 
   // Set the message mode to drush output.
   _backup_migrate_message_callback('_backup_migrate_message_drush');
 
-  if (!backup_migrate_get_destination($source_id)) {
+  if (!backup_migrate_get_source($source_id)) {
     _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam-sources' to get a list of available sources or use 'db' to backup the Drupal database.", array('@source' => $source_id), 'error');
     return;
   }
@@ -129,11 +125,15 @@ function backup_migrate_drush_restore($source_id = '', $destination_id = '', $fi
     _backup_migrate_message("Could not find the destination '@destination'. Try using 'drush bam-destinations' to get a list of available destinations.", array('@destination' => $destination_id), 'error');
     return;
   }
-  if (!$file_id || !$file = backup_migrate_destination_get_file($destination_id, $file_id)) {
+  else if (!$file_id || !$file = backup_migrate_destination_get_file($destination_id, $file_id)) {
     _backup_migrate_message("Could not find the file '@file'. Try using 'drush bam-backups @destination' to get a list of available backup files in this destination destinations.", array('@destination' => $destination_id, '@file' => $file_id), 'error');
     return;
   }
 
+  drush_print(dt('Restoring will delete some or all of your data and cannot be undone. ALWAYS TEST YOUR BACKUPS ON A NON-PRODUCTION SERVER!'));
+  if (!drush_confirm(dt('Are you sure you want to perform the restore?'))) {
+    return drush_user_abort();
+  }
   _backup_migrate_message('Starting restore...');
   $settings = array('source_id' => $source_id);
   backup_migrate_perform_restore($destination_id, $file_id);
@@ -150,7 +150,7 @@ function backup_migrate_drush_destinations() {
  * Get a list of available sources.
  */
 function backup_migrate_drush_sources() {
-  return _backup_migrate_drush_destinations('source');
+  return _backup_migrate_drush_sources('source');
 }
 
 
@@ -161,6 +161,23 @@ function _backup_migrate_drush_destinations($op = NULL) {
   backup_migrate_include('destinations');
   $rows = array(array(dt('ID'), dt('Name'), dt('Operations')));
   foreach (backup_migrate_get_destinations($op) as $destination) {
+    $rows[] = array(
+      $destination->get_id(),
+      $destination->get_name(),
+      implode (', ', $destination->ops()),
+    );
+  }
+  drush_print_table($rows, TRUE, array(32, 32));
+}
+
+
+/**
+ * Get a list of available destinations with the given op.
+ */
+function _backup_migrate_drush_sources($op = NULL) {
+  backup_migrate_include('sources');
+  $rows = array(array(dt('ID'), dt('Name'), dt('Operations')));
+  foreach (backup_migrate_get_sources($op) as $destination) {
     $rows[] = array(
       $destination->get_id(),
       $destination->get_name(),
