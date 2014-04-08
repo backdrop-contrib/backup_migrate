@@ -361,7 +361,6 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
       $out .= strtr($create['Create View'], "\n", " ") . ";\n";
       $out .= "SET sql_mode = '$sql_mode';\n";
     }
-    dpm($out);
     return $out;
   }
 
