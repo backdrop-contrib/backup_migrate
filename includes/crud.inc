@@ -860,13 +860,13 @@ class backup_migrate_item {
       'type' => MENU_DEFAULT_LOCAL_TASK,
     );
     $items[$path .'/add'] = array(
-      'title' => 'Create !type',
+      'title' => 'Add !type',
       'title arguments' => array('!type' => t($this->title_singular)),
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_create', TRUE, $this->type_name),
       'access arguments' => array('administer backup and migrate'),
       'weight' => 2,
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_LOCAL_ACTION,
     );
     $items[$path .'/delete'] = array(
       'title' => 'Delete !type',
@@ -882,7 +882,7 @@ class backup_migrate_item {
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_edit', TRUE, $this->type_name),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
     );
     $items[$path .'/export'] = array(
       'title' => 'Export !type',
@@ -890,7 +890,7 @@ class backup_migrate_item {
       'page callback' => 'backup_migrate_menu_callback',
       'page arguments' => array('crud', 'backup_migrate_crud_ui_export', TRUE, $this->type_name),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_CALLBACK,
     );
     return $items;
   }

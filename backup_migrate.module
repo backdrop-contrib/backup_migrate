@@ -165,15 +165,16 @@ function backup_migrate_menu() {
     'weight' => 2,
     'type' => MENU_LOCAL_TASK,
   );
-  $items[BACKUP_MIGRATE_MENU_PATH . '/schedule'] = array(
-    'title' => 'Schedule',
-    'description' => 'Schedule automatic backups',
-    'page callback' => 'backup_migrate_menu_callback',
-    'page arguments' => array('', 'backup_migrate_ui_schedule', TRUE),
-    'access arguments' => array('administer backup and migrate'),
-    'weight' => 3,
-    'type' => MENU_LOCAL_TASK,
-  );
+  // @TODO: This was removed because it was getting far to complicated for an abstraction. Exposing the actual schedules is more direct.
+  // $items[BACKUP_MIGRATE_MENU_PATH . '/schedule'] = array(
+  //   'title' => 'Schedule',
+  //   'description' => 'Schedule automatic backups',
+  //   'page callback' => 'backup_migrate_menu_callback',
+  //   'page arguments' => array('', 'backup_migrate_ui_schedule', TRUE),
+  //   'access arguments' => array('administer backup and migrate'),
+  //   'weight' => 3,
+  //   'type' => MENU_LOCAL_TASK,
+  // );
   $items[BACKUP_MIGRATE_MENU_PATH . '/settings'] = array(
     'title' => 'Settings',
     'description' => 'Module settings.',
@@ -407,22 +408,38 @@ function _backup_migrate_block_view_quick_backup() {
 function backup_migrate_backup_migrate_schedules() {
   backup_migrate_include('sources');
 
-  $sources = backup_migrate_get_sources();
-
   $schedules = array();
-  foreach ($sources as $id => $source) {
-    $schedule = array(
-      'schedule_id' => $id,
-      'name' => $source->get('name'),
-      'source_id' => $id,
-      'destination_id' => 'scheduled',
-      'profile_id' => 'default',
-      'period' => variable_get('backup_migrate_default_schedule', 60*60),
-      'keep' => BACKUP_MIGRATE_SMART_DELETE,
-      'enabled' => FALSE,
-    );
-    $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
-  }
+
+  // Declare a default backup for each source that can be enabled.
+  // @TODO: This makes setting up scheduled easier, but only when combined with the now disabled quick-schedule feature.
+  // $sources = backup_migrate_get_sources();
+  // foreach ($sources as $id => $source) {
+  //   $schedule = array(
+  //     'schedule_id' => $id,
+  //     'name' => $source->get('name'),
+  //     'source_id' => $id,
+  //     'destination_id' => 'scheduled',
+  //     'profile_id' => 'default',
+  //     'period' => variable_get('backup_migrate_default_schedule', 60*60),
+  //     'keep' => BACKUP_MIGRATE_SMART_DELETE,
+  //     'enabled' => FALSE,
+  //   );
+  //   $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
+  // }
+  
+  if (variable_get('nodesquirrel_schedule', 60*60*24) && variable_get('nodesquirrel_secret_key', FALSE) != FALSE) {
+      $schedule = array(
+        'machine_name' => 'nodesquirrel',
+        'name' => 'NodeSquirrel',
+        'source_id' => 'db',
+        'destination_id' => 'nodesquirrel',
+        'profile_id' => 'default',
+        'period' => variable_get('nodesquirrel_schedule', 60*60*24),
+        'enabled' => variable_get('nodesquirrel_secret_key', FALSE) != FALSE,
+      );
+      $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
+    }
+
   return $schedules;
 }
 

@@ -229,6 +229,47 @@ function backup_migrate_nodesquirrel_status_form($key, $destination, $status) {
   return $form;
 }
 
+function backup_migrate_nodesquirrel_schedule_settings_form($destination, $status) {
+  backup_migrate_include('sources', 'schedules', 'profiles');
+  $sources = backup_migrate_get_sources();
+  $schedules = backup_migrate_get_schedules();
+
+  $defaults = array(
+    'nodesquirrel_schedule_db' => 60*60*24,
+  );
+  $form = array();
+  $form['nodesquirrel_schedule'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Backup Schedule'),
+    '#description' => t('Set up a schedule to back up your site to NodeSquirrel. You can customize these schedules in the !schedule.', array('!schedule' => l(t('Schedules tab'), BACKUP_MIGRATE_MENU_PATH . '/schedule'), '!cron' => l(t('cron'), 'http://drupal.org/cron'))),
+  );
+
+  foreach ($sources as $id => $source) {
+    $var = 'nodesquirrel_schedule_' . $id;
+    $schedule = variable_get($var, isset($defaults[$var]) ? $defaults[$var] : 0);
+    $form['nodesquirrel_schedule'][$var] = array(
+      '#type' => 'select',
+      '#title' => t('Backup my %source to NodeSquirrel', array('%source' => $source->get('name'))),
+      '#options' => array(
+        ''            => t('- None - '),
+        (60*60)       => t('Hourly'),
+        (60*60*24)    => t('Daily'),
+        (60*60*24*7)  => t('Weekly'),
+      ),
+      '#default_value' => $schedule,
+    );
+
+    // If the schedule has been overriden it must be edited in the schedule tab.
+    backup_migrate_include('crud');
+    $item = backup_migrate_crud_get_item('schedule', 'nodesquirrel');
+    if ($item && $item->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
+      $form['nodesquirrel_schedule']['nodesquirrel_schedule_' . $id]['#options'] = array('' => $item->get_frequency_description());
+      $form['nodesquirrel_schedule']['nodesquirrel_schedule_' . $id]['#disabled'] = TRUE;
+      $form['nodesquirrel_schedule']['nodesquirrel_schedule_' . $id]['#description'] = t('Your NodeSquirrel schedule has been overriden and must be edited in the !schedule.', array('!schedule' => l(t('Schedules tab'), BACKUP_MIGRATE_MENU_PATH . '/schedule/list/edit/nodesquirrel')));
+    }
+  }
+  return $form;
+}
 
 /**
  * NodeSquirrel settings form.
@@ -247,6 +288,7 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
   $form += backup_migrate_nodesquirrel_info_form();
   $form += backup_migrate_nodesquirrel_status_form($key, $destination, $status);
   $form += backup_migrate_nodesquirrel_credentials_settings_form($key, $status);
+  // $form += backup_migrate_nodesquirrel_schedule_settings_form($destination, $status);
 
   return system_settings_form($form);
 }

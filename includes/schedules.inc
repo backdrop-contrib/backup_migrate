@@ -159,6 +159,14 @@ class backup_migrate_schedule extends backup_migrate_item {
   }
 
   /**
+   * Get the columns needed to list the type.
+   */  
+  function get_settings_path() {
+    // Pull the schedules tab up a level to the top.
+    return BACKUP_MIGRATE_MENU_PATH . '/' . $this->type_name;
+  }
+
+  /**
    * Get the menu items for manipulating this type.
    */
   function get_menu_items() {
