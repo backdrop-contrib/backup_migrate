@@ -30,8 +30,7 @@ function backup_migrate_help($section, $arg) {
     ),
     BACKUP_MIGRATE_MENU_PATH => array(
       'title' => t('Quick Backup Tab'),
-      'body' => t('Use this form to run simple manual backups of your database and files. Visit the !helppage for more help using this module', 
-                  array('!helppage' => l(t('help page'), 'admin/help/backup_migrate'))),
+      'body' => t('Use this form to run simple manual backups of your database and files.'),
       'access arguments' => array('perform backup'),
     ),
     BACKUP_MIGRATE_MENU_PATH . '/export/advanced' => array(
@@ -76,6 +75,9 @@ function backup_migrate_help($section, $arg) {
                   array('!cronurl' => 'http://drupal.org/cron')),
     ),
   );
+  if (module_exists('help')) {
+    $help[BACKUP_MIGRATE_MENU_PATH]['body'] .= ' ' . t('Visit the !helppage for more help using this module.', array('!helppage' => l(t('help page'), 'admin/help/backup_migrate')));
+  }
 
   if (isset($help[$section])) {
     return $help[$section]['body'];
