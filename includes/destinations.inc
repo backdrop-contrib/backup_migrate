@@ -183,6 +183,29 @@ function backup_migrate_destination_get_file($destination_id, $file_id) {
 }
 
 /**
+ * Load a file from a destination and return the file info.
+ */
+function backup_migrate_destination_get_latest_file($destination_id) {
+  $out = NULL;
+  if ($destination = backup_migrate_get_destination($destination_id)) {
+    $files = $destination->list_files();
+    $max = 0;
+    foreach ((array)$files as $file) {
+      $info = $file->info();
+
+      // If there's a datestamp, it should override the filetime as it's probably more reliable.
+      $time = !empty($info['datestamp']) ? $info['datestamp'] : $info['filetime'];
+      if ($time > $max) {
+        $max = $time;
+        $out = $file;
+      }
+    }
+  }
+  return $out;
+}
+
+
+/**
  * Check if a file exists in the given destination.
  */
 function backup_migrate_destination_file_exists($destination_id, $file_id) {

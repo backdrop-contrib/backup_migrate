@@ -240,6 +240,7 @@ function form_process_backup_migrate_file_list($element) {
       '#parents' => $element['#parents'],
     );
   }
+
   return $element;
 }
 
@@ -429,15 +430,15 @@ function backup_migrate_backup_migrate_schedules() {
   //   $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
   // }
   
-  if (variable_get('nodesquirrel_schedule', 60*60*24) && variable_get('nodesquirrel_secret_key', FALSE) != FALSE) {
+  if (variable_get('nodesquirrel_secret_key', FALSE) != FALSE) {
       $schedule = array(
         'machine_name' => 'nodesquirrel',
         'name' => 'NodeSquirrel',
-        'source_id' => 'db',
+        'source_id' => variable_get('nodesquirrel_schedule_source_id', 'db'),
         'destination_id' => 'nodesquirrel',
         'profile_id' => 'default',
         'period' => variable_get('nodesquirrel_schedule', 60*60*24),
-        'enabled' => variable_get('nodesquirrel_secret_key', FALSE) != FALSE,
+        'enabled' => variable_get('nodesquirrel_schedule_enabled', TRUE) && variable_get('nodesquirrel_secret_key', FALSE) != FALSE,
       );
       $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
     }
@@ -950,9 +951,11 @@ function theme_backup_migrate_file_list($vars) {
 
   // Render the radios so they can be placed in the file list rendering.
   $vars['element']['#display_options']['form_elements'] = array();
-  foreach (element_children($vars['element']['files']) as $id) {
-    $vars['element']['files'][$id]['#title'] = '';
-    $vars['element']['#display_options']['form_elements'][$id] = render($vars['element']['files'][$id]);
+  if ($vars['element']['files']) {  
+    foreach (element_children($vars['element']['files']) as $id) {
+      $vars['element']['files'][$id]['#title'] = '';
+      $vars['element']['#display_options']['form_elements'][$id] = render($vars['element']['files'][$id]);
+    }
   }
 
   $out = _backup_migrate_ui_destination_display_file_list($vars['element']['#files'], $vars['element']['#display_options']);

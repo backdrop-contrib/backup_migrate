@@ -10,8 +10,8 @@ define('NODESQUIRREL_SECRET_KEY_PATTERN', '/^[0-9a-f]{32}\:?[0-9a-f]{32}$/');
 /**
  * Check that a nodesquirel key is valid.
  */
-function nodesquirrel_check_secret_key($secret_key) {
-  if ($destination = nodesquirrel_get_destination($secret_key)) {
+function backup_migrate_nodesquirrel_check_secret_key($secret_key) {
+  if ($destination = backup_migrate_nodesquirrel_get_destination($secret_key)) {
     if ($destination->confirm_destination()) {
       return $destination;
     }
@@ -22,7 +22,7 @@ function nodesquirrel_check_secret_key($secret_key) {
 /**
  * Get the NS destination for the given key.
  */
-function nodesquirrel_get_destination($secret_key) {
+function backup_migrate_nodesquirrel_get_destination($secret_key) {
   if ($secret_key) {
     backup_migrate_include('destinations');
     $destination = backup_migrate_create_destination('nodesquirrel', array('machine_name' => 'nodesquirrel'));
@@ -36,8 +36,8 @@ function nodesquirrel_get_destination($secret_key) {
 /**
  * Get a helper link to activate a site and create a tree.
  */
-function nodesquirrel_get_activate_help_text() {
-  $activate_link = nodesquirrel_get_activate_link();
+function backup_migrate_nodesquirrel_get_activate_help_text() {
+  $activate_link = backup_migrate_nodesquirrel_get_activate_link();
   return array(
     '#type' => 'item',
     '#title' => t('Need a Secret Key?'),
@@ -49,7 +49,7 @@ function nodesquirrel_get_activate_help_text() {
 /**
  * Get a helper link to activate a site and create a tree.
  */
-function nodesquirrel_get_activate_link() {
+function backup_migrate_nodesquirrel_get_activate_link() {
   $activate_link = l('nodesquirrel.com/activate', variable_get('nodesquirrel_activate_url', 'http://manage.nodesquirrel.com/activate'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => variable_get('site_mail', ''), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
   return $activate_link;
 }
@@ -57,7 +57,7 @@ function nodesquirrel_get_activate_link() {
 /**
  * Get a helper link to activate a site and create a tree.
  */
-function nodesquirrel_get_manage_link($destination) {
+function backup_migrate_nodesquirrel_get_manage_link($destination) {
   $url = variable_get('nodesquirrel_manage_url', 'https://manage.nodesquirrel.com') . '/backups/' . $destination->_get_destination();
   return l($url, $url);
 }
@@ -65,7 +65,7 @@ function nodesquirrel_get_manage_link($destination) {
 /**
  * Get a helper link to activate a site and create a tree.
  */
-function nodesquirrel_get_plan_link() {
+function backup_migrate_nodesquirrel_get_plan_link() {
   $url = variable_get('nodesquirrel_manage_url', 'https://manage.nodesquirrel.com') . '/plan';
   return l($url, $url);
 }
@@ -73,7 +73,7 @@ function nodesquirrel_get_plan_link() {
 /**
  * Get the path to the nodesquirrel settings tab.
  */
-function nodesquirrel_settings_path() {
+function backup_migrate_nodesquirrel_settings_path() {
   $path = BACKUP_MIGRATE_MENU_PATH . '/settings/destinations/nodesquirrel/edit';
   return $path;
 }
@@ -105,7 +105,7 @@ function backup_migrate_nodesquirrel_credentials_settings_form($key = '', $statu
     '#default_value' => $key,
   );
   if (empty($key)) {
-    $form['nodesquirrel_credentials']['secret_key_help'] = nodesquirrel_get_activate_help_text();
+    $form['nodesquirrel_credentials']['secret_key_help'] = backup_migrate_nodesquirrel_get_activate_help_text();
   }
 
   return $form;
@@ -147,11 +147,11 @@ function backup_migrate_nodesquirrel_status_form($key, $destination, $status) {
 
   // Warn the user if the key they entered is invalid.
   if ($key && empty($status)) {
-    $form['nodesquirrel_status']['status']['#markup'] = t('Your secret key does not seem to be valid. Please check that you entered it correctly or visit !ns to generate a new key.', array('!ns' => nodesquirrel_get_activate_link()));
+    $form['nodesquirrel_status']['status']['#markup'] = t('Your secret key does not seem to be valid. Please check that you entered it correctly or visit !ns to generate a new key.', array('!ns' => backup_migrate_nodesquirrel_get_activate_link()));
   }
   else if (!empty($destination) && is_array($status)) {
     if (!empty($status['lifetime_backups_used']) && !empty($status['lifetime_backups']) && $status['lifetime_backups_used'] >= $status['lifetime_backups']) {
-      $form['nodesquirrel_status']['status']['#markup'] = t('Your !num backup trial has expired. Visit !link to continue backing up.', array('!num' => $status['lifetime_backups'], '!link' => nodesquirrel_get_plan_link()));
+      $form['nodesquirrel_status']['status']['#markup'] = t('Your !num backup trial has expired. Visit !link to continue backing up.', array('!num' => $status['lifetime_backups'], '!link' => backup_migrate_nodesquirrel_get_plan_link()));
     }
     else {
       $form['nodesquirrel_status']['status']['#markup'] = t('Ready to Backup');
@@ -220,7 +220,7 @@ function backup_migrate_nodesquirrel_status_form($key, $destination, $status) {
     $form['nodesquirrel_status']['manage'] = array(
       '#type' => 'item',
       '#title' => t('Management Console'),
-      '#markup' => nodesquirrel_get_manage_link($destination),
+      '#markup' => backup_migrate_nodesquirrel_get_manage_link($destination),
       '#description' => t('You can use the NodeSquirrel management console to add and edit your sites, reset your secret key, download and delete backups, and modify your NodeSquirrel account.'),
     );
 
@@ -231,43 +231,54 @@ function backup_migrate_nodesquirrel_status_form($key, $destination, $status) {
 
 function backup_migrate_nodesquirrel_schedule_settings_form($destination, $status) {
   backup_migrate_include('sources', 'schedules', 'profiles');
-  $sources = backup_migrate_get_sources();
-  $schedules = backup_migrate_get_schedules();
 
-  $defaults = array(
-    'nodesquirrel_schedule_db' => 60*60*24,
-  );
+  // If the schedule has been overriden it must be edited in the schedule tab.
+  $schedule = backup_migrate_crud_get_item('schedule', 'nodesquirrel');
+
+  $default = 60*60*24;
+
   $form = array();
   $form['nodesquirrel_schedule'] = array(
     '#type' => 'fieldset',
     '#title' => t('Backup Schedule'),
-    '#description' => t('Set up a schedule to back up your site to NodeSquirrel. You can customize these schedules in the !schedule.', array('!schedule' => l(t('Schedules tab'), BACKUP_MIGRATE_MENU_PATH . '/schedule'), '!cron' => l(t('cron'), 'http://drupal.org/cron'))),
+    '#description' => t('Set up a schedule to back up your site to NodeSquirrel. You can customize this schedule or add additional schedules in the !schedule.', array('!schedule' => l(t('Schedules tab'), BACKUP_MIGRATE_MENU_PATH . '/schedule'), '!cron' => l(t('cron'), 'http://drupal.org/cron'))),
   );
 
-  foreach ($sources as $id => $source) {
-    $var = 'nodesquirrel_schedule_' . $id;
-    $schedule = variable_get($var, isset($defaults[$var]) ? $defaults[$var] : 0);
-    $form['nodesquirrel_schedule'][$var] = array(
-      '#type' => 'select',
-      '#title' => t('Backup my %source to NodeSquirrel', array('%source' => $source->get('name'))),
-      '#options' => array(
-        ''            => t('- None - '),
-        (60*60)       => t('Hourly'),
-        (60*60*24)    => t('Daily'),
-        (60*60*24*7)  => t('Weekly'),
-      ),
-      '#default_value' => $schedule,
-    );
+  $key = 'nodesquirrel_schedule';
+  $form['nodesquirrel_schedule'][$key] = array();
+  $defaults = array(
+    'period' => empty($schedule) ? variable_get('nodesquirrel_schedule', 60*60*24) : $schedule->get('period'),
+    'enabled' => empty($schedule) ? variable_get('nodesquirrel_schedule_enabled', TRUE) : $schedule->get('enabled'),
+    'source_id' => empty($schedule) ? variable_get('nodesquirrel_schedule_source_id', 'db') : $schedule->get('source_id'),
+  );
 
-    // If the schedule has been overriden it must be edited in the schedule tab.
-    backup_migrate_include('crud');
-    $item = backup_migrate_crud_get_item('schedule', 'nodesquirrel');
-    if ($item && $item->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
-      $form['nodesquirrel_schedule']['nodesquirrel_schedule_' . $id]['#options'] = array('' => $item->get_frequency_description());
-      $form['nodesquirrel_schedule']['nodesquirrel_schedule_' . $id]['#disabled'] = TRUE;
-      $form['nodesquirrel_schedule']['nodesquirrel_schedule_' . $id]['#description'] = t('Your NodeSquirrel schedule has been overriden and must be edited in the !schedule.', array('!schedule' => l(t('Schedules tab'), BACKUP_MIGRATE_MENU_PATH . '/schedule/list/edit/nodesquirrel')));
-    }
+  $form['nodesquirrel_schedule'][$key]['nodesquirrel_schedule_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Automatically backup to NodeSquirrel'),
+    '#default_value' => $defaults['enabled'],
+  );
+  $form['nodesquirrel_schedule'][$key]['settings'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'nodesquirrel_schedule_enabled' => TRUE,
+    ),
+  );
+  $form['nodesquirrel_schedule'][$key]['settings']['nodesquirrel_schedule_source_id'] = _backup_migrate_get_source_pulldown($defaults['source_id']);
+  $options = array(
+    (60*60)       => t('Once an hour'),
+    (60*60*24)    => t('Once a day'),
+    (60*60*24*7)  => t('Once a week'),
+  );
+  $period = $defaults['period'];
+  if (!isset($options[$period])) {
+    $options[$period] = empty($schedule) ? t('Custom') : $schedule->get('frequency_description');
   }
+  $form['nodesquirrel_schedule'][$key]['settings']['nodesquirrel_schedule'] = array(
+    '#type' => 'select',
+    '#title' => t('Schedule Frequency'),
+    '#options' => $options,
+    '#default_value' => $period,
+  );
   return $form;
 }
 
@@ -281,14 +292,14 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
 
   $key = variable_get('nodesquirrel_secret_key', '');
   $status = array();
-  if ($destination = nodesquirrel_get_destination($key)) {  
+  if ($destination = backup_migrate_nodesquirrel_get_destination($key)) {  
     $status = $destination->check_limits(); 
   }
 
   $form += backup_migrate_nodesquirrel_info_form();
   $form += backup_migrate_nodesquirrel_status_form($key, $destination, $status);
   $form += backup_migrate_nodesquirrel_credentials_settings_form($key, $status);
-  // $form += backup_migrate_nodesquirrel_schedule_settings_form($destination, $status);
+  $form += backup_migrate_nodesquirrel_schedule_settings_form($destination, $status);
 
   return system_settings_form($form);
 }
@@ -527,7 +538,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     }
 
     $form['settings'] = array('#tree' => TRUE);
-    $activate_link = nodesquirrel_get_activate_link();
+    $activate_link = backup_migrate_nodesquirrel_get_activate_link();
 
     // Retrieve the key from the settings or get it from the get string if this is an auto-config action.
     $key = $this->settings('secret_key');
