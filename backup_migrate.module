@@ -452,7 +452,7 @@ function backup_migrate_backup_migrate_schedules() {
  *
  * Tell CTools that we support the default_mymodule_presets API.
  */
-function mymodule_ctools_plugin_api($owner, $api) {
+function backup_migrate_ctools_plugin_api($owner, $api) {
   if ($owner == 'backup_migrate') {
     return array('version' => 1);
   }

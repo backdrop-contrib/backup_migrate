@@ -695,7 +695,7 @@ class backup_migrate_item {
   function get_list() {
     $items = $this->all_items();
     $rows = array();
-    foreach ($items as $item) {
+    foreach ((array)$items as $item) {
       if ($item->show_in_list()) {
         if ($row = $item->get_list_row()) {
           $rows[] = $row;
@@ -911,7 +911,7 @@ class backup_migrate_item {
     static $cache = array();
 
     // Get any items stored as a variable. This allows destinations to be defined in settings.php
-    $defaults = (array)variable_get($this->db_table .'_defaults', array());
+    $defaults = (array)variable_get($this->db_table . '_defaults', array());
     foreach ($defaults as $info) {
       if (is_array($info) && $item = $this->create($info)) {
         $items[$item->get_id()] = $item;
@@ -931,8 +931,20 @@ class backup_migrate_item {
     // Allow other modules to declare destinations programatically.
     $default_items = module_invoke_all($this->db_table);
 
-    // Get any items stored as a variable. This allows destinations to be defined in settings.php
-    $defaults = (array)variable_get($this->db_table .'_defaults', array());
+    // Get CTools exported versions.
+    if (function_exists('ctools_include')) {
+      ctools_include('export');
+      $defaults = ctools_export_load_object($this->db_table);
+      foreach ($defaults as $info) {
+        $info = (array)$info;
+        if (!empty($info) && $item = $this->create($info)) {
+          $default_items[$item->get_id()] = $item;
+        }
+      }
+    }
+
+    // Get any items stored as a variable again to correctly mark overrides.
+    $defaults = (array)variable_get($this->db_table . '_defaults', array());
     foreach ($defaults as $info) {
       if (is_array($info) && $item = $this->create($info)) {
         $default_items[] = $item;
