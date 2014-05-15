@@ -604,7 +604,7 @@ function backup_migrate_update_7302() {
 }
 
 /**
- * Add a second destination to schedules.
+ * Add a serial id field to all tables to allow them to be ctools exportable.
  */
 function backup_migrate_update_7303() {
   foreach (array('backup_migrate_sources' => 'source_id', 'backup_migrate_destinations' => 'destination_id', 'backup_migrate_schedules' => 'schedule_id', 'backup_migrate_profiles' => 'profile_id') as $table => $id) {
