@@ -951,7 +951,7 @@ function theme_backup_migrate_file_list($vars) {
 
   // Render the radios so they can be placed in the file list rendering.
   $vars['element']['#display_options']['form_elements'] = array();
-  if ($vars['element']['files']) {  
+  if (isset($vars['element']['files']) && count($vars['element']['files'])) {  
     foreach (element_children($vars['element']['files']) as $id) {
       $vars['element']['files'][$id]['#title'] = '';
       $vars['element']['#display_options']['form_elements'][$id] = render($vars['element']['files'][$id]);
