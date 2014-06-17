@@ -210,7 +210,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
 
       // Restore the sql db.
       if ($sqlfile && file_exists($sqlfile)) {
-        $db_settings = drupal_clone($settings);
+        $db_settings = clone($settings);
         $db_settings->source_id = 'db';
         $file = new backup_file(array('filepath' => $sqlfile));
         $success = backup_migrate_filters_restore($file, $db_settings);

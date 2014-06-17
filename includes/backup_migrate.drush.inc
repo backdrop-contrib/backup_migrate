@@ -136,7 +136,7 @@ function backup_migrate_drush_restore($source_id = '', $destination_id = '', $fi
   }
   _backup_migrate_message('Starting restore...');
   $settings = array('source_id' => $source_id);
-  backup_migrate_perform_restore($destination_id, $file_id);
+  backup_migrate_perform_restore($destination_id, $file_id, $settings);
 }
 
 /**
