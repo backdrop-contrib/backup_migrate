@@ -404,7 +404,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#options" => _backup_migrate_get_profile_form_item_options(),
       "#default_value" => $this->get('profile_id'),
     );
-    $form['profile_id']['#description'] = ' '. l(t("Create new profile"), BACKUP_MIGRATE_MENU_PATH . "/profile/add");
+    $form['profile_id']['#description'] = ' '. l(t('Create new profile'), BACKUP_MIGRATE_MENU_PATH . '/settings/profile/add');
     if (!$form['profile_id']['#options']) {
       $form['profile_id']['#options'] = array('0' => t('-- None Available --'));
     }
