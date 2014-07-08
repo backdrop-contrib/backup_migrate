@@ -228,13 +228,13 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
               }
               // If the directory is empty, add an empty directory.
               if (count($subdir) == 0) {
-                $out[] = $path;
+                $out[] = $real;
               }
               $out = array_merge($out, $subdir);
             }
             else {
               if (is_readable($real)) {
-                $out[] = $path;
+                $out[] = $real;
               }
               else {
                 $errors[] = $dir . '/' . $file;
