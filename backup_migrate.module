@@ -136,7 +136,7 @@ function backup_migrate_menu() {
     'description' => 'Backup the database.',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('', 'backup_migrate_ui_manual_backup_quick', TRUE),
-    'access arguments' => array('access backup and migrate'),
+    'access arguments' => array('perform backup'),
     'weight' => 0,
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
@@ -163,7 +163,7 @@ function backup_migrate_menu() {
     'description' => 'Previously created backups',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('', 'backup_migrate_ui_saved_backups', TRUE),
-    'access arguments' => array('access backup and migrate'),
+    'access arguments' => array('access backup files'),
     'weight' => 2,
     'type' => MENU_LOCAL_TASK,
   );
@@ -1828,7 +1828,12 @@ function backup_migrate_exec($command, $args = array()) {
   $output = $result = NULL;
 
   // Run the command.
-  exec($command . ' 2>&1', $output, $result);
+  $temp_name = drupal_tempnam('temporary://', 'mysql');
+  exec($command . ' 2>' . realpath($temp_name), $output, $result);
+  if ($result !== 0 && isset($args['%file'])) {
+    file_put_contents($args['%file'], file_get_contents($temp_name), FILE_APPEND);
+  }
+  unlink($temp_name);
 
   return $result == 0;
 }
