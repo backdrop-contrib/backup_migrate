@@ -640,8 +640,8 @@ class backup_migrate_schedule extends backup_migrate_item {
       $settings->source_id = $this->get('source_id');
       $settings->destination_id = $this->get('destination_ids');
 
-      backup_migrate_perform_backup($settings);
       $this->update_last_run(time());
+      backup_migrate_perform_backup($settings);
       $this->remove_expired_backups();
     }
     else {
