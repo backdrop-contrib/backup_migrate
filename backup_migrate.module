@@ -787,9 +787,11 @@ function backup_migrate_ui_manual_quick_backup_form_validate($form, &$form_state
   if ($form_state['values']['source_id'] == $form_state['values']['destination_id']) {
     form_set_error('destination_id', t('A source cannot be backed up to itself. Please pick a different destination for this backup.'));
   }
+  // Wrap profile_id for prevent Undefined index notice.
+  $profile_id = isset($form_state['values']['profile_id']) ? $form_state['values']['profile_id'] : NULL;
 
   // For a quick backup use the default settings.
-  $settings = _backup_migrate_profile_saved_default_profile($form_state['values']['profile_id']);
+  $settings = _backup_migrate_profile_saved_default_profile($profile_id);
 
   // Set the destination to the one chosen in the pulldown.
   $settings->destination_id = array($form_state['values']['destination_id']);
