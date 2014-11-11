@@ -764,7 +764,7 @@ function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline
 
   $form['advanced'] = array(
     '#type' => 'markup',
-    '#markup' => '<div class="clearblock backup-migrate-footer-message">' . t('For more backup options, try the <a href="!advancedurl">advanced backup page</a>.', array('!advancedurl' => url('admin/config/system/backup_migrate/export/advanced'))) . '</div>',
+    '#markup' => '<div class="clearblock backup-migrate-footer-message">' . t('For more backup options, try the <a href="!advancedurl">advanced backup page</a>.', array('!advancedurl' => url(BACKUP_MIGRATE_MENU_PATH . '/export/advanced'))) . '</div>',
   );
 
   $form['quickbackup']['submit'] = array(
