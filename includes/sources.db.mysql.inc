@@ -204,7 +204,7 @@ class backup_migrate_source_db_mysql extends backup_migrate_source_db {
       $file->close();
     }
     else {
-      drupal_set_message(t("Unable to open file %file to restore database", array("%file" => $file->filepath())), 'error');
+      backdrop_set_message(t("Unable to open file %file to restore database", array("%file" => $file->filepath())), 'error');
       $num = FALSE;
     }
     return $num;

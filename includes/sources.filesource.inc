@@ -295,7 +295,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    * Get the file location.
    */
   function get_realpath() {
-    return drupal_realpath($this->get_location());
+    return backdrop_realpath($this->get_location());
   }
 }
 

@@ -23,7 +23,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Get the file location.
    */
   function get_realpath() {
-    return drupal_realpath($this->get_location());
+    return backdrop_realpath($this->get_location());
   }
 
   /**
@@ -43,7 +43,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 
       // chmod, chown and chgrp the file if needed.
       if ($chmod = $this->settings('chmod')) {
-        if (!@drupal_chmod($filepath, octdec($chmod))) {
+        if (!@backdrop_chmod($filepath, octdec($chmod))) {
           _backup_migrate_message('Unable to set the file mode for: @file', array('@file' => $filepath), 'error');
         }
       }
@@ -240,7 +240,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
         }
         else {
           $message = t("Security notice: Backup and Migrate was unable to write a test text file to the destination directory %directory, and is therefore unable to check the security of the backup destination. Backups to the server will be disabled until the destination becomes writable and secure.", array('%directory' => $directory));
-          drupal_set_message($message, "error");
+          backdrop_set_message($message, "error");
           return FALSE;
         }
       }
@@ -249,7 +249,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       // so it's not a bullet-proof check.
       if ($this->test_file_readable_remotely($directory .'/test.txt', $test_contents)) {
         $message = t("Security notice: Backup and Migrate will not save backup files to the server because the destination directory is publicly accessible. If you want to save files to the server, please secure the '%directory' directory", array('%directory' => $directory));
-        drupal_set_message($message, "error");
+        backdrop_set_message($message, "error");
         return FALSE;
       }
       // Directory tested OK, so we mark it as tested.
@@ -266,8 +266,8 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Check if the given directory is within the webroot and is therefore web accessible.
    */
   function dir_in_webroot($directory) {
-    $real_dir = drupal_realpath($directory);
-    $real_root = drupal_realpath(DRUPAL_ROOT);
+    $real_dir = backdrop_realpath($directory);
+    $real_root = backdrop_realpath(DRUPAL_ROOT);
     if ($real_dir == $real_root || strpos($real_dir, $real_root . '/') === 0) {
       return TRUE;
     }
@@ -278,14 +278,14 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Check if a file can be read remotely via http.
    */
   function test_file_readable_remotely($directory, $contents) {
-    $real_dir = drupal_realpath($directory);
-    $real_root = drupal_realpath(DRUPAL_ROOT);
+    $real_dir = backdrop_realpath($directory);
+    $real_root = backdrop_realpath(DRUPAL_ROOT);
     if ($real_dir && $real_root) {
       // Get the root relative path.
       $path = substr($real_dir, strlen($real_root));
 
       $url = $GLOBALS['base_url'] . str_replace('\\', '/', $path);
-      $result = drupal_http_request($url);
+      $result = backdrop_http_request($url);
       if (!empty($result->data) && strpos($result->data, $contents) !== FALSE) {
         return TRUE;
       }

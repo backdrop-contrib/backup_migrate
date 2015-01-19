@@ -146,9 +146,9 @@ function backup_migrate_crud_menu() {
  */
 function backup_migrate_crud_ui_create($type, $subtype = NULL) {
   if ($item = backup_migrate_crud_create($type, $subtype)) {
-    return drupal_get_form('backup_migrate_crud_edit_form', $item);
+    return backdrop_get_form('backup_migrate_crud_edit_form', $item);
   }
-  return drupal_not_found();
+  return backdrop_not_found();
 }
 
 /**
@@ -181,9 +181,9 @@ function backup_migrate_crud_ui_list_all() {
 function backup_migrate_crud_ui_edit($type, $item_id = NULL) {
   if ($type = backup_migrate_crud_type_load($type)) {
     if ($item_id && $item = $type->item($item_id)) {
-      return drupal_get_form('backup_migrate_crud_edit_form', $item);
+      return backdrop_get_form('backup_migrate_crud_edit_form', $item);
     }
-    drupal_goto($type->get_settings_path());
+    backdrop_goto($type->get_settings_path());
   }
 }
 
@@ -239,9 +239,9 @@ function backup_migrate_crud_edit_form_submit($form, &$form_state) {
 function backup_migrate_crud_ui_delete($type, $item_id = NULL) {
   if ($type = backup_migrate_crud_type_load($type)) {
     if ($item_id && $item = $type->item($item_id)) {
-      return drupal_get_form('backup_migrate_crud_delete_confirm_form', $item);
+      return backdrop_get_form('backup_migrate_crud_delete_confirm_form', $item);
     }
-    drupal_goto($type->get_settings_path());
+    backdrop_goto($type->get_settings_path());
   }
 }
 
@@ -279,9 +279,9 @@ function backup_migrate_crud_delete_confirm_form_submit($form, &$form_state) {
 function backup_migrate_crud_ui_export($type, $item_id = NULL) {
   if ($type = backup_migrate_crud_type_load($type)) {
     if ($item_id && $item = $type->item($item_id)) {
-      return drupal_get_form('backup_migrate_crud_export_form', $item->export());
+      return backdrop_get_form('backup_migrate_crud_export_form', $item->export());
     }
-    drupal_goto($type->get_settings_path());
+    backdrop_goto($type->get_settings_path());
   }
 }
 
@@ -302,7 +302,7 @@ function backup_migrate_crud_export_form($form, &$form_state, $export) {
  * Page callback to import an item.
  */
 function backup_migrate_crud_ui_import() {
-  return drupal_get_form('backup_migrate_crud_import_form');
+  return backdrop_get_form('backup_migrate_crud_import_form');
 }
 
 /**
@@ -465,7 +465,7 @@ class backup_migrate_item {
       $this->unique_id();
     }
     $record = $this->to_array();
-    drupal_write_record($this->db_table, $record, !empty($this->storage) ? $this->get_primary_key() : array());
+    backdrop_write_record($this->db_table, $record, !empty($this->storage) ? $this->get_primary_key() : array());
   }
 
   /**
@@ -584,7 +584,7 @@ class backup_migrate_item {
    * Get the schema for the item type.
    */
   function get_schema() {
-    return drupal_get_schema($this->db_table);
+    return backdrop_get_schema($this->db_table);
   }
 
   /**
@@ -912,7 +912,7 @@ class backup_migrate_item {
     $items = array();
 
     // Get any items stored as a variable. This allows destinations to be defined in settings.php
-    $defaults = (array)variable_get($this->db_table . '_defaults', array());
+    $defaults = (array)config_get('backup_migrate.settings',$this->db_table . '_defaults', array());
     foreach ($defaults as $info) {
       if (is_array($info) && $item = $this->create($info)) {
         $items[$item->get_id()] = $item;
@@ -945,7 +945,7 @@ class backup_migrate_item {
     }
 
     // Get any items stored as a variable again to correctly mark overrides.
-    $defaults = (array)variable_get($this->db_table . '_defaults', array());
+    $defaults = (array)config_get('backup_migrate.settings',$this->db_table . '_defaults', array());
     foreach ($defaults as $info) {
       if (is_array($info) && $item = $this->create($info)) {
         $default_items[] = $item;
@@ -966,7 +966,7 @@ class backup_migrate_item {
     // Allow other modules to alter the items. This should maybe be before the db override code above
     // but then the filters are not able to set defaults for missing values. Other modules should just
     // be careful not to overwrite the user's UI changes in an unexpected way.
-    drupal_alter($this->db_table, $items);
+    backdrop_alter($this->db_table, $items);
 
     return $items;
   }

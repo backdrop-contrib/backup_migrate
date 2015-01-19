@@ -179,7 +179,7 @@ class backup_migrate_schedule extends backup_migrate_item {
    * Get a row of data to be used in a list of items of this type.
    */
   function get_list_row() {
-    drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+    backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
     $row = parent::get_list_row();
     if (!$this->is_enabled()) {
       foreach ($row as $key => $field) {

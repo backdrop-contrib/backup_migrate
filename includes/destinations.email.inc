@@ -19,7 +19,7 @@ class backup_migrate_destination_email extends backup_migrate_destination {
    */
   function save_file($file, $settings) {
     $size = filesize($file->filepath());
-    $max = variable_get('backup_migrate_max_email_size', 20971520);
+    $max = config_get('backup_migrate.settings','backup_migrate_max_email_size', 20971520);
     if ($size > $max) {
       _backup_migrate_message('Could not email the file @file because it is @size and Backup and Migrate only supports emailing files smaller than @max.', array('@file' => $file->filename(), '@size' => format_size($size), '@max' => format_size($max)), 'error');
       return FALSE;
@@ -75,10 +75,10 @@ function _backup_migrate_destination_email_mail_backup($attachment, $to) {
   // Send mail
   $attach        = fread(fopen($attachment->path, "r"), filesize($attachment->path));
   $mail          = new mime_mail();
-  $mail->from    = variable_get('site_mail', ini_get('sendmail_from'));
+  $mail->from    = config_get('backup_migrate.settings','site_mail', ini_get('sendmail_from'));
   $mail->headers = 'Errors-To: [EMAIL='. $mail->from .']'. $mail->from .'[/EMAIL]';
   $mail->to      = $to;
-  $mail->subject = t('Database backup from !site: !file', array('!site' => variable_get('site_name', 'drupal'), '!file' => $attachment->filename));
+  $mail->subject = t('Database backup from !site: !file', array('!site' => config_get('backup_migrate.settings','site_name', 'drupal'), '!file' => $attachment->filename));
   $mail->body    = t('Database backup attached.') ."\n\n";
 
   $mail->add_attachment("$attach", $attachment->filename, "Content-Transfer-Encoding: base64 /9j/4AAQSkZJRgABAgEASABIAAD/7QT+UGhvdG9zaG", NULL, TRUE);

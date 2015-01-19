@@ -130,9 +130,9 @@ function _backup_migrate_filetypes() {
  * staying within the maximum filename limit.
  */
 function _backup_migrate_filename_append_prepare($filename, $append_str) {
-  $max_name_len = BACKUP_MIGRATE_FILENAME_MAXLENGTH - drupal_strlen($append_str);
-  if (drupal_strlen($filename) > $max_name_len) {
-    $filename = drupal_substr($filename, 0, $max_name_len);
+  $max_name_len = BACKUP_MIGRATE_FILENAME_MAXLENGTH - backdrop_strlen($append_str);
+  if (backdrop_strlen($filename) > $max_name_len) {
+    $filename = backdrop_substr($filename, 0, $max_name_len);
   }
   return $filename;
 }
@@ -164,7 +164,7 @@ function _backup_migrate_construct_filename($settings) {
   $filename = trim($filename, '-');
 
   // If there is no filename, then just call it untitled.
-  if (drupal_strlen($filename) == 0) {
+  if (backdrop_strlen($filename) == 0) {
     $filename = 'untitled';
   }
   return $filename;
@@ -235,7 +235,7 @@ class backup_file {
    * Get the current filepath.
    */
   function filepath() {
-    return drupal_realpath($this->path);
+    return backdrop_realpath($this->path);
   }
 
   /**
@@ -445,7 +445,7 @@ class backup_file {
         // not followed by a space or a tab.
         // See http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
         $header['value'] = preg_replace('/\r?\n(?!\t| )/', '', $header['value']);
-        drupal_add_http_header($header['key'], $header['value']);
+        backdrop_add_http_header($header['key'], $header['value']);
       }
       // Transfer file in 1024 byte chunks to save memory usage.
       while ($data = $this->read(1024)) {
@@ -457,7 +457,7 @@ class backup_file {
       $GLOBALS['devel_shutdown'] = FALSE;
     }
     else {
-      drupal_not_found();
+      backdrop_not_found();
     }
 
     // Start buffering and throw away the results so that errors don't get appended to the file.
@@ -549,7 +549,7 @@ class backup_file {
    * Get a temporary file name with path.
    */
   function temporary_file() {
-    $file = drupal_tempnam('temporary://', 'backup_migrate_');
+    $file = backdrop_tempnam('temporary://', 'backup_migrate_');
     // Add the version without the extension. The tempnam function creates this for us.
     backup_migrate_temp_files_add($file);
 

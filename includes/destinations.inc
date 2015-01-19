@@ -22,23 +22,23 @@ function backup_migrate_get_destination_subtypes() {
  */
 function backup_migrate_backup_migrate_destination_subtypes() {
   $out = array();
-  if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_file', TRUE)) {
     $out += array(
       'file' => array(
         'description' => t('Save the backup files to any directory on this server which the web-server can write to.'),
-        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
+        'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
         'class' => 'backup_migrate_destination_files',
         'type_name' => t('Server Directory'),
         'local' => TRUE,
         'can_create' => TRUE,
       ),
       'file_manual' => array(
-        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
+        'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
         'type_name' => t('Server Directory'),
         'class' => 'backup_migrate_destination_files_manual',
       ),
       'file_scheduled' => array(
-        'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
+        'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.file.inc',
         'type_name' => t('Server Directory'),
         'class' => 'backup_migrate_destination_files_scheduled',
       ),
@@ -46,16 +46,16 @@ function backup_migrate_backup_migrate_destination_subtypes() {
   }
   $out += array(
     'browser_download' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
       'class' => 'backup_migrate_destination_browser_download',
     ),
     'browser_upload' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
       'class' => 'backup_migrate_destination_browser_upload',
     ),
     'nodesquirrel' => array(
       'description' => t('Save the backup files to the NodeSquirrel.com backup service.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.nodesquirrel.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.nodesquirrel.inc',
       'class' => 'backup_migrate_destination_nodesquirrel',
       'type_name' => t('NodeSquirrel.com'),
       'can_create' => TRUE,
@@ -63,7 +63,7 @@ function backup_migrate_backup_migrate_destination_subtypes() {
     ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
       'class' => 'backup_migrate_destination_ftp',
       'type_name' => t('FTP Directory'),
       'can_create' => TRUE,
@@ -71,7 +71,7 @@ function backup_migrate_backup_migrate_destination_subtypes() {
     ),
     's3' => array(
       'description' => t('Save the backup files to a bucket on your !link.', array('!link' => l(t('Amazon S3 account'), 'http://aws.amazon.com/s3/'))),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.s3.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.s3.inc',
       'class' => 'backup_migrate_destination_s3',
       'type_name' => t('Amazon S3 Bucket'),
       'can_create' => TRUE,
@@ -80,7 +80,7 @@ function backup_migrate_backup_migrate_destination_subtypes() {
     'email' => array(
       'type_name' => t('Email'),
       'description' => t('Send the backup as an email attachment to the specified email address.'),
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/destinations.email.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.email.inc',
       'class' => 'backup_migrate_destination_email',
       'can_create' => TRUE,
       'remote' => TRUE,
@@ -99,8 +99,8 @@ function backup_migrate_backup_migrate_destinations() {
   $out              = array();
 
   // Add the default, out of the box destinations for new users.
-  if (variable_get('backup_migrate_allow_backup_to_file', TRUE)) {
-    if (variable_get('file_private_path', FALSE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_file', TRUE)) {
+    if (config_get('backup_migrate.settings','file_private_path', FALSE)) {
       $out['manual']    = backup_migrate_create_destination('file_manual', array('machine_name' => 'manual'));
       $out['scheduled'] = backup_migrate_create_destination('file_scheduled', array('machine_name' => 'scheduled'));
     }
@@ -109,7 +109,7 @@ function backup_migrate_backup_migrate_destinations() {
     }
   }
   // Add the browser destination for downloading to the desktop.
-  if (variable_get('backup_migrate_allow_backup_to_download', TRUE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_download', TRUE)) {
     $out['download']  = backup_migrate_create_destination('browser_download');
   }
   $out['upload']    = backup_migrate_create_destination('browser_upload');
@@ -276,14 +276,14 @@ function _backup_migrate_destination_get_file_links($destination_id, $file_id) {
  * List the backup files in the given destination.
  */
 function backup_migrate_ui_destination_display_files($destination_id = NULL) {
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $rows = $sort = array();
   if ($destination = backup_migrate_get_destination($destination_id)) {
-    drupal_set_title(t('@title Files', array('@title' => $destination->get_name())));
+    backdrop_set_title(t('@title Files', array('@title' => $destination->get_name())));
     return _backup_migrate_ui_destination_display_files($destination, 20, TRUE);
   }
-  drupal_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
+  backdrop_goto(BACKUP_MIGRATE_MENU_PATH . "/destination");
 }
 
 /**
@@ -294,7 +294,7 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
     // Refresh the file listing cache if requested.
     if (isset($_GET['refresh'])) {
       $destination->file_cache_clear();
-      drupal_goto($_GET['q']);
+      backdrop_goto($_GET['q']);
     }
     $files = $destination->list_files();
 
@@ -317,7 +317,7 @@ function _backup_migrate_ui_destination_display_files($destination = NULL, $limi
  * List the backup files in the given destination.
  */
 function _backup_migrate_ui_destination_display_file_list($files, $options = array()) {
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   // Set soem default options
   $options += array(
@@ -445,7 +445,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $options = arr
  * List the backup files in the given destination.
  */
 function _backup_migrate_ui_destination_display_file_list_options($files, $limit = NULL) {
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $rows = $sort = array();
   if ($files) {
@@ -533,7 +533,7 @@ function backup_migrate_ui_destination_download_file($destination_id = NULL, $fi
     backup_migrate_include('files');
     $file->transfer();
   }
-  drupal_goto(BACKUP_MIGRATE_MENU_PATH);
+  backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
 
 /**
@@ -541,13 +541,13 @@ function backup_migrate_ui_destination_download_file($destination_id = NULL, $fi
  */
 function backup_migrate_ui_destination_restore_file($destination_id = NULL, $file_id = NULL) {
   if (backup_migrate_destination_file_exists($destination_id, $file_id)) {
-    return drupal_get_form('backup_migrate_ui_destination_restore_file_confirm', $destination_id, $file_id);
+    return backdrop_get_form('backup_migrate_ui_destination_restore_file_confirm', $destination_id, $file_id);
   }
   _backup_migrate_message('Cannot restore from the the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
   if ($destination_id && user_access('access backup files')) {
-    drupal_goto(BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/' . $destination_id);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/' . $destination_id);
   }
-  drupal_goto(BACKUP_MIGRATE_MENU_PATH);
+  backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
 
 /**
@@ -574,7 +574,7 @@ function backup_migrate_ui_destination_restore_file_confirm($form, &$form_state,
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
   $form = confirm_form($form, t('Are you sure you want to restore the database?'), BACKUP_MIGRATE_MENU_PATH . "/destination/list/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));
-  drupal_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
+  backdrop_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
   $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
   $form['actions']['#weight'] = 100;
 
@@ -607,13 +607,13 @@ function backup_migrate_ui_destination_restore_file_confirm_submit($form, &$form
  */
 function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file_id = NULL) {
   if (backup_migrate_destination_file_exists($destination_id, $file_id)) {
-    return drupal_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
+    return backdrop_get_form('backup_migrate_ui_destination_delete_file_confirm', $destination_id, $file_id);
   }
   _backup_migrate_message('Cannot delete the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
   if ($destination_id && user_access('access backup files')) {
-    drupal_goto(BACKUP_MIGRATE_MENU_PATH .'/destination/list/files/' . $destination_id);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH .'/destination/list/files/' . $destination_id);
   }
-  drupal_goto(BACKUP_MIGRATE_MENU_PATH);
+  backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
 
 /**
@@ -644,7 +644,7 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
  * Get pulldown to select existing source options.
  */
 function _backup_migrate_get_destination_pulldown($op, $destination_id = NULL, $copy_destination_id = NULL) {
-  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  backdrop_add_js(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.js');
 
   $destinations = _backup_migrate_get_destination_form_item_options($op);
   $form = array(
@@ -704,7 +704,7 @@ function _backup_migrate_process_destination_pulldown($element) {
       )
     )
   );
-  drupal_add_js($settings, 'setting');
+  backdrop_add_js($settings, 'setting');
 
   return $element;
 }
@@ -883,7 +883,7 @@ class backup_migrate_destination extends backup_migrate_location {
       // See if there is an info file with the same name as the backup.
       if (isset($files[$key . '.info'])) {
         $info_file = $this->load_file($files[$key . '.info']->file_id());
-        $info = drupal_parse_info_file($info_file->filepath());
+        $info = backdrop_parse_info_file($info_file->filepath());
         // Allow the stored metadata to override the detected metadata.
         unset($info['filename']);
         $file->file_info = $info + $file->file_info;

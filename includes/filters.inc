@@ -39,23 +39,23 @@ function backup_migrate_get_filters($op = NULL) {
 function backup_migrate_backup_migrate_filters() {
   return array(
     'backup_restore' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.backup_restore.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/filters.backup_restore.inc',
       'class' => 'backup_migrate_filter_backup_restore',
     ),
     'compression' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
       'class' => 'backup_migrate_filter_compression',
     ),
     'encryption' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.encryption.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/filters.encryption.inc',
       'class' => 'backup_migrate_filter_encryption',
     ),
     'statusnotify' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.statusnotify.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/filters.statusnotify.inc',
       'class' => 'backup_migrate_filter_statusnotify',
     ),
     'utils' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.utils.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/filters.utils.inc',
       'class' => 'backup_migrate_filter_utils',
     ),
   );

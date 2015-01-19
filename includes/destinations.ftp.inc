@@ -19,7 +19,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
    */
   function _save_file($file, $settings) {
     $ftp = $this->ftp_object();
-    if (drupal_ftp_file_to_ftp($file->filepath(), $file->filename(), '.', $ftp)) {
+    if (backdrop_ftp_file_to_ftp($file->filepath(), $file->filename(), '.', $ftp)) {
       return $file;
     }
     return FALSE;
@@ -32,7 +32,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
     backup_migrate_include('files');
     $file = new backup_file(array('filename' => $file_id));
     $this->ftp_object();
-    if (drupal_ftp_ftp_to_file($file->filepath(), $file_id, '.', $this->ftp)) {
+    if (backdrop_ftp_ftp_to_file($file->filepath(), $file_id, '.', $this->ftp)) {
       return $file;
     }
     return FALSE;
@@ -43,14 +43,14 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
    */
   function _delete_file($file_id) {
     $this->ftp_object();
-    drupal_ftp_delete_file($file_id, $this->ftp);
+    backdrop_ftp_delete_file($file_id, $this->ftp);
   }
 
   function _list_files() {
     backup_migrate_include('files');
     $files = array();
     $this->ftp_object();
-    $ftp_files = (array)drupal_ftp_file_list('.', $this->ftp);
+    $ftp_files = (array)backdrop_ftp_file_list('.', $this->ftp);
     foreach ($ftp_files as $file) {
       $files[$file['filename']] = new backup_file($file);
     }
@@ -91,7 +91,7 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
     if (!$this->ftp) {
       $this->dest_url['port'] = empty($this->dest_url['port']) ? '21' : $this->dest_url['port'];
       $this->dest_url['pasv'] = $this->get_pasv();
-      $this->ftp = drupal_ftp_ftp_object($this->dest_url['host'], $this->dest_url['port'], $this->dest_url['user'], $this->dest_url['pass'], $this->dest_url['path'], $this->dest_url['pasv']);
+      $this->ftp = backdrop_ftp_ftp_object($this->dest_url['host'], $this->dest_url['port'], $this->dest_url['user'], $this->dest_url['pass'], $this->dest_url['path'], $this->dest_url['pasv']);
     }
     return $this->ftp;
   }
@@ -109,7 +109,7 @@ define('DRUPAL_FTP_FT_FILE', 1);
 /**
  *  creates a new ftp object. if any elements of ftp_map are missing, they'll be filled with the server defaults.
  */
-function drupal_ftp_ftp_object($server, $port, $user, $pass, $dir, $pasv) {
+function backdrop_ftp_ftp_object($server, $port, $user, $pass, $dir, $pasv) {
   $ftp = new stdClass();
 
   $ftp->__server = $server;
@@ -123,16 +123,16 @@ function drupal_ftp_ftp_object($server, $port, $user, $pass, $dir, $pasv) {
 }
 
 /**
- *  The drupal_ftp_connect function
+ *  The backdrop_ftp_connect function
  *  This function connects to an FTP server and attempts to change into the directory specified by
  *  the fourth parameter, $directory.
  */
-function drupal_ftp_connect(&$ftp) {
+function backdrop_ftp_connect(&$ftp) {
   if (is_NULL($ftp)) {
-    $ftp = drupal_ftp_ftp_object();
+    $ftp = backdrop_ftp_ftp_object();
   }
 
-  if (!$ftp->__conn && !drupal_ftp_connected($ftp)) {
+  if (!$ftp->__conn && !backdrop_ftp_connected($ftp)) {
     // Attempt to connect to the remote server
     $ftp->__conn = @ftp_connect($ftp->__server, $ftp->__port);
 
@@ -172,16 +172,16 @@ function drupal_ftp_connect(&$ftp) {
 }
 
 /**
- * The drupal_ftp_connected function
+ * The backdrop_ftp_connected function
  * This function queries the FTP server with the ftp_systype command to check if the connection is still alive.
  * It returns TRUE on success or FALSE on disconnection.
  */
-function drupal_ftp_connected(&$ftp) {
+function backdrop_ftp_connected(&$ftp) {
   // Attempt to call the ftp_systype to see if the connect
   // to the FTP server is still alive and kicking
 
   if (is_NULL($ftp)) {
-    $ftp = drupal_ftp_ftp_object();
+    $ftp = backdrop_ftp_ftp_object();
     return FALSE;
   }
 
@@ -200,11 +200,11 @@ function drupal_ftp_connected(&$ftp) {
  *  Firstly it changes into the $directory directory, and then attempts to download the file $filename.
  *  The file is saved locally and its contents are returned to the caller of the function.
  */
-function drupal_ftp_ftp_to_file($file, $filename, $directory, &$ftp) {
+function backdrop_ftp_ftp_to_file($file, $filename, $directory, &$ftp) {
   // Change into the remote directory and retrieve the content
   // of a file. Once retrieve, return this value to the caller
 
-  if (!@drupal_ftp_connect($ftp)) {
+  if (!@backdrop_ftp_connect($ftp)) {
     return FALSE;
   }
 
@@ -235,12 +235,12 @@ function drupal_ftp_ftp_to_file($file, $filename, $directory, &$ftp) {
 /**
  * Send a file to an FTP server.
  */
-function drupal_ftp_file_to_ftp($file, $ftp_filename, $ftp_directory, &$ftp) {
-  if (!@drupal_ftp_connect($ftp)) {
+function backdrop_ftp_file_to_ftp($file, $ftp_filename, $ftp_directory, &$ftp) {
+  if (!@backdrop_ftp_connect($ftp)) {
     return FALSE;
   }
 
-  if ($source = drupal_realpath($file)) {
+  if ($source = backdrop_realpath($file)) {
     // Now we can try to write to the remote file
     $complete_filename = $ftp_directory .'/'. $ftp_filename;
     $put_file = @ftp_put($ftp->__conn, $complete_filename, $source, FTP_BINARY);
@@ -259,15 +259,15 @@ function drupal_ftp_file_to_ftp($file, $ftp_filename, $ftp_directory, &$ftp) {
 }
 
 /**
- *  The drupal_ftp_change_directory Function
+ *  The backdrop_ftp_change_directory Function
  *  This function simply changes into the $directory folder on the FTP server.
  *  If a connection or permission error occurs then _backup_migrate_message() will contain the error message.
  */
-function drupal_ftp_change_directory($directory, &$ftp) {
+function backdrop_ftp_change_directory($directory, &$ftp) {
   // Switch to another directory on the web server. If we don't
   // have permissions then an error will occur
 
-  if (!@drupal_ftp_connect($ftp)) {
+  if (!@backdrop_ftp_connect($ftp)) {
     return FALSE;
   }
 
@@ -285,11 +285,11 @@ function drupal_ftp_change_directory($directory, &$ftp) {
 }
 
 /**
- *  The drupal_ftp_file_list Function
+ *  The backdrop_ftp_file_list Function
  *  This function will change into the $directory folder and get a list of files and directories contained in that folder.
  *  This function still needs a lot of work, but should work in most cases.
  */
-function drupal_ftp_file_list($directory, &$ftp) {
+function backdrop_ftp_file_list($directory, &$ftp) {
   // This function will attempt to change into the specified
   // directory and retrieve a list of files as an associative
   // array. This list will include file name, size and date last modified
@@ -297,7 +297,7 @@ function drupal_ftp_file_list($directory, &$ftp) {
   $file_array = array();
 
   // Can we switch to the desired directory?
-  if (!drupal_ftp_change_directory($directory, $ftp)) {
+  if (!backdrop_ftp_change_directory($directory, $ftp)) {
     return FALSE;
   }
 
@@ -321,14 +321,14 @@ function drupal_ftp_file_list($directory, &$ftp) {
 }
 
 /**
- *  The drupal_ftp_create_directory Function
+ *  The backdrop_ftp_create_directory Function
  *  This function tries to make a new directory called $folder_name on the FTP server.
  *  If it can create the folder, then the folder is given appropriate rights with the CHMOD command.
  */
-function drupal_ftp_create_directory($folder_name, &$ftp) {
+function backdrop_ftp_create_directory($folder_name, &$ftp) {
   // Makes a new folder on the web server via FTP
 
-  if (!@drupal_ftp_connect($ftp)) {
+  if (!@backdrop_ftp_connect($ftp)) {
     return FALSE;
   }
 
@@ -353,12 +353,12 @@ function drupal_ftp_create_directory($folder_name, &$ftp) {
 }
 
 /**
- *  The drupal_ftp_delete_file Function
+ *  The backdrop_ftp_delete_file Function
  *  This function attempts to delete a file called $filename from the FTP server.
  */
-function drupal_ftp_delete_file($filename, &$ftp) {
+function backdrop_ftp_delete_file($filename, &$ftp) {
   // Remove the specified file from the FTP server
-  if (!@drupal_ftp_connect($ftp)) {
+  if (!@backdrop_ftp_connect($ftp)) {
     return FALSE;
   }
 
@@ -376,11 +376,11 @@ function drupal_ftp_delete_file($filename, &$ftp) {
 }
 
 /**
- *  The drupal_ftp_delete_folder Function
+ *  The backdrop_ftp_delete_folder Function
  *  This function was one of the hardest to write. It recursively deletes all files and folders from a directory called $folder_name.
  */
-function drupal_ftp_delete_folder($folder_name, &$ftp) {
-  if (!@drupal_ftp_connect($ftp)) {
+function backdrop_ftp_delete_folder($folder_name, &$ftp) {
+  if (!@backdrop_ftp_connect($ftp)) {
     return FALSE;
   }
 
@@ -418,7 +418,7 @@ function drupal_ftp_delete_folder($folder_name, &$ftp) {
   for ($j = 0; $j < $dir_counter; $j++) {
     if ($directories[$j] != "." OR $directories[$j] != "..") {
       $location = ftp_pwd($ftp->__conn);
-      drupal_ftp_delete_folder($directories[$j], $ftp);
+      backdrop_ftp_delete_folder($directories[$j], $ftp);
       @ftp_cdup ($ftp->__conn);
       @ftp_rmdir($ftp->__conn, $directories[$j]);
     }

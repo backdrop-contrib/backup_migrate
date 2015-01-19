@@ -250,7 +250,7 @@ function form_process_backup_migrate_file_list($element) {
 function backup_migrate_form_update_script_selection_form_alter(&$form, $form_state) {
   $msg = t('Before you run any database updates, <strong>make sure you have a backup of your database.</strong> Use !backup_migrate to create that backup now.', array('!backup_migrate' => l(t('Backup and Migrate'), BACKUP_MIGRATE_MENU_PATH)));
   
-  drupal_set_message($msg, 'warning');
+  backdrop_set_message($msg, 'warning');
   
 }
 
@@ -331,7 +331,7 @@ function backup_migrate_permission() {
  * Implements hook_simpletest().
  */
 function backup_migrate_simpletest() {
-  $dir = drupal_get_path('module', 'backup_migrate') .'/tests';
+  $dir = backdrop_get_path('module', 'backup_migrate') .'/tests';
   $tests = file_scan_directory($dir, '\.test$');
   return array_keys($tests);
 }
@@ -393,13 +393,13 @@ function backup_migrate_block_view($delta) {
  */
 function _backup_migrate_block_view_quick_backup() {
   if (user_access('access backup and migrate') && user_access('perform backup') && $_GET['q'] != BACKUP_MIGRATE_MENU_PATH) {
-    drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+    backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
     // Messages should be sent to the browser.
     _backup_migrate_message_callback('_backup_migrate_message_browser');
     return array(
       'subject' => t('Quick Backup'),
-      'content' => drupal_get_form('backup_migrate_ui_manual_quick_backup_form', FALSE),
+      'content' => backdrop_get_form('backup_migrate_ui_manual_quick_backup_form', FALSE),
     );
   }
   return array();
@@ -423,22 +423,23 @@ function backup_migrate_backup_migrate_schedules() {
   //     'source_id' => $id,
   //     'destination_id' => 'scheduled',
   //     'profile_id' => 'default',
-  //     'period' => variable_get('backup_migrate_default_schedule', 60*60),
+  //     'period' => config_get('backup_migrate.settings','backup_migrate_default_schedule', 60*60),
   //     'keep' => BACKUP_MIGRATE_SMART_DELETE,
   //     'enabled' => FALSE,
   //   );
   //   $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
   // }
   
-  if (variable_get('nodesquirrel_secret_key', FALSE) != FALSE) {
+  //if (variable_get('nodesquirrel_secret_key', FALSE) != FALSE) {
+  if (config_get('backup_migrate.settings','nodesquirrel_secret_key', FALSE) != FALSE) {
       $schedule = array(
         'machine_name' => 'nodesquirrel',
         'name' => 'NodeSquirrel',
-        'source_id' => variable_get('nodesquirrel_schedule_source_id', 'db'),
+        'source_id' => config_get('backup_migrate.settings','nodesquirrel_schedule_source_id', 'db'),
         'destination_id' => 'nodesquirrel',
         'profile_id' => 'default',
-        'period' => variable_get('nodesquirrel_schedule', 60*60*24),
-        'enabled' => variable_get('nodesquirrel_schedule_enabled', TRUE) && variable_get('nodesquirrel_secret_key', FALSE) != FALSE,
+        'period' => config_get('backup_migrate.settings','nodesquirrel_schedule', 60*60*24),
+        'enabled' => config_get('backup_migrate.settings','nodesquirrel_schedule_enabled', TRUE) && config_get('backup_migrate.settings','nodesquirrel_secret_key', FALSE) != FALSE,
       );
       $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
     }
@@ -494,7 +495,7 @@ function backup_migrate_include() {
  * Include views .inc files as necessary.
  */
 function backup_migrate_include_path($file) {
-  return DRUPAL_ROOT . '/' . drupal_get_path('module', 'backup_migrate') . "/includes/$file.inc";
+  return DRUPAL_ROOT . '/' . backdrop_get_path('module', 'backup_migrate') . "/includes/$file.inc";
 }
 
 
@@ -504,7 +505,7 @@ function backup_migrate_include_path($file) {
 function backup_migrate_ui_manual_backup_quick() {
   $out = array();
   if (user_access('perform backup')) {
-    return drupal_get_form('backup_migrate_ui_manual_quick_backup_form');
+    return backdrop_get_form('backup_migrate_ui_manual_quick_backup_form');
   }
   else {
     return t('You do not have permission to back up this site.');
@@ -521,8 +522,8 @@ function backup_migrate_ui_manual_backup_advanced() {
   $profile_id = arg(BACKUP_MIGRATE_MENU_DEPTH + 2);
   $profile = _backup_migrate_profile_saved_default_profile($profile_id);
 
-  $out[] = drupal_get_form('backup_migrate_ui_manual_backup_load_profile_form', $profile);
-  $out[] = drupal_get_form('backup_migrate_ui_manual_backup_form', $profile);
+  $out[] = backdrop_get_form('backup_migrate_ui_manual_backup_load_profile_form', $profile);
+  $out[] = backdrop_get_form('backup_migrate_ui_manual_backup_form', $profile);
   return $out;
 }
 
@@ -580,7 +581,7 @@ function backup_migrate_ui_schedule() {
   $sources = backup_migrate_get_sources();
   $schedules = backup_migrate_get_schedules();
 
-  $out = drupal_get_form('backup_migrate_ui_schedule_form', $sources, $schedules);
+  $out = backdrop_get_form('backup_migrate_ui_schedule_form', $sources, $schedules);
   return $out;
 }
 
@@ -670,7 +671,7 @@ function backup_migrate_ui_schedule_form($form, &$form_state, $sources, $schedul
       );
       $form['quickschedule'][$key]['settings']['advanced'] = array(
         '#type' => 'markup',
-        '#markup' => l(t('Advanced Settings.'), BACKUP_MIGRATE_MENU_PATH . '/settings/schedule/edit/' . $id, array('query' => drupal_get_destination())),
+        '#markup' => l(t('Advanced Settings.'), BACKUP_MIGRATE_MENU_PATH . '/settings/schedule/edit/' . $id, array('query' => backdrop_get_destination())),
       );
       // Set the parent for the setttings up a level.
       foreach (element_children($form['quickschedule'][$key]['settings']) as $child) {
@@ -705,7 +706,7 @@ function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
         $schedule->save();
       }
     }
-    drupal_set_message(t('Your schedules have been saved'));
+    backdrop_set_message(t('Your schedules have been saved'));
   }
 }
 
@@ -716,7 +717,7 @@ function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
  */
 function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline = TRUE) {
   backup_migrate_include('profiles', 'destinations', 'sources');
-  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  backdrop_add_js(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.js');
 
   $form = array();
 
@@ -733,15 +734,15 @@ function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline
     "#tree" => FALSE,
   );
 
-  $form['quickbackup']['source_id'] = _backup_migrate_get_source_pulldown(variable_get('backup_migrate_source_id', NULL));
+  $form['quickbackup']['source_id'] = _backup_migrate_get_source_pulldown(config_get('backup_migrate.settings','backup_migrate_source_id', NULL));
 
-  $form['quickbackup']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', variable_get('backup_migrate_destination_id', 'download'), variable_get('backup_migrate_copy_destination_id', ''));
+  $form['quickbackup']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id', 'download'), config_get('backup_migrate.settings','backup_migrate_copy_destination_id', ''));
 
   $profile_options = _backup_migrate_get_profile_form_item_options();
   $form['quickbackup']['profile_id'] = array(
     "#type" => "select",
     "#title" => t("Settings Profile"),
-    '#default_value' => variable_get('backup_migrate_profile_id', NULL),
+    '#default_value' => config_get('backup_migrate.settings','backup_migrate_profile_id', NULL),
     "#options" => $profile_options,
   );
 
@@ -831,7 +832,7 @@ function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) 
  * Theme the quick backup form.
  */
 function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $form = $form['form'];
 
@@ -843,10 +844,10 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   unset($form['quickbackup']['destination']['copy_destination']['copy_destination_id']['#title']);
 
   $replacements = array(
-    '!from' => drupal_render($form['quickbackup']['source_id']),
-    '!to' => drupal_render($form['quickbackup']['destination']['destination_id']),
-    '!profile' => drupal_render($form['quickbackup']['profile_id']),
-    //'!submit' => drupal_render($form['quickbackup']['submit']),
+    '!from' => backdrop_render($form['quickbackup']['source_id']),
+    '!to' => backdrop_render($form['quickbackup']['destination']['destination_id']),
+    '!profile' => backdrop_render($form['quickbackup']['profile_id']),
+    //'!submit' => backdrop_render($form['quickbackup']['submit']),
   );
   $form['quickbackup']['markup'] = array(
     '#type'   => 'markup',
@@ -856,7 +857,7 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   );
 
   $replacements = array(
-    '!to' => drupal_render($form['quickbackup']['destination']['copy_destination']['copy_destination_id']),
+    '!to' => backdrop_render($form['quickbackup']['destination']['copy_destination']['copy_destination_id']),
   );
   $form['quickbackup']['destination']['copy']["#prefix"] = '<div class="container-inline backup-migrate-inline">';
   $form['quickbackup']['destination']['copy']["#suffix"] = $replacements['!to'] . '</div>';
@@ -869,15 +870,15 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   unset($form['quickbackup']['destination']['copy_destination']);
   unset($form['quickbackup']['profile_id']);
   //unset($form['quickbackup']['submit']);
-  return drupal_render_children($form);
+  return backdrop_render_children($form);
 }
 
 /**
  * Theme the quick schedule form.
  */
 function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
-  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $form = $form['form'];
 
@@ -894,11 +895,11 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
   unset($form['settings']['keep']['#field_suffix']);
 
   $replacements = array(
-    '!from'       => drupal_render($form['settings']['source_id']),
-    '!to'         => drupal_render($form['settings']['destination']['destination_id']),
-    '!frequency'  => drupal_render($form['settings']['period']),
-    '!profile'    => drupal_render($form['settings']['profile_id']),
-    '!keep'       => drupal_render($form['settings']['keep']),
+    '!from'       => backdrop_render($form['settings']['source_id']),
+    '!to'         => backdrop_render($form['settings']['destination']['destination_id']),
+    '!frequency'  => backdrop_render($form['settings']['period']),
+    '!profile'    => backdrop_render($form['settings']['profile_id']),
+    '!keep'       => backdrop_render($form['settings']['keep']),
   );
   $form['settings'] = array('inline' => array(
     '#type' => 'markup',
@@ -908,7 +909,7 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
   )) + $form['settings'];
 
   $replacements = array(
-    '!to' => drupal_render($form['settings']['destination']['copy_destination']['copy_destination_id']),
+    '!to' => backdrop_render($form['settings']['destination']['copy_destination']['copy_destination_id']),
   );
   $form['settings']['destination']['copy']["#prefix"] = '<div class="container-inline backup-migrate-inline">';
   $form['settings']['destination']['copy']["#suffix"] = $replacements['!to'] . '</div>';
@@ -920,7 +921,7 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
   unset($form['settings']['profile_id']);
   unset($form['settings']['keep']);
 
-  return drupal_render_children($form);
+  return backdrop_render_children($form);
 }
 
 
@@ -929,19 +930,19 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
  */
 function theme_backup_migrate_dependent($vars) {
   $element = $vars['element'];
-  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
-  $id = drupal_html_id(implode('-', $element['#array_parents']));
+  $id = backdrop_html_id(implode('-', $element['#array_parents']));
 
   $settings = array(
     'backup_migrate' => array(
       'dependents' => array($id => array('dependent' => $id, 'dependencies' => $element['#dependencies']))
     )
   );
-  drupal_add_js($settings, 'setting');
+  backdrop_add_js($settings, 'setting');
 
-  return '<div id="edit-' . $id . '" class="backup-migrate-form-dependent">' . drupal_render_children($element) . '</div>';
+  return '<div id="edit-' . $id . '" class="backup-migrate-form-dependent">' . backdrop_render_children($element) . '</div>';
 }
 
 
@@ -985,7 +986,7 @@ function theme_backup_migrate_group($vars) {
  * The backup/export form.
  */
 function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
-  drupal_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js', array('type' => 'module', 'scope' => 'footer'));
+  backdrop_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js', array('type' => 'module', 'scope' => 'footer'));
 
   $form = array();
 
@@ -1011,7 +1012,7 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
     "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them. Select 'Download' to download the file to your desktop."),
     // '#weight' => 70,
   );
-  $form['destination']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', variable_get('backup_migrate_destination_id', 'download'));
+  $form['destination']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id', 'download'));
 
   $form += _backup_migrate_ui_backup_settings_form($profile);
 
@@ -1208,7 +1209,7 @@ function backup_migrate_ui_manual_backup_perform($settings) {
  * The restore/import upload page.
  */
 function backup_migrate_ui_manual_restore() {
-  return drupal_get_form('backup_migrate_ui_manual_restore_form');
+  return backdrop_get_form('backup_migrate_ui_manual_restore_form');
 }
 
 /**
@@ -1217,7 +1218,7 @@ function backup_migrate_ui_manual_restore() {
 function backup_migrate_ui_manual_restore_form() {
   backup_migrate_include('filters', 'destinations', 'sources');
 
-  drupal_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
+  backdrop_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
 
   $form = array();
 
@@ -1350,7 +1351,7 @@ function backup_migrate_ui_export_form($form, &$form_state, $item) {
  */
 function backup_migrate_ui_saved_backups() {
   backup_migrate_include('profiles', 'destinations', 'sources');
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = FALSE;
   $now = $fetch_time = time();
@@ -1360,7 +1361,7 @@ function backup_migrate_ui_saved_backups() {
 
   // Redirect if refreshing instead of displaying.
   if ($refresh) {
-    drupal_goto($_GET['q']);
+    backdrop_goto($_GET['q']);
   }
 
   $fetch = $out = '';
@@ -1377,7 +1378,7 @@ function backup_migrate_ui_saved_backups() {
 
   // Add a remote backups warning if there are no remote backups.
   if (!$remote && user_access('administer backup and migrate')) {
-      drupal_set_message(
+      backdrop_set_message(
         t('You do not have any offsite backups. For the highest level of protection, <a href="!addurl">create an offsite destination</a> or <a href="!nsurl">set up NodeSquirrel</a> to save your backups to.', 
             array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'),
                   '!nsurl' => url(BACKUP_MIGRATE_MENU_PATH . '/nodesquirrel')
@@ -1392,7 +1393,7 @@ function backup_migrate_ui_saved_backups() {
  */
 function backup_migrate_get_saved_backups($refresh = FALSE) {
   backup_migrate_include('profiles', 'destinations', 'sources');
-  drupal_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = FALSE;
   $now = $fetch_time = time();
@@ -1440,7 +1441,7 @@ function backup_migrate_perform_backup(&$settings) {
 
   // If not in 'safe mode', increase the maximum execution time:
   if (!ini_get('safe_mode') && strpos(ini_get('disable_functions'), 'set_time_limit') === FALSE && ini_get('max_execution_time') < 1200) {
-    set_time_limit(variable_get('backup_migrate_backup_max_time', 1200));
+    set_time_limit(config_get('backup_migrate.settings','backup_migrate_backup_max_time', 1200));
   }
 
   // Confirm the destinations are valid
@@ -1517,8 +1518,8 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
   timer_start('backup_migrate_restore');
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < variable_get('backup_migrate_backup_max_time', 1200)) {
-    set_time_limit(variable_get('backup_migrate_restore_max_time', 1200));
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < config_get('backup_migrate.settings','backup_migrate_backup_max_time', 1200)) {
+    set_time_limit(config_get('backup_migrate.settings','backup_migrate_restore_max_time', 1200));
   }
 
   // Make the settings into a default profile.
@@ -1643,9 +1644,9 @@ function backup_migrate_shutdown($settings) {
     backup_migrate_cleanup();
     backup_migrate_backup_fail('The operation timed out. Try increasing your PHP <a href="!url">max_execution_time setting</a>.', array('!url' => 'http://www.php.net/manual/en/info.configuration.php#ini.max-execution-time'), $settings);
     // The session will have already been written and closed, so we need to write any changes directly.
-    _drupal_session_write(session_id(), session_encode());
+    _backdrop_session_write(session_id(), session_encode());
     // Add a redirect or we'll just get whitescreened.
-    drupal_goto(BACKUP_MIGRATE_MENU_PATH);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
   }
 }
 
@@ -1756,8 +1757,8 @@ function _backup_migrate_message_browser($message, $replace, $type) {
   if (!empty($replace['!links'])) {
     $message .= " (!links)";
   }
-  // Use drupal_set_message to display to the user.
-  drupal_set_message(t($message, $replace), str_replace('success', 'status', $type), FALSE);
+  // Use backdrop_set_message to display to the user.
+  backdrop_set_message(t($message, $replace), str_replace('success', 'status', $type), FALSE);
 }
 
 /**
@@ -1790,7 +1791,7 @@ function _backup_migrate_check_timeout() {
   }
   // Figure out when we should stop execution.
   if (!$timeout) {
-    $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - variable_get('backup_migrate_timeout_buffer', 5);
+    $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - config_get('backup_migrate.settings','backup_migrate_timeout_buffer', 5);
   }
   return (time() > $timeout);
 }
@@ -1830,7 +1831,7 @@ function backup_migrate_exec($command, $args = array()) {
   $output = $result = NULL;
 
   // Run the command.
-  $temp_name = drupal_tempnam('temporary://', 'mysql');
+  $temp_name = backdrop_tempnam('temporary://', 'mysql');
   exec($command . ' 2>' . realpath($temp_name), $output, $result);
   if ($result !== 0 && isset($args['%file'])) {
     file_put_contents($args['%file'], file_get_contents($temp_name), FILE_APPEND);
