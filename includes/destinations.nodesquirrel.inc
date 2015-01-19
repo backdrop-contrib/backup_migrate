@@ -50,7 +50,7 @@ function backup_migrate_nodesquirrel_get_activate_help_text() {
  * Get a helper link to activate a site and create a tree.
  */
 function backup_migrate_nodesquirrel_get_activate_link() {
-  $activate_link = l('nodesquirrel.com/activate', config_get('backup_migrate.settings','nodesquirrel_activate_url'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => config_get('backup_migrate.settings','site_mail'), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
+  $activate_link = l('nodesquirrel.com/activate', config_get('backup_migrate.settings','nodesquirrel_activate_url'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => config_get('system.core','site_mail'), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
   return $activate_link;
 }
 
@@ -349,7 +349,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function destinations() {
     $out = array();
     $out['nodesquirrel'] = backup_migrate_create_destination('nodesquirrel', array('machine_name' => 'nodesquirrel'));
-    if ($secret_key = config_get('backup_migrate.settings','nodesquirrel_secret_key') {
+    if ($secret_key = config_get('backup_migrate.settings','nodesquirrel_secret_key')) {
       $out['nodesquirrel']->settings['secret_key'] = $secret_key;
     }
     else {

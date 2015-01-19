@@ -307,17 +307,16 @@ function backup_migrate_schema() {
 
 /**
  * Implementation of hook_install().
- * Backdrop - save all DEFAULT settings to CMI .settings file 
+ * Backdrop - save all intial DEFAULT settings to CMI .settings 
+ * commented out because now all settings are pulled from .json file but
+ * if new settings are needed or changed, set them below.
  */
 function backup_migrate_install() {
-  $config = config('backup_migrate.settings');
+/*  $config = config('backup_migrate.settings');
 
-  $config->set($this->db_table . '_defaults',array());
   $config->set('backup_migrate_data_rows_per_line', 30);
   $config->set('backup_migrate_data_bytes_per_line', 2000);
   $config->set('backup_migrate_max_email_size', 20971520);
-  $config->set('site_mail', ini_get('sendmail_from'));
-  $config->set('site_name', 'Drupal Site');
   $config->set('backup_migrate_allow_backup_to_file', TRUE);
   $config->set('file_private_path', FALSE);
   $config->set('file_public_path', FALSE);
@@ -332,20 +331,19 @@ function backup_migrate_install() {
   $config->set('nodesquirrel_default_endpoint_urls', array('api.nodesquirrel.com/services/xmlrpc'));
   $config->set('debug_http_request', FALSE);
   $config->set('dev_query', 0);
-  $config->set('site_offline_message', t('@site is currently under maintenance. We should be back shortly. Thank you for your patience.', array('@site' => config_get('backup_migrate.settings','site_name'))));
+  $config->set('site_offline_message', '[site_name] is currently under maintenance. We should be back shortly. Thank you for your patience.');
   $config->set('maintenance_mode', 0);
   $config->set('maintenance_mode_message', NULL);
   $config->set('backup_migrate_cleanup_time', 21600);
   $config->set('backup_migrate_cleanup_temp_files', TRUE);
   $config->set('backup_migrate_profile_id', 'default');
-  $config->set('backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
-  $config->set('backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
-  $config->set('backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
+  $config->set('backup_migrate_smart_keep_hourly', 24);
+  $config->set('backup_migrate_smart_keep_daily', 30);
+  $config->set('backup_migrate_smart_keep_weekly', PHP_INT_MAX);
   $config->set('backup_migrate_schedule_buffer', 0.01);
-  $config->set('backup_migrate_schedule_last_run_' . $this->get('id'), 0);
   $config->set('backup_migrate_data_rows_per_line', 30);
   $config->set('backup_migrate_data_bytes_per_line', 2000);
-  $config->set('backup_migrate_default_schedule', 60*60)
+  $config->set('backup_migrate_default_schedule', 60*60);
   $config->set('nodesquirrel_schedule_source_id', 'db');
   $config->set('backup_migrate_source_id', NULL);
   $config->set('backup_migrate_destination_id', 'download');
@@ -355,6 +353,7 @@ function backup_migrate_install() {
   $config->set('backup_migrate_timeout_buffer', 5);
 
   $config->save();
+*/
 }
 
 /**

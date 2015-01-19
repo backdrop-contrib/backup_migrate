@@ -64,8 +64,8 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $form['advanced']['utils_site_offline_message_wrapper']['utils_site_offline_message'] = array(
       '#type' => 'textarea',
       '#title' => t('Site off-line message'),
-      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : config_get('backup_migrate.settings','site_offline_message')),
-      '#description' => t('Message to show visitors when the site is in off-line mode.')
+      '#default_value' => !empty($settings['utils_site_offline_message']) ? $settings['utils_site_offline_message'] : config_get('backup_migrate.settings','site_offline_message'),
+      '#description' => t('Message to show visitors when the site is in off-line mode.'),
     );
     $form['advanced']['utils_description'] = array(
       '#type' => 'textarea',
@@ -94,7 +94,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    */
   function restore_settings_form($settings) {
     $form = array();
-    if (module_exists('devel') && config_get('backup_migrate.settings','dev_query') {
+    if (module_exists('devel') && config_get('backup_migrate.settings','dev_query')) {
       $form['advanced']['utils_disable_query_log'] = array(
         '#type' => 'checkbox',
         '#title' => t('Disable query log'),
@@ -186,7 +186,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     $file->file_info['generator']         = 'Backup and Migrate (http://drupal.org/project/backup_migrate)';
     $file->file_info['generatorversion']  = BACKUP_MIGRATE_VERSION;
     $file->file_info['siteurl']           = url('', array('absolute' => TRUE));
-    $file->file_info['sitename']          = config_get('backup_migrate.settings','site_name');
+    $file->file_info['sitename']          = config_get('system.core','site_name');
     $file->file_info['drupalversion']     = VERSION;
     $file->calculate_filesize();
 

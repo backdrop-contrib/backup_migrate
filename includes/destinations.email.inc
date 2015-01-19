@@ -75,10 +75,10 @@ function _backup_migrate_destination_email_mail_backup($attachment, $to) {
   // Send mail
   $attach        = fread(fopen($attachment->path, "r"), filesize($attachment->path));
   $mail          = new mime_mail();
-  $mail->from    = config_get('backup_migrate.settings','site_mail');
+  $mail->from    = config_get('system.core','site_mail');
   $mail->headers = 'Errors-To: [EMAIL='. $mail->from .']'. $mail->from .'[/EMAIL]';
   $mail->to      = $to;
-  $mail->subject = t('Database backup from !site: !file', array('!site' => config_get('backup_migrate.settings','site_name'), '!file' => $attachment->filename));
+  $mail->subject = t('Database backup from !site: !file', array('!site' => config_get('system.core','site_name'), '!file' => $attachment->filename));
   $mail->body    = t('Database backup attached.') ."\n\n";
 
   $mail->add_attachment("$attach", $attachment->filename, "Content-Transfer-Encoding: base64 /9j/4AAQSkZJRgABAgEASABIAAD/7QT+UGhvdG9zaG", NULL, TRUE);

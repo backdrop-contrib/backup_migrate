@@ -109,8 +109,8 @@ Current Maintainers
 
 - Jason Ramsey (https://github.com/quackers8me)
 
-Past Maintainers
-----------------
-
+Credits
+-------
+This module was originally written for Drupal by
 - Ronan Dowling, Gorton Studios (https://www.drupal.org/u/ronan)
 

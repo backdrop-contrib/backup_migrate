@@ -179,7 +179,7 @@ function _backup_migrate_default_filename() {
   }
   else {
     // Cleaning the string isn't strictly necessary but it looks better in the settings field.
-    return _backup_migrate_clean_filename(config_get('backup_migrate.settings','site_name'));
+    return _backup_migrate_clean_filename(config_get('system.core','site_name'));
   }
 }
 

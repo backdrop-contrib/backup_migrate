@@ -133,7 +133,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       ),
       'Site 0' => array(
         'version' => VERSION,
-        'name' => config_get('backup_migrate.settings','site_name'),
+        'name' => config_get('system.core','site_name'),
         'docroot' => 'docroot',
         'sitedir' => 'docroot/' . conf_path(),
         'database-file-default' => 'database.sql',
