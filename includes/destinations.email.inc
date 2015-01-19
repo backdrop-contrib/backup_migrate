@@ -24,9 +24,14 @@ class backup_migrate_destination_email extends backup_migrate_destination {
       _backup_migrate_message('Could not email the file @file because it is @size and Backup and Migrate only supports emailing files smaller than @max.', array('@file' => $file->filename(), '@size' => format_size($size), '@max' => format_size($max)), 'error');
       return FALSE;
     }
-    $attachment = new stdClass();
-    $attachment->filename = $file->filename();
-    $attachment->path = $file->filepath();
+    //Backdrop change classed entities
+    //$attachment = new stdClass();
+    $attachment = entity_create('attachment', array('filename' => $file->filename(), 'path' => $file->filepath()));
+    
+    //$attachment->filename = $file->filename();
+    //$attachment->path = $file->filepath();
+    $attachment->save();
+    
     _backup_migrate_destination_email_mail_backup($attachment, $this->get_location());
     return $file;
   }

@@ -288,6 +288,9 @@ function backup_migrate_nodesquirrel_schedule_settings_form($destination, $statu
 function backup_migrate_nodesquirrel_settings_form($form_state) {
   _backup_migrate_message_callback('_backup_migrate_message_browser');
 
+  /* Backdrop - replace system_settings_form to utilize CMI */
+  $config = config('backup_migrate.settings');
+  
   $form = array();
 
   $key = config_get('backup_migrate.settings','nodesquirrel_secret_key');
@@ -301,9 +304,24 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
   $form += backup_migrate_nodesquirrel_credentials_settings_form($key, $status);
   $form += backup_migrate_nodesquirrel_schedule_settings_form($destination, $status);
 
-  return system_settings_form($form);
-}
+  // Backdrop - Add a submit button
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
 
+  //return system_settings_form($form);
+  return $form;
+}
+// Backdrop - Add a submit function to process config
+function my_settings_form_submit($form, &$form_state) {
+  $config = config('backup_migrate.settings');
+  $config->set('backup_migrate_nodesquirrel_settings_form', $form_state['values']);
+  $config->save();
+  backdrop_set_message(t('The configuration options have been saved.'));
+}
+//end of replace system_settings_form
 
 /**
  * A destination for sending database backups to the NodeSquirel backup service.
@@ -778,20 +796,24 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function _post_file($url, $method = 'GET', $params = array(), $file = NULL, $retry = 3) {
     global $db_prefix;
   
-    $result = new stdClass();
-  
+    //Backdrop change classed entities
+    //$result = new stdClass();
+    $result = entity_create('result', array('error' => '', 'code' => ''));
+    
     // Parse the URL and make sure we can handle the schema.
     $uri = parse_url($url);
   
     if ($uri == FALSE) {
       $result->error = 'unable to parse URL';
       $result->code = -1001;
+      $result->save();
       return $result;
     }
   
     if (!isset($uri['scheme'])) {
       $result->error = 'missing schema';
       $result->code = -1002;
+      $result->save();
       return $result;
     }
   
@@ -811,6 +833,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       default:
         $result->error = 'invalid schema '. $uri['scheme'];
         $result->code = -1003;
+        $result->save();
         return $result;
     }
   
@@ -820,7 +843,8 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       // clash with the HTTP status codes.
       $result->code = -$errno;
       $result->error = trim($errstr);
-  
+      $result->save();
+      
       // Mark that this request failed. This will trigger a check of the web
       // server's ability to make outgoing HTTP requests the next time that
       // requirements checking is performed.
