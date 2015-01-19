@@ -22,7 +22,7 @@ function backup_migrate_get_destination_subtypes() {
  */
 function backup_migrate_backup_migrate_destination_subtypes() {
   $out = array();
-  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_file', TRUE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_file')) {
     $out += array(
       'file' => array(
         'description' => t('Save the backup files to any directory on this server which the web-server can write to.'),
@@ -99,8 +99,8 @@ function backup_migrate_backup_migrate_destinations() {
   $out              = array();
 
   // Add the default, out of the box destinations for new users.
-  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_file', TRUE)) {
-    if (config_get('backup_migrate.settings','file_private_path', FALSE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_file')) {
+    if (config_get('backup_migrate.settings','file_private_path')) {
       $out['manual']    = backup_migrate_create_destination('file_manual', array('machine_name' => 'manual'));
       $out['scheduled'] = backup_migrate_create_destination('file_scheduled', array('machine_name' => 'scheduled'));
     }
@@ -109,7 +109,7 @@ function backup_migrate_backup_migrate_destinations() {
     }
   }
   // Add the browser destination for downloading to the desktop.
-  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_download', TRUE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_allow_backup_to_download')) {
     $out['download']  = backup_migrate_create_destination('browser_download');
   }
   $out['upload']    = backup_migrate_create_destination('browser_upload');

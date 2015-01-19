@@ -25,7 +25,7 @@ function backup_migrate_temp_files_add($filepath = NULL) {
  * Delete all temporary files.
  */
 function _backup_migrate_temp_files_delete() {
-  if (config_get('backup_migrate.settings','backup_migrate_cleanup_temp_files', TRUE)) {
+  if (config_get('backup_migrate.settings','backup_migrate_cleanup_temp_files')) {
     // Delete the temp files created during this run.
     foreach (backup_migrate_temp_files_add() as $file) {
       if (file_exists($file) && is_writable($file)) {
@@ -35,7 +35,7 @@ function _backup_migrate_temp_files_delete() {
 
     // Delete temp files abandoned for 6 or more hours.
     $dir = file_directory_temp();
-    $expire = time() - config_get('backup_migrate.settings','backup_migrate_cleanup_time', 21600);
+    $expire = time() - config_get('backup_migrate.settings','backup_migrate_cleanup_time');
     if (file_exists($dir) && is_dir($dir) && is_readable($dir) && $handle = opendir($dir)) {
       while (FALSE !== ($file = @readdir($handle))) {
         // Delete 'backup_migrate_' files in the temp directory that are older than the expire time.
@@ -179,7 +179,7 @@ function _backup_migrate_default_filename() {
   }
   else {
     // Cleaning the string isn't strictly necessary but it looks better in the settings field.
-    return _backup_migrate_clean_filename(config_get('backup_migrate.settings','site_name', "backup_migrate"));
+    return _backup_migrate_clean_filename(config_get('backup_migrate.settings','site_name'));
   }
 }
 

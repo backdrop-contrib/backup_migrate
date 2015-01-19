@@ -368,8 +368,8 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    *  Get the sql to insert the data for a given table
    */
   function _dump_table_data_sql_to_file($file, $table) {
-    $rows_per_line = config_get('backup_migrate.settings','backup_migrate_data_rows_per_line', 30);
-    $bytes_per_line = config_get('backup_migrate.settings','backup_migrate_data_bytes_per_line', 2000);
+    $rows_per_line = config_get('backup_migrate.settings','backup_migrate_data_rows_per_line');
+    $bytes_per_line = config_get('backup_migrate.settings','backup_migrate_data_bytes_per_line');
   
     $lines = 0;
     $data = $this->query("SELECT * FROM `". $table['name'] ."`", array(), array('fetch' => PDO::FETCH_ASSOC));

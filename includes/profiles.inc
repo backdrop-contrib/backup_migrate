@@ -192,7 +192,7 @@ function _backup_migrate_profile_default_profile() {
  * Get the default profile saved by the user (or the module default if none exists).
  */
 function _backup_migrate_profile_saved_default_profile($profile_id = NULL) {
-  $profile_id = $profile_id ? $profile_id : config_get("backup_migrate.settings","backup_migrate_profile_id", 'default');
+  $profile_id = $profile_id ? $profile_id : config_get("backup_migrate.settings","backup_migrate_profile_id");
   $profile = NULL;
   if ($profile_id) {
     $profile = backup_migrate_get_profile($profile_id);

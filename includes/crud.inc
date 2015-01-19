@@ -912,7 +912,7 @@ class backup_migrate_item {
     $items = array();
 
     // Get any items stored as a variable. This allows destinations to be defined in settings.php
-    $defaults = (array)config_get('backup_migrate.settings',$this->db_table . '_defaults', array());
+    $defaults = (array)config_get('backup_migrate.settings',$this->db_table . '_defaults');
     foreach ($defaults as $info) {
       if (is_array($info) && $item = $this->create($info)) {
         $items[$item->get_id()] = $item;
@@ -945,7 +945,7 @@ class backup_migrate_item {
     }
 
     // Get any items stored as a variable again to correctly mark overrides.
-    $defaults = (array)config_get('backup_migrate.settings',$this->db_table . '_defaults', array());
+    $defaults = (array)config_get('backup_migrate.settings',$this->db_table . '_defaults');
     foreach ($defaults as $info) {
       if (is_array($info) && $item = $this->create($info)) {
         $default_items[] = $item;

@@ -20,8 +20,8 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
     return array(
       'notify_success_enable' => FALSE,
       'notify_failure_enable' => FALSE,
-      'notify_success_email' => config_get('backup_migrate.settings','site_mail', ''),
-      'notify_failure_email' => config_get('backup_migrate.settings','site_mail', ''),
+      'notify_success_email' => config_get('backup_migrate.settings','site_mail'),
+      'notify_failure_email' => config_get('backup_migrate.settings','site_mail'),
     );
   }
 
@@ -71,7 +71,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
   function backup_succeed($settings) {
     if (@$settings->filters['notify_success_enable'] && $to = @$settings->filters['notify_success_email']) {
       $messages = $this->get_messages();
-      $subject = t('!site backup succeeded', array('!site' => config_get('backup_migrate.settings','site_name', 'Drupal site')));
+      $subject = t('!site backup succeeded', array('!site' => config_get('backup_migrate.settings','site_name')));
       if ($messages = $this->get_messages()) {
         $body = t("The site backup has completed successfully with the following messages:\n!messages", array('!messages' => $messages));
       }
@@ -88,7 +88,7 @@ class backup_migrate_filter_statusnotify extends backup_migrate_filter {
   function backup_fail($settings) {
     if (@$settings->filters['notify_failure_enable'] && $to = @$settings->filters['notify_failure_email']) {
       $messages = $this->get_messages();
-      $subject = t('!site backup failed', array('!site' => config_get('backup_migrate.settings','site_name', 'Drupal site')));
+      $subject = t('!site backup failed', array('!site' => config_get('backup_migrate.settings','site_name')));
       if ($messages = $this->get_messages()) {
         $body = t("The site backup has failed with the following messages:\n!messages", array('!messages' => $messages));
       }

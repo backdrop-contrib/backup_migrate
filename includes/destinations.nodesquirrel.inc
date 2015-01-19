@@ -50,7 +50,7 @@ function backup_migrate_nodesquirrel_get_activate_help_text() {
  * Get a helper link to activate a site and create a tree.
  */
 function backup_migrate_nodesquirrel_get_activate_link() {
-  $activate_link = l('nodesquirrel.com/activate', config_get('backup_migrate.settings',('nodesquirrel_activate_url', 'http://manage.nodesquirrel.com/activate'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => config_get('backup_migrate.settings','site_mail', ''), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
+  $activate_link = l('nodesquirrel.com/activate', config_get('backup_migrate.settings','nodesquirrel_activate_url'), array('query' => array('url' => url('', array('absolute' => TRUE)), 'email' => config_get('backup_migrate.settings','site_mail'), 'configure' => url($_GET['q'], array('absolute' => TRUE)))));
   return $activate_link;
 }
 
@@ -58,7 +58,7 @@ function backup_migrate_nodesquirrel_get_activate_link() {
  * Get a helper link to activate a site and create a tree.
  */
 function backup_migrate_nodesquirrel_get_manage_link($destination) {
-  $url = config_get('backup_migrate.settings','nodesquirrel_manage_url', 'https://manage.nodesquirrel.com') . '/backups/' . $destination->_get_destination();
+  $url = config_get('backup_migrate.settings','nodesquirrel_manage_url') . '/backups/' . $destination->_get_destination();
   return l($url, $url);
 }
 
@@ -66,7 +66,7 @@ function backup_migrate_nodesquirrel_get_manage_link($destination) {
  * Get a helper link to activate a site and create a tree.
  */
 function backup_migrate_nodesquirrel_get_plan_link() {
-  $url = config_get('backup_migrate.settings','nodesquirrel_manage_url', 'https://manage.nodesquirrel.com') . '/plan';
+  $url = config_get('backup_migrate.settings','nodesquirrel_manage_url') . '/plan';
   return l($url, $url);
 }
 
@@ -247,9 +247,9 @@ function backup_migrate_nodesquirrel_schedule_settings_form($destination, $statu
   $key = 'nodesquirrel_schedule';
   $form['nodesquirrel_schedule'][$key] = array();
   $defaults = array(
-    'period' => empty($schedule) ? config_get('backup_migrate.settings','nodesquirrel_schedule', 60*60*24) : $schedule->get('period'),
-    'enabled' => empty($schedule) ? config_get('backup_migrate.settings','nodesquirrel_schedule_enabled', TRUE) : $schedule->get('enabled'),
-    'source_id' => empty($schedule) ? config_get('backup_migrate.settings','nodesquirrel_schedule_source_id', 'db') : $schedule->get('source_id'),
+    'period' => empty($schedule) ? config_get('backup_migrate.settings','nodesquirrel_schedule') : $schedule->get('period'),
+    'enabled' => empty($schedule) ? config_get('backup_migrate.settings','nodesquirrel_schedule_enabled') : $schedule->get('enabled'),
+    'source_id' => empty($schedule) ? config_get('backup_migrate.settings','nodesquirrel_schedule_source_id') : $schedule->get('source_id'),
   );
 
   $form['nodesquirrel_schedule'][$key]['nodesquirrel_schedule_enabled'] = array(
@@ -290,7 +290,7 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
 
   $form = array();
 
-  $key = config_get('backup_migrate.settings','nodesquirrel_secret_key', '');
+  $key = config_get('backup_migrate.settings','nodesquirrel_secret_key');
   $status = array();
   if ($destination = backup_migrate_nodesquirrel_get_destination($key)) {  
     $status = $destination->check_limits(); 
@@ -349,7 +349,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function destinations() {
     $out = array();
     $out['nodesquirrel'] = backup_migrate_create_destination('nodesquirrel', array('machine_name' => 'nodesquirrel'));
-    if ($secret_key = config_get('backup_migrate.settings','nodesquirrel_secret_key', '')) {
+    if ($secret_key = config_get('backup_migrate.settings','nodesquirrel_secret_key') {
       $out['nodesquirrel']->settings['secret_key'] = $secret_key;
     }
     else {
@@ -389,7 +389,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function before_backup_form_submit($settings, $form, $form_state) {
     if (isset($form_state['values']['nodesquirrel_secret_key'])) {
       $this->settings['secret_key'] = $form_state['values']['nodesquirrel_secret_key'];
-      config_get('backup_migrate.settings','nodesquirrel_secret_key', $this->settings['secret_key']);  
+      config_get('backup_migrate.settings','nodesquirrel_secret_key');  
     }
   }
 
@@ -424,7 +424,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
 
           if ($confirm['success']) {
             // Set a message with a link to the manage console.
-            $url = config_get('backup_migrate.settings','nodesquirrel_manage_url', 'http://manage.nodesquirrel.com') . '/backups/' . $this->_get_destination();
+            $url = config_get('backup_migrate.settings','nodesquirrel_manage_url') . '/backups/' . $this->_get_destination();
             _backup_migrate_message('Your backup has been saved to your NodeSquirrel account. View it at !account', array('!account' => l($url, $url)));
 
             return $file;
@@ -533,7 +533,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
 
     // If this is a new destination but the default NS destination has not been created yet, 
     // redirect to the NS config screen.
-    if (!$this->get_id() && !config_get('backup_migrate.settings','nodesquirrel_secret_key', '')) {
+    if (!$this->get_id() && !config_get('backup_migrate.settings','nodesquirrel_secret_key')) {
       backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/nodesquirrel');
     }
 
@@ -754,15 +754,15 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    * Retrieve the list of servers.
    */
   function _get_endpoints($refresh = FALSE, $retry = 3) {
-    $servers = (array)config_get('backup_migrate.settings','nodesquirrel_endpoint_urls', array());
+    $servers = (array)config_get('backup_migrate.settings','nodesquirrel_endpoint_urls');
 
     // No servers saved or a force refreshr required.
     if ($refresh || empty($servers)) {
-      $servers = array_unique(array_merge($servers, config_get('backup_migrate.settings','nodesquirrel_default_endpoint_urls', array('api.nodesquirrel.com/services/xmlrpc'))));
+      $servers = array_unique(array_merge($servers, config_get('backup_migrate.settings','nodesquirrel_default_endpoint_urls')));
       // Call the get endpoints method but use the default or previous servers to avoid infinite loops.
       $new_servers = $this->__xmlrpc('backups.getEndpoints', array($this->_get_destination(), 'xmlrpc'), $servers, $retry);
       if ($new_servers) {
-        config_get('backup_migrate.settings','nodesquirrel_endpoint_urls', $new_servers);
+        config_get('backup_migrate.settings','nodesquirrel_endpoint_urls');
         $servers = $new_servers;
       }
     }
@@ -903,7 +903,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     }
     fclose($fp);
   
-  if (config_get('backup_migrate.settings','debug_http_request', FALSE)) {
+  if (config_get('backup_migrate.settings','debug_http_request')) {
     backdrop_debug(date('r'));
     backdrop_debug($request);
     backdrop_debug($response);

@@ -12,6 +12,15 @@ define('BACKUP_MIGRATE_VERSION', '7.x-3.x');
 define('BACKUP_MIGRATE_MENU_PATH', 'admin/config/system/backup_migrate');
 define('BACKUP_MIGRATE_MENU_DEPTH', 4);
 
+/* Backdrop hook_config_info() */
+function backup_migrate_config_info() {
+  $prefixes['backup_migrate.settings'] = array(
+    'label' => t('Backup Migrate settings'),
+    'group' => t('Backup Migrate'),
+  );
+  return $prefixes;
+}
+
 /* Drupal Hooks */
 
 /**
@@ -423,22 +432,22 @@ function backup_migrate_backup_migrate_schedules() {
   //     'source_id' => $id,
   //     'destination_id' => 'scheduled',
   //     'profile_id' => 'default',
-  //     'period' => config_get('backup_migrate.settings','backup_migrate_default_schedule', 60*60),
+  //     'period' => config_get('backup_migrate.settings','backup_migrate_default_schedule'),
   //     'keep' => BACKUP_MIGRATE_SMART_DELETE,
   //     'enabled' => FALSE,
   //   );
   //   $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
   // }
   
-  if (config_get('backup_migrate.settings','nodesquirrel_secret_key', FALSE) != FALSE) {
+  if (config_get('backup_migrate.settings','nodesquirrel_secret_key') != FALSE) {
       $schedule = array(
         'machine_name' => 'nodesquirrel',
         'name' => 'NodeSquirrel',
-        'source_id' => config_get('backup_migrate.settings','nodesquirrel_schedule_source_id', 'db'),
+        'source_id' => config_get('backup_migrate.settings','nodesquirrel_schedule_source_id'),
         'destination_id' => 'nodesquirrel',
         'profile_id' => 'default',
-        'period' => config_get('backup_migrate.settings','nodesquirrel_schedule', 60*60*24),
-        'enabled' => config_get('backup_migrate.settings','nodesquirrel_schedule_enabled', TRUE) && config_get('backup_migrate.settings','nodesquirrel_secret_key', FALSE) != FALSE,
+        'period' => config_get('backup_migrate.settings','nodesquirrel_schedule'),
+        'enabled' => config_get('backup_migrate.settings','nodesquirrel_schedule_enabled') && config_get('backup_migrate.settings','nodesquirrel_secret_key') != FALSE,
       );
       $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
     }
@@ -733,15 +742,15 @@ function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline
     "#tree" => FALSE,
   );
 
-  $form['quickbackup']['source_id'] = _backup_migrate_get_source_pulldown(config_get('backup_migrate.settings','backup_migrate_source_id', NULL));
+  $form['quickbackup']['source_id'] = _backup_migrate_get_source_pulldown(config_get('backup_migrate.settings','backup_migrate_source_id'));
 
-  $form['quickbackup']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id', 'download'), config_get('backup_migrate.settings','backup_migrate_copy_destination_id', ''));
+  $form['quickbackup']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id'), config_get('backup_migrate.settings','backup_migrate_copy_destination_id'));
 
   $profile_options = _backup_migrate_get_profile_form_item_options();
   $form['quickbackup']['profile_id'] = array(
     "#type" => "select",
     "#title" => t("Settings Profile"),
-    '#default_value' => config_get('backup_migrate.settings','backup_migrate_profile_id', NULL),
+    '#default_value' => config_get('backup_migrate.settings','backup_migrate_profile_id'),
     "#options" => $profile_options,
   );
 
@@ -1011,7 +1020,7 @@ function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
     "#description" => t("Choose where the backup file will be saved. Backup files contain sensitive data, so be careful where you save them. Select 'Download' to download the file to your desktop."),
     // '#weight' => 70,
   );
-  $form['destination']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id', 'download'));
+  $form['destination']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id'));
 
   $form += _backup_migrate_ui_backup_settings_form($profile);
 
@@ -1440,7 +1449,7 @@ function backup_migrate_perform_backup(&$settings) {
 
   // If not in 'safe mode', increase the maximum execution time:
   if (!ini_get('safe_mode') && strpos(ini_get('disable_functions'), 'set_time_limit') === FALSE && ini_get('max_execution_time') < 1200) {
-    set_time_limit(config_get('backup_migrate.settings','backup_migrate_backup_max_time', 1200));
+    set_time_limit(config_get('backup_migrate.settings','backup_migrate_backup_max_time'));
   }
 
   // Confirm the destinations are valid
@@ -1517,8 +1526,8 @@ function backup_migrate_perform_restore($destination_id, $file, $settings = arra
   timer_start('backup_migrate_restore');
 
   // If not in 'safe mode', increase the maximum execution time:
-  if (!ini_get('safe_mode') && ini_get('max_execution_time') < config_get('backup_migrate.settings','backup_migrate_backup_max_time', 1200)) {
-    set_time_limit(config_get('backup_migrate.settings','backup_migrate_restore_max_time', 1200));
+  if (!ini_get('safe_mode') && ini_get('max_execution_time') < config_get('backup_migrate.settings','backup_migrate_backup_max_time')) {
+    set_time_limit(config_get('backup_migrate.settings','backup_migrate_restore_max_time'));
   }
 
   // Make the settings into a default profile.
@@ -1790,7 +1799,7 @@ function _backup_migrate_check_timeout() {
   }
   // Figure out when we should stop execution.
   if (!$timeout) {
-    $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - config_get('backup_migrate.settings','backup_migrate_timeout_buffer', 5);
+    $timeout = (!empty($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()) + ini_get('max_execution_time') - config_get('backup_migrate.settings','backup_migrate_timeout_buffer');
   }
   return (time() > $timeout);
 }
