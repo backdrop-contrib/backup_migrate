@@ -329,9 +329,9 @@ class backup_migrate_schedule extends backup_migrate_item {
       return t('all backups');
     }
     else if ($keep == BACKUP_MIGRATE_SMART_DELETE) {
-      $keep_hourly = variable_get('backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
-      $keep_daily  = variable_get('backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
-      $keep_weekly = variable_get('backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
+      $keep_hourly = config_get('backup_migrate.settings','backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
+      $keep_daily  = config_get('backup_migrate.settings','backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
+      $keep_weekly = config_get('backup_migrate.settings','backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
       if ($terse) {
       return t('!hours hourly, !days daily, !weeks weekly backups',
           array(
@@ -517,9 +517,9 @@ class backup_migrate_schedule extends backup_migrate_item {
       ),
     );
 
-    $keep_hourly = variable_get('backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
-    $keep_daily  = variable_get('backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
-    $keep_weekly = variable_get('backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
+    $keep_hourly = config_get('backup_migrate.settings','backup_migrate_smart_keep_hourly', BACKUP_MIGRATE_SMART_KEEP_HOURLY);
+    $keep_daily  = config_get('backup_migrate.settings','backup_migrate_smart_keep_daily', BACKUP_MIGRATE_SMART_KEEP_DAILY);
+    $keep_weekly = config_get('backup_migrate.settings','backup_migrate_smart_keep_weekly', BACKUP_MIGRATE_SMART_KEEP_WEEKLY);
     $form['delete_settings']['smartdelete'] = array(
       "#type" => "radio",
       "#title" => t('Smart Delete'),
@@ -624,7 +624,7 @@ class backup_migrate_schedule extends backup_migrate_item {
     $now = time();
 
     // Add a small negative buffer (1% of the entire period) to the time to account for slight difference in cron run length.
-    $wait_time = $this->period - ($this->period * variable_get('backup_migrate_schedule_buffer', 0.01));
+    $wait_time = $this->period - ($this->period * config_get('backup_migrate.settings','backup_migrate_schedule_buffer', 0.01));
 
     $cron = $this->get('cron');
     if ($cron == BACKUP_MIGRATE_CRON_BUILTIN && $this->is_enabled() && ($now - $this->get('last_run')) >= $wait_time) {
@@ -656,14 +656,14 @@ class backup_migrate_schedule extends backup_migrate_item {
     if ($timestamp === NULL) {
       $timestamp = time();
     }
-    variable_set('backup_migrate_schedule_last_run_' . $this->get('id'), $timestamp);
+    config_set('backup_migrate.settings','backup_migrate_schedule_last_run_' . $this->get('id'), $timestamp);
   }
 
   /**
    * Set the last run time of a schedule to the given timestamp, or now if none specified.
    */
   function get_last_run() {
-    return variable_get('backup_migrate_schedule_last_run_' . $this->get('id'), 0);
+    return config_get('backup_migrate.settings','backup_migrate_schedule_last_run_' . $this->get('id'), 0);
   }
 
   /**
@@ -680,10 +680,10 @@ class backup_migrate_schedule extends backup_migrate_item {
           $this->smart_delete_backups(
             $destination, 
             $destination_files,
-            variable_get('backup_migrate_smart_keep_subhourly', BACKUP_MIGRATE_SMART_KEEP_SUBHOURLY),
-            variable_get('backup_migrate_smart_keep_hourly',    BACKUP_MIGRATE_SMART_KEEP_HOURLY),
-            variable_get('backup_migrate_smart_keep_daily',     BACKUP_MIGRATE_SMART_KEEP_DAILY),
-            variable_get('backup_migrate_smart_keep_weekly',    BACKUP_MIGRATE_SMART_KEEP_WEEKLY)
+            config_get('backup_migrate.settings','backup_migrate_smart_keep_subhourly', BACKUP_MIGRATE_SMART_KEEP_SUBHOURLY),
+            config_get('backup_migrate.settings','backup_migrate_smart_keep_hourly',    BACKUP_MIGRATE_SMART_KEEP_HOURLY),
+            config_get('backup_migrate.settings','backup_migrate_smart_keep_daily',     BACKUP_MIGRATE_SMART_KEEP_DAILY),
+            config_get('backup_migrate.settings','backup_migrate_smart_keep_weekly',    BACKUP_MIGRATE_SMART_KEEP_WEEKLY)
           );
         }
         else if ($num_to_keep != BACKUP_MIGRATE_KEEP_ALL) {

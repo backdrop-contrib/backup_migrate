@@ -825,7 +825,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       // server's ability to make outgoing HTTP requests the next time that
       // requirements checking is performed.
       // @see system_requirements()
-      variable_set('backdrop_http_request_fails', TRUE);
+      config_set('backup_migrate.settings','backdrop_http_request_fails', TRUE);
   
       return $result;
     }

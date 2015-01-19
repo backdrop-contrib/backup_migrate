@@ -25,7 +25,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   function sources() {
     $out  = array();
     $out['files'] = backup_migrate_create_destination('filesource', array('machine_name' => 'files', 'location' => 'public://', 'name' => t('Public Files Directory'), 'show_in_list' => FALSE));
-    if (variable_get('file_private_path', FALSE)) {
+    if (config_get('backup_migrate.settings','file_private_path', FALSE)) {
       $out['files_private'] = backup_migrate_create_destination('filesource', array('machine_name' => 'files', 'location' => 'private://', 'name' => t('Private Files Directory'), 'show_in_list' => FALSE));
     }
     return $out;

@@ -333,7 +333,7 @@ function backup_migrate_update_2000() {
  */
 function backup_migrate_update_2001() {
   $ret = array();
-  $schema = drupal_get_schema_unprocessed('backup_migrate', 'backup_migrate_profiles');
+  $schema = backdrop_get_schema_unprocessed('backup_migrate', 'backup_migrate_profiles');
 
   // Add the filters field to the db.
   if (!db_field_exists('backup_migrate_profiles', 'filters')) {
@@ -411,8 +411,8 @@ function backup_migrate_update_2004() {
  * Change the default database id to something friendlier 2009-08-08
  */
 function backup_migrate_update_2005() {
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/crud.inc';
-  require_once './'. drupal_get_path('module', 'backup_migrate') .'/includes/profiles.inc';
+  require_once './'. backdrop_get_path('module', 'backup_migrate') .'/includes/crud.inc';
+  require_once './'. backdrop_get_path('module', 'backup_migrate') .'/includes/profiles.inc';
 
   $ret = array();
   // Change the destination ids of the defined database sources mostly to make using them with drush friendlier.
@@ -469,9 +469,9 @@ function backup_migrate_update_2005() {
 function backup_migrate_update_7200() {
   $from = 'public://backup_migrate';
   $to   = 'private://backup_migrate';
-  if (drupal_realpath($from) && !drupal_realpath($to)) {
+  if (backdrop_realpath($from) && !backdrop_realpath($to)) {
     if (!rename($from, $to)) {
-      drupal_set_message(t('Unable to move the backups directory to your private folder, please check file permissions and move the directory %from to %to', array('%from' => drupal_realpath($from), '%to' => drupal_realpath($to))), 'warning');
+      backdrop_set_message(t('Unable to move the backups directory to your private folder, please check file permissions and move the directory %from to %to', array('%from' => backdrop_realpath($from), '%to' => backdrop_realpath($to))), 'warning');
     }
   }
 }
@@ -494,7 +494,7 @@ function backup_migrate_update_7203() {
   $result = db_query('SELECT * FROM {backup_migrate_schedules}', array(), array('fetch' => PDO::FETCH_ASSOC));
   foreach ($result as $item) {
     if (isset($item['last_run'])) {
-      variable_set('backup_migrate_schedule_last_run_' . $item['schedule_id'], $item['last_run']);
+      config_set('backup_migrate.settings','backup_migrate_schedule_last_run_' . $item['schedule_id'], $item['last_run']);
     }
   }
   if (db_field_exists('backup_migrate_schedules', 'last_run')) {
@@ -567,7 +567,7 @@ function backup_migrate_update_7300() {
   $result = db_query("SELECT * FROM {backup_migrate_destinations} WHERE type in ('filesource', 'db')", array(), array('fetch' => PDO::FETCH_ASSOC));
   foreach ($result as $item) {
     $item['source_id'] = $item['destination_id'];
-    drupal_write_record('backup_migrate_source', $item);
+    backdrop_write_record('backup_migrate_source', $item);
   }
 
   // Change 'destination' settings to 'source' settings
@@ -576,7 +576,7 @@ function backup_migrate_update_7300() {
     $item['filters'] = unserialize($item['filters']);
     $item['filters']['sources'] = $item['filters']['destinations'];
     unset($item['filters']['destinations']);
-    drupal_write_record('backup_migrate_profiles', $item, array('profile_id'));
+    backdrop_write_record('backup_migrate_profiles', $item, array('profile_id'));
   }
 }
 

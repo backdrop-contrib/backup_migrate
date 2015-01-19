@@ -133,17 +133,17 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       ),
       'Site 0' => array(
         'version' => VERSION,
-        'name' => variable_get('site_name', ''),
+        'name' => config_get('backup_migrate.settings','site_name', ''),
         'docroot' => 'docroot',
         'sitedir' => 'docroot/' . conf_path(),
         'database-file-default' => 'database.sql',
         'database-file-driver' => 'mysql',
       ),
     );
-    if ($private = variable_get('file_private_path', FALSE)) {
+    if ($private = config_get('backup_migrate.settings','file_private_path', FALSE)) {
       $info['Site 0']['files-private'] = 'docroot/' . $private;
     }
-    $info['Site 0']['files-public'] = 'docroot/' . variable_get('file_public_path', FALSE);
+    $info['Site 0']['files-public'] = 'docroot/' . config_get('backup_migrate.settings','file_public_path', FALSE);
     $ini = $this->_array_to_ini($info);
 
     $tmpdir = backup_migrate_temp_directory();
