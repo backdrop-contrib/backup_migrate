@@ -222,7 +222,8 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       return $directory;
     }
     else {
-      file_create_htaccess($directory, TRUE);
+	  //Backdrop change 
+      file_save_htaccess($directory, TRUE);
   
       // Check the user agent to make sure we're not responding to a request from drupal itself.
       // That should prevent infinite loops which could be caused by poormanscron in some circumstances.
