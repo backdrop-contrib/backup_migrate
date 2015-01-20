@@ -110,7 +110,9 @@ define('DRUPAL_FTP_FT_FILE', 1);
  *  creates a new ftp object. if any elements of ftp_map are missing, they'll be filled with the server defaults.
  */
 function backdrop_ftp_ftp_object($server, $port, $user, $pass, $dir, $pasv) {
-  $ftp = new stdClass();
+  //Backdrop change to classed entities
+  //$ftp = new stdClass();
+  $ftp = entity_create('ftp', array());
 
   $ftp->__server = $server;
   $ftp->__port = $port;

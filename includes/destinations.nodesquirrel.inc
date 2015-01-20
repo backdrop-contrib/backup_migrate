@@ -284,6 +284,7 @@ function backup_migrate_nodesquirrel_schedule_settings_form($destination, $statu
 
 /**
  * NodeSquirrel settings form.
+ * @see system_settings_form()
  */
 function backup_migrate_nodesquirrel_settings_form($form_state) {
   _backup_migrate_message_callback('_backup_migrate_message_browser');
@@ -315,8 +316,9 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
   return $form;
 }
 // Backdrop - Add a submit function to process config
-function my_settings_form_submit($form, &$form_state) {
+function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   $config = config('backup_migrate.settings');
+  
   $config->set('backup_migrate_nodesquirrel_settings_form', $form_state['values']);
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
@@ -798,7 +800,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   
     //Backdrop change classed entities
     //$result = new stdClass();
-    $result = entity_create('result', array('error' => '', 'code' => ''));
+    $result = entity_create('result', array());
     
     // Parse the URL and make sure we can handle the schema.
     $uri = parse_url($url);
@@ -806,14 +808,12 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     if ($uri == FALSE) {
       $result->error = 'unable to parse URL';
       $result->code = -1001;
-      $result->save();
       return $result;
     }
   
     if (!isset($uri['scheme'])) {
       $result->error = 'missing schema';
       $result->code = -1002;
-      $result->save();
       return $result;
     }
   
@@ -833,7 +833,6 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       default:
         $result->error = 'invalid schema '. $uri['scheme'];
         $result->code = -1003;
-        $result->save();
         return $result;
     }
   
@@ -843,7 +842,6 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       // clash with the HTTP status codes.
       $result->code = -$errno;
       $result->error = trim($errstr);
-      $result->save();
       
       // Mark that this request failed. This will trigger a check of the web
       // server's ability to make outgoing HTTP requests the next time that

@@ -26,11 +26,10 @@ class backup_migrate_destination_email extends backup_migrate_destination {
     }
     //Backdrop change classed entities
     //$attachment = new stdClass();
-    $attachment = entity_create('attachment', array('filename' => $file->filename(), 'path' => $file->filepath()));
+    $attachment = entity_create('attachment', array());
     
-    //$attachment->filename = $file->filename();
-    //$attachment->path = $file->filepath();
-    $attachment->save();
+    $attachment->filename = $file->filename();
+    $attachment->path = $file->filepath();
     
     _backup_migrate_destination_email_mail_backup($attachment, $this->get_location());
     return $file;
