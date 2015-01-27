@@ -319,7 +319,16 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
 function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   $config = config('backup_migrate.settings');
   
-  $config->set('backup_migrate_nodesquirrel_settings_form', $form_state['values']);
+  // _status_form
+  $config->set('backup_migrate_nodesquirrel_status_status', $form['nodesquirrel_status']['status']);
+  $config->set('backup_migrate_nodesquirrel_status_plan_name', $form['nodesquirrel_status']['plan_name']);
+  $config->set('backup_migrate_nodesquirrel_status_backups_used', $form['nodesquirrel_status']['backups_used']);
+  $config->set('backup_migrate_nodesquirrel_status_last_backup', $form['nodesquirrel_status']['last_backup']);
+  $config->set('backup_migrate_nodesquirrel_status_space', $form['nodesquirrel_status']['space']);
+  $config->set('backup_migrate_nodesquirrel_status_manage', $form['nodesquirrel_status']['manage']);
+
+
+
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
 }
