@@ -326,7 +326,10 @@ function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   $config->set('backup_migrate_nodesquirrel_status_last_backup', $form['nodesquirrel_status']['last_backup']);
   $config->set('backup_migrate_nodesquirrel_status_space', $form['nodesquirrel_status']['space']);
   $config->set('backup_migrate_nodesquirrel_status_manage', $form['nodesquirrel_status']['manage']);
-
+  //_credentials_settings_form
+  $config->set('backup_migrate_nodesquirrel_credentials_secret_key',  $form['nodesquirrel_credentials']['nodesquirrel_secret_key']);
+  $config->set('backup_migrate_nodesquirrel_credentials_secret_key_help',  $form['nodesquirrel_credentials']['secret_key_help']);
+  
 
 
   $config->save();
