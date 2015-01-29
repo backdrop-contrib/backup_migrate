@@ -312,7 +312,8 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
     '#value' => t('Save configuration'),
   );
 
-  //return system_settings_form($form);
+  // replace system_settings_form with CMI for Backdrop in _settings_form_submit function
+  /*return system_settings_form($form);*/
   return $form;
 }
 // Backdrop - Add a submit function to process config
@@ -329,9 +330,14 @@ function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   //_credentials_settings_form
   $config->set('backup_migrate_nodesquirrel_credentials_secret_key',  $form['nodesquirrel_credentials']['nodesquirrel_secret_key']);
   $config->set('backup_migrate_nodesquirrel_credentials_secret_key_help',  $form['nodesquirrel_credentials']['secret_key_help']);
+  //_schedule_settings_form
+  $config->set('backup_migrate_nodesquirrel_schedule', $form['nodesquirrel_schedule']);
+  $config->set('backup_migrate_nodesquirrel_schedule_key', $form['nodesquirrel_schedule']['nodesquirrel_schedule']);
+  $config->set('backup_migrate_nodesquirrel_schedule_key_enabled', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['nodesquirrel_schedule_enabled']);
+  $config->set('backup_migrate_nodesquirrel_schedule_key_settings', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['settings']);
+  $config->set('backup_migrate_nodesquirrel_schedule_key_settings_schedule_source_id', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['settings']['nodesquirrel_schedule_source_id']);
+  $config->set('backup_migrate_nodesquirrel_schedule_key_settings_schedule', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['settings']['nodesquirrel_schedule']);
   
-
-
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
 }
@@ -810,10 +816,8 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function _post_file($url, $method = 'GET', $params = array(), $file = NULL, $retry = 3) {
     global $db_prefix;
   
-    //Backdrop change classed entities
-    //$result = new stdClass();
-    $result = entity_create('result', array());
-    
+    $result = new stdClass();
+        
     // Parse the URL and make sure we can handle the schema.
     $uri = parse_url($url);
   
