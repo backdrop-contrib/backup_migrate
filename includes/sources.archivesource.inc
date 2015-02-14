@@ -75,7 +75,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         $gz = new Archive_Tar($file->filepath(), false);
 
         $gz->addModify(array($manifest), $file->name .'/', dirname($manifest));
-        $gz->addModify($files, $file->name .'/docroot', $this->get_location());
+        $gz->addModify($files, $file->name .'/docroot', $this->get_realpath());
         $gz->addModify($db, $file->name . '/', dirname($db));
 
         unlink($manifest);
