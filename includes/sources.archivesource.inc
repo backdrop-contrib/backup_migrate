@@ -51,6 +51,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
     foreach ($excludes as $i => $exclude) {
       $excludes[$i] = 'public://' . $exclude;
     }
+    $excludes[] = 'private://backup_migrate';
     $excludes[] = conf_path() . '/settings.php';
     $excludes[] = file_directory_temp();
 
@@ -64,9 +65,11 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
    */
   function _backup_to_file_php($file, $settings) {
     if ($this->check_libs()) {
+      $base_dir = $this->get_realpath();
+
       $excluded_paths = empty($settings->filters['exclude_filepaths']) ? '' : $settings->filters['exclude_filepaths'];
-      $exclude = $this->get_excluded_paths($excluded_paths);
-      $files = $this->get_files_to_backup($this->get_location(), $settings, $exclude, realpath('.') . '/');
+      $exclude = $this->get_excluded_paths($settings);
+      $files = $this->get_files_to_backup($this->get_realpath(), $settings, $exclude);
       if ($files) {
         $manifest = $this->generate_manifest();
         $db = $this->get_db();
@@ -75,7 +78,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         $gz = new Archive_Tar($file->filepath(), false);
 
         $gz->addModify(array($manifest), $file->name .'/', dirname($manifest));
-        $gz->addModify($files, $file->name .'/docroot', $this->get_realpath());
+        $gz->addModify($files, $file->name .'/docroot', $base_dir);
         $gz->addModify($db, $file->name . '/', dirname($db));
 
         unlink($manifest);
@@ -255,7 +258,6 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
 
     return $out;
   }
-
 
   /**
    * Convert an associated array to an ini format string. Only allows 2 levels of depth to allow parse_ini_file to parse.
