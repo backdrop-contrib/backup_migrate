@@ -162,9 +162,12 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
     backup_migrate_include('destinations', 'files', 'filters', 'profiles');
 
     $file = new backup_file();
-    $settings = _backup_migrate_profile_saved_default_profile();
+    // Clone the default settings so we can make changes without them leaking out of this function.
+    $settings = clone _backup_migrate_profile_saved_default_profile();
     $settings->source_id = 'db';
     $settings->filters['compression'] = 'none';
+
+    // Execute the backup on the db with the default settings.
     $file = backup_migrate_filters_backup($file, $settings);
 
     // Generate a tmp file with the correct final title (because ArchiveTar doesn't seem to allow renaming).
