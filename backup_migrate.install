@@ -608,8 +608,18 @@ function backup_migrate_update_7302() {
  */
 function backup_migrate_update_7303() {
   foreach (array('backup_migrate_sources' => 'source_id', 'backup_migrate_destinations' => 'destination_id', 'backup_migrate_schedules' => 'schedule_id', 'backup_migrate_profiles' => 'profile_id') as $table => $id) {
+    // Take the primary key status from the machine name so it can be renamed
+    // A serial field must be defined as a key, so make a temporary index.
+    // See: https://www.drupal.org/node/190027
+    db_add_index($table, 'temp', array($id));
     db_drop_primary_key($table);
+    // Drop our temporary index.
+    db_drop_index($table, 'temp');
+
+    // Switch the name of the id to 'machine_name' to be more ctools standard
     db_change_field($table, $id, 'machine_name', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+
+    // Add a serial ID
     db_add_field($table, $id, 
       array(
           'type' => 'serial',
