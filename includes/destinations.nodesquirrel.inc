@@ -250,6 +250,7 @@ function backup_migrate_nodesquirrel_schedule_settings_form($destination, $statu
     'period' => empty($schedule) ? variable_get('nodesquirrel_schedule', 60*60*24) : $schedule->get('period'),
     'enabled' => empty($schedule) ? variable_get('nodesquirrel_schedule_enabled', TRUE) : $schedule->get('enabled'),
     'source_id' => empty($schedule) ? variable_get('nodesquirrel_schedule_source_id', 'db') : $schedule->get('source_id'),
+    'keep' => empty($schedule) ? variable_get('nodesquirrel_schedule_keep', BACKUP_MIGRATE_SMART_DELETE) : $schedule->get('keep'),    
   );
 
   $form['nodesquirrel_schedule'][$key]['nodesquirrel_schedule_enabled'] = array(
@@ -278,6 +279,12 @@ function backup_migrate_nodesquirrel_schedule_settings_form($destination, $statu
     '#title' => t('Schedule Frequency'),
     '#options' => $options,
     '#default_value' => $period,
+  );
+  $form['nodesquirrel_schedule'][$key]['settings']['nodesquirrel_schedule_keep'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Automatically delete old backups'),
+    '#return_value' => $defaults['keep'] == BACKUP_MIGRATE_KEEP_ALL ? BACKUP_MIGRATE_SMART_DELETE : $defaults['keep'],
+    '#default_value' => $defaults['keep'],
   );
   return $form;
 }

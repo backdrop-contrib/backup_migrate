@@ -439,6 +439,7 @@ function backup_migrate_backup_migrate_schedules() {
         'profile_id' => 'default',
         'period' => variable_get('nodesquirrel_schedule', 60*60*24),
         'enabled' => variable_get('nodesquirrel_schedule_enabled', TRUE) && variable_get('nodesquirrel_secret_key', FALSE) != FALSE,
+        'keep' => variable_get('nodesquirrel_schedule_keep', BACKUP_MIGRATE_SMART_DELETE)
       );
       $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
     }
