@@ -124,7 +124,7 @@ function backup_migrate_nodesquirrel_info_form() {
 
   $form['nodesquirrel_info']['intro'] = array(
     '#type' => 'markup',
-    '#markup' => t('<p>NodeSquirrel is the cloud backup service for Drupal built by the maintainers of Backup and Migrate. It is secure, reliable and affordable.</p><p>Find out more at !nodesquirrel</p>', array('!nodesquirrel' => l('nodesquirrel.com', 'http://www.nodesquirrel.com'), '!add' => l(t('add other offsite destinations'), BACKUP_MIGRATE_MENU_PATH . '/destination/list/add'), '!bam' => l(t('Backup and Migrate project page'), 'http://drupal.org/project/backup_migrate'))),
+    '#markup' => t('<p>NodeSquirrel is the cloud backup service built by the maintainers of Backup and Migrate.</p></p>NodeSquirrel is now free for all Drupal sites, courtesy of Pantheon.</p><p>Create your free account at !signup</p>', array('!nodesquirrel' => l('nodesquirrel.com', 'http://www.nodesquirrel.com'), '!signup' => backup_migrate_nodesquirrel_get_activate_link())),
     );
   return $form;
 }
