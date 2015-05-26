@@ -35,5 +35,6 @@
     "backup_migrate_copy_destination_id": "",
     "backup_migrate_backup_max_time": 1200,
     "backup_migrate_restore_max_time": 1200,
-    "backup_migrate_timeout_buffer": 5
+    "backup_migrate_timeout_buffer": 5,
+    "nodesquirrel_schedule_keep": -2
 }

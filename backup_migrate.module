@@ -4,11 +4,11 @@
 
 /**
  * @file
- * Create (manually or scheduled) and restore backups of your Drupal MySQL
+ * Create (manually or scheduled) and restore backups of your Backdrop MySQL
  * database with an option to exclude table data (e.g. cache_*)
  */
 
-define('BACKUP_MIGRATE_VERSION', '7.x-3.x');
+define('BACKUP_MIGRATE_VERSION', '1.x-1.x');
 define('BACKUP_MIGRATE_MENU_PATH', 'admin/config/system/backup_migrate');
 define('BACKUP_MIGRATE_MENU_DEPTH', 4);
 
@@ -21,7 +21,7 @@ function backup_migrate_config_info() {
   return $prefixes;
 }
 
-/* Drupal Hooks */
+/* Backdrop Hooks */
 
 /**
  * Implements hook_help().
@@ -30,7 +30,7 @@ function backup_migrate_help($section, $arg) {
   $help = array(
     array(
       'body' => 
-       t('Backup and Migrate makes the task of backing up your Drupal database and migrating data from one Drupal install to another easier. It provides a function to backup the entire database to file or download, and to restore from a previous backup. You can also schedule the backup operation. Compression of backup files is also supported.  The database backup files created with this module can be imported into this or any other Drupal installation with the !restorelink, or you can use a database tool such as <a href="!phpmyadminurl">phpMyAdmin</a> or the mysql command line command.',
+       t('Backup and Migrate makes the task of backing up your Backdrop database and migrating data from one Backdrop install to another easier. It provides a function to backup the entire database to file or download, and to restore from a previous backup. You can also schedule the backup operation. Compression of backup files is also supported.  The database backup files created with this module can be imported into this or any other Backdrop installation with the !restorelink, or you can use a database tool such as <a href="!phpmyadminurl">phpMyAdmin</a> or the mysql command line command.',
          array(
             '!restorelink' => user_access('restore from backup') ? l(t('restore feature'), BACKUP_MIGRATE_MENU_PATH . '/restore') : t('restore feature'), 
             '!phpmyadminurl' => 'http://www.phpmyadmin.net'
@@ -125,7 +125,7 @@ function backup_migrate_menu() {
 
   $items[BACKUP_MIGRATE_MENU_PATH] = array(
     'title' => 'Backup and Migrate',
-    'description' => 'Backup/restore your database and files or migrate data to or from another Drupal site.',
+    'description' => 'Backup/restore your database and files or migrate data to or from another Backdrop site.',
     'page callback' => 'backup_migrate_menu_callback',
     'page arguments' => array('', 'backup_migrate_ui_manual_backup_quick', TRUE),
     'access arguments' => array('access backup and migrate'),
@@ -448,6 +448,7 @@ function backup_migrate_backup_migrate_schedules() {
         'profile_id' => 'default',
         'period' => config_get('backup_migrate.settings','nodesquirrel_schedule'),
         'enabled' => config_get('backup_migrate.settings','nodesquirrel_schedule_enabled') && config_get('backup_migrate.settings','nodesquirrel_secret_key') != FALSE,
+        'keep' => config_get('backup_migrate.settings','nodesquirrel_schedule_keep')
       );
       $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
     }
@@ -503,7 +504,7 @@ function backup_migrate_include() {
  * Include views .inc files as necessary.
  */
 function backup_migrate_include_path($file) {
-  return DRUPAL_ROOT . '/' . backdrop_get_path('module', 'backup_migrate') . "/includes/$file.inc";
+  return BACKDROP_ROOT . '/' . backdrop_get_path('module', 'backup_migrate') . "/includes/$file.inc";
 }
 
 
@@ -885,8 +886,8 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
  * Theme the quick schedule form.
  */
 function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
-  backdrop_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
-  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_js(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $form = $form['form'];
 
@@ -938,8 +939,8 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
  */
 function theme_backup_migrate_dependent($vars) {
   $element = $vars['element'];
-  backdrop_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js');
-  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_js(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.js');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $id = backdrop_html_id(implode('-', $element['#array_parents']));
 
@@ -994,7 +995,7 @@ function theme_backup_migrate_group($vars) {
  * The backup/export form.
  */
 function backup_migrate_ui_manual_backup_form($form, &$form_state, $profile) {
-  backdrop_add_js(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.js', array('type' => 'module', 'scope' => 'footer'));
+  backdrop_add_js(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.js', array('type' => 'module', 'scope' => 'footer'));
 
   $form = array();
 
@@ -1359,7 +1360,7 @@ function backup_migrate_ui_export_form($form, &$form_state, $item) {
  */
 function backup_migrate_ui_saved_backups() {
   backup_migrate_include('profiles', 'destinations', 'sources');
-  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = FALSE;
   $now = $fetch_time = time();
@@ -1401,7 +1402,7 @@ function backup_migrate_ui_saved_backups() {
  */
 function backup_migrate_get_saved_backups($refresh = FALSE) {
   backup_migrate_include('profiles', 'destinations', 'sources');
-  backdrop_add_css(drupal_get_path('module', 'backup_migrate') .'/backup_migrate.css');
+  backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
 
   $remote = FALSE;
   $now = $fetch_time = time();
@@ -1663,7 +1664,7 @@ function backup_migrate_shutdown($settings) {
 /* Actions/Workflow integration */
 
 /**
- * Action to backup the drupal site. Requires actions.module.
+ * Action to backup the backdrop site. Requires actions.module.
 function action_backup_migrate_backup($op, $edit = array()) {
   switch ($op) {
     case 'do':
@@ -1731,7 +1732,7 @@ function _backup_migrate_backup_with_defaults($destination_id = "manual") {
 }
 
 /**
- * Helper function to set a drupal message and watchdog message depending on whether the module is being run interactively.
+ * Helper function to set a backdrop message and watchdog message depending on whether the module is being run interactively.
  */
 function _backup_migrate_message($message, $replace = array(), $type = 'status') {
   // Only set a message if there is a callback handler to handle the message.
@@ -1744,7 +1745,7 @@ function _backup_migrate_message($message, $replace = array(), $type = 'status')
 }
 
 /**
- * Helper function to set a drupal message and watchdog message depending on whether the module is being run interactively.
+ * Helper function to set a backdrop message and watchdog message depending on whether the module is being run interactively.
  */
 function _backup_migrate_messages($message = NULL, $replace = array(), $type = 'status') {
   static $messages = array();
@@ -1839,12 +1840,7 @@ function backup_migrate_exec($command, $args = array()) {
   $output = $result = NULL;
 
   // Run the command.
-  $temp_name = backdrop_tempnam('temporary://', 'mysql');
-  exec($command . ' 2>' . realpath($temp_name), $output, $result);
-  if ($result !== 0 && isset($args['%file'])) {
-    file_put_contents($args['%file'], file_get_contents($temp_name), FILE_APPEND);
-  }
-  unlink($temp_name);
+  exec($command, $output, $result);
 
   return $result == 0;
 }

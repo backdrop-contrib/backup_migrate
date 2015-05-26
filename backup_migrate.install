@@ -167,7 +167,7 @@ function backup_migrate_schema() {
       ),
       'machine_name' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 255,
         'not null' => TRUE,
         'default' => '0',
         'description' => 'The primary identifier for a source.',
@@ -351,7 +351,7 @@ function backup_migrate_install() {
   $config->set('backup_migrate_backup_max_time', 1200);
   $config->set('backup_migrate_restore_max_time', 1200);
   $config->set('backup_migrate_timeout_buffer', 5);
-
+  $config->set('nodesquirrel_schedule_keep', -2);
   $config->save();
 */
 }
@@ -408,6 +408,7 @@ function backup_migrate_update_1000() {
   $config->set('backup_migrate_backup_max_time', update_variable_get('backup_migrate_backup_max_time',1200));
   $config->set('backup_migrate_restore_max_time', update_variable_get('backup_migrate_restore_max_time',1200));
   $config->set('backup_migrate_timeout_buffer', update_variable_get('backup_migrate_timeout_buffer',5));
+  $config->set('nodesquirrel_schedule_keep', update_variable_get('nodesquirrel_schedule_keep',-2));
 
   $config->save();
   
@@ -449,6 +450,7 @@ function backup_migrate_update_1000() {
   update_variable_del('backup_migrate_backup_max_time');
   update_variable_del('backup_migrate_restore_max_time');
   update_variable_del('backup_migrate_timeout_buffer');
+  update_variable_del('nodesquirrel_schedule_keep');
 }  
 
 /**
@@ -457,3 +459,31 @@ function backup_migrate_update_1000() {
 function backup_migrate_update_last_removed() {
   return 7303;
 }
+
+/**
+ * Update all schedules to use the built in cron if none is specified.
+ */
+function backup_migrate_update_1004() {
+  db_query("UPDATE {backup_migrate_schedules} SET cron = 'builtin' WHERE cron = '0'");
+}
+
+/**
+ * Fix schema mismatch after upgrade.
+ */
+function backup_migrate_update_1005() {
+  foreach (array('backup_migrate_profiles', 'backup_migrate_destinations', 'backup_migrate_sources', 'backup_migrate_schedules') as $table) {
+    db_change_field($table, 'machine_name', 'machine_name', array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '0',
+    ));
+  }
+  db_change_field('backup_migrate_schedules', 'cron', 'cron', array(
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => TRUE,
+    'default' => 'builtin',
+  ));
+}
+
