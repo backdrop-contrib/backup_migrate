@@ -19,7 +19,7 @@ such as phpMyAdmin or the command-line mysql client.
 Installation
 ------------
 
-- Install this module using the official Backdrop CMS instructions at
+* Install this module using the official Backdrop CMS instructions at
   https://backdropcms.org/guide/modules
   
 * Put the module in your Drupal modules directory and enable it in 

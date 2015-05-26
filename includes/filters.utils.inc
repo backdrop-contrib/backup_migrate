@@ -223,12 +223,14 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
    */
   function take_site_online($settings) {
     // Take the site back off/online because the restored db may have changed that setting.
-    config_set('backup_migrate.settings','maintenance_mode', $this->saved_site_offline);
-    if ($settings->filters['utils_site_offline']) {
-      if (!empty($this->saved_site_offline_message)) {
-        config_set('backup_migrate.settings','maintenance_mode_message', $this->saved_site_offline_message);
+    if (config_get('backup_migrate.settings','maintenance_mode') == 0 && !empty($this->saved_site_offline)) {
+      config_set('backup_migrate.settings','maintenance_mode', 0);
+      if ($settings->filters['utils_site_offline']) {
+        if (!empty($this->saved_site_offline_message)) {
+          config_set('backup_migrate.settings','maintenance_mode_message', $this->saved_site_offline_message);
+        }
+        _backup_migrate_message('Site was taken online.');
       }
-      _backup_migrate_message('Site was taken online.');
     }
   }
 }
