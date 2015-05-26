@@ -5,6 +5,8 @@
  * Functions to handle the NodeSquirrel backup destination.
  */
 
+backup_migrate_include('crud', 'locations', 'destinations');
+
 define('NODESQUIRREL_SECRET_KEY_PATTERN', '/^[0-9a-f]{32}\:?[0-9a-f]{32}$/');
 
 /**
@@ -327,23 +329,13 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
 function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   $config = config('backup_migrate.settings');
   
-  // _status_form
-  $config->set('backup_migrate_nodesquirrel_status_status', $form['nodesquirrel_status']['status']);
-  $config->set('backup_migrate_nodesquirrel_status_plan_name', $form['nodesquirrel_status']['plan_name']);
-  $config->set('backup_migrate_nodesquirrel_status_backups_used', $form['nodesquirrel_status']['backups_used']);
-  $config->set('backup_migrate_nodesquirrel_status_last_backup', $form['nodesquirrel_status']['last_backup']);
-  $config->set('backup_migrate_nodesquirrel_status_space', $form['nodesquirrel_status']['space']);
-  $config->set('backup_migrate_nodesquirrel_status_manage', $form['nodesquirrel_status']['manage']);
   //_credentials_settings_form
-  $config->set('backup_migrate_nodesquirrel_credentials_secret_key',  $form['nodesquirrel_credentials']['nodesquirrel_secret_key']);
-  $config->set('backup_migrate_nodesquirrel_credentials_secret_key_help',  $form['nodesquirrel_credentials']['secret_key_help']);
+  $config->set('nodesquirrel_secret_key',  $form_state['values']['nodesquirrel_secret_key']);
+
   //_schedule_settings_form
-  $config->set('backup_migrate_nodesquirrel_schedule', $form['nodesquirrel_schedule']);
-  $config->set('backup_migrate_nodesquirrel_schedule_key', $form['nodesquirrel_schedule']['nodesquirrel_schedule']);
-  $config->set('backup_migrate_nodesquirrel_schedule_key_enabled', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['nodesquirrel_schedule_enabled']);
-  $config->set('backup_migrate_nodesquirrel_schedule_key_settings', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['settings']);
-  $config->set('backup_migrate_nodesquirrel_schedule_key_settings_schedule_source_id', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['settings']['nodesquirrel_schedule_source_id']);
-  $config->set('backup_migrate_nodesquirrel_schedule_key_settings_schedule', $form['nodesquirrel_schedule']['nodesquirrel_schedule']['settings']['nodesquirrel_schedule']);
+  $config->set('nodesquirrel_schedule_source_id', $form_state['values']['nodesquirrel_schedule_source_id']);
+  $config->set('nodesquirrel_schedule', $form_state['values']['nodesquirrel_schedule']);
+  $config->set('nodesquirrel_schedule_enabled', $form_state['values']['nodesquirrel_schedule_enabled']);
   
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
@@ -483,7 +475,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
           _backup_migrate_message('The NodeSquirrel server returned the following error: %err', array('%err' => $error), 'error');
         }
       }
-      else if ($err = xmlrpc_error()) {
+      else if ($err = $this->_xmlrpc_error()) {
         // XMLRPC errors are already handled by the server function below.
       }
       else {
@@ -631,7 +623,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       $limits = $this->check_limits();
 
       if (!$limits) {
-        $err = xmlrpc_error();
+        $err = $this->_xmlrpc_error();
         if (!empty($err->code) && $err->code == '401') {
           return 'Could not log in to the NodeSquirrel server. Please check that your secret key is correct.';
         }
@@ -714,10 +706,10 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   
           $url = $this->add_scheme($url);
 
-          $out = xmlrpc($url, array($method => $args));
+          $out = $this->_xmlrpc_request($url, $method, $args);
   
           // Check for errors.
-          $err = xmlrpc_error();
+          $err = $this->_xmlrpc_error();
           if ($err && $err->is_error) {
             switch ($err->code) {
               case '500':
@@ -758,6 +750,512 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       }
     }
   }
+
+  /**
+   * Performs one or more XML-RPC requests.
+   *
+   * @param $url
+   *   An absolute URL of the XML-RPC endpoint, e.g.,
+   *   http://example.com/xmlrpc.php
+   * @param $args
+   *   An associative array whose keys are the methods to call and whose values
+   *   are the arguments to pass to the respective method. If multiple methods
+   *   are specified, a system.multicall is performed.
+   * @param $options
+   *   (optional) An array of options to pass along to drupal_http_request().
+   *
+   * @return
+   *   A single response (single request) or an array of responses (multicall
+   *   request). Each response is the return value of the method, just as if it
+   *   has been a local function call, on success, or FALSE on failure. If FALSE
+   *   is returned, see xmlrpc_errno() and xmlrpc_error_msg() to get more
+   *   information.
+   */
+  function _xmlrpc_request($url, $method, $args, $options = array()) {
+    // Clear the error status
+    $this->_xmlrpc_error(NULL, NULL, TRUE);
+
+    $xmlrpc_request = $this->_xmlrpc_build_request($method, $args);
+
+    // Required options which will replace any that are passed in.
+    $options['method'] = 'POST';
+    $options['headers']['Content-Type'] = 'text/xml';
+    $options['data'] = $xmlrpc_request->xml;
+    $result = drupal_http_request($url, $options);
+    if ($result->code != 200) {
+      $this->_xmlrpc_error($result->code, $result->error);
+      return FALSE;
+    }
+    $message = $this->_xmlrpc_message($result->data);
+    // Now parse what we've got back
+    if (!$this->_xmlrpc_message_parse($message)) {
+      // XML error
+      $this->_xmlrpc_error(-32700, t('Parse error. Not well formed'));
+      return FALSE;
+    }
+    // Is the message a fault?
+    if ($message->messagetype == 'fault') {
+      $this->_xmlrpc_error($message->fault_code, $message->fault_string);
+      return FALSE;
+    }
+    // We now know that the message is well-formed and a non-fault result.
+    if ($method == 'system.multicall') {
+      // Return per-method results or error objects.
+      $return = array();
+      foreach ($message->params[0] as $result) {
+        if (array_keys($result) == array(0)) {
+          $return[] = $result[0];
+        }
+        else {
+          $return[] = $this->_xmlrpc_error($result['faultCode'], $result['faultString']);
+        }
+      }
+    }
+    else {
+      $return = $message->params[0];
+    }
+    return $return;
+  }
+
+  /**
+   * Constructs an object representing an XML-RPC request.
+   *
+   * @param $method
+   *   The name of the method to be called.
+   * @param $args
+   *   An array of parameters to send with the method.
+   *
+   * @return object
+   *   An XML-RPC object representing the request.
+   */
+  function _xmlrpc_build_request($method, $args) {
+    $xmlrpc_request = new stdClass();
+    $xmlrpc_request->method = $method;
+    $xmlrpc_request->args = $args;
+    $xmlrpc_request->xml = <<<EOD
+<?xml version="1.0"?>
+<methodCall>
+<methodName>{$xmlrpc_request->method}</methodName>
+<params>
+
+EOD;
+
+    foreach ($xmlrpc_request->args as $arg) {
+      $xmlrpc_request->xml .= '<param><value>';
+      $v = $this->_xmlrpc_value($arg);
+      $xmlrpc_request->xml .= $this->_xmlrpc_value_get_xml($v);
+      $xmlrpc_request->xml .= "</value></param>\n";
+    }
+    $xmlrpc_request->xml .= '</params></methodCall>';
+    return $xmlrpc_request;
+  }
+
+  /**
+   * Turns a data structure into objects with 'data' and 'type' attributes.
+   *
+   * @param $data
+   *   The data structure.
+   * @param $type
+   *   Optional type to assign to $data.
+   *
+   * @return object
+   *   An XML-RPC data object containing the input $data.
+   */
+  function _xmlrpc_value($data, $type = FALSE) {
+    $xmlrpc_value = new stdClass();
+    $xmlrpc_value->data = $data;
+    if (!$type) {
+      $type = $this->_xmlrpc_value_calculate_type($xmlrpc_value);
+    }
+    $xmlrpc_value->type = $type;
+    if ($type == 'struct') {
+      // Turn all the values in the array into new xmlrpc_values
+      foreach ($xmlrpc_value->data as $key => $value) {
+        $xmlrpc_value->data[$key] = $this->_xmlrpc_value($value);
+      }
+    }
+    if ($type == 'array') {
+      for ($i = 0, $j = count($xmlrpc_value->data); $i < $j; $i++) {
+        $xmlrpc_value->data[$i] = $this->_xmlrpc_value($xmlrpc_value->data[$i]);
+      }
+    }
+    return $xmlrpc_value;
+  }
+
+  /**
+   * Maps a PHP type to an XML-RPC type.
+   *
+   * @param $xmlrpc_value
+   *   Variable whose type should be mapped.
+   *
+   * @return string
+   *   The corresponding XML-RPC type.
+   *
+   * @see http://www.xmlrpc.com/spec#scalars
+   */
+  function _xmlrpc_value_calculate_type($xmlrpc_value) {
+    // http://www.php.net/gettype: Never use gettype() to test for a certain type
+    // [...] Instead, use the is_* functions.
+    if (is_bool($xmlrpc_value->data)) {
+      return 'boolean';
+    }
+    if (is_double($xmlrpc_value->data)) {
+      return 'double';
+    }
+    if (is_int($xmlrpc_value->data)) {
+      return 'int';
+    }
+    if (is_array($xmlrpc_value->data)) {
+      // empty or integer-indexed arrays are 'array', string-indexed arrays 'struct'
+      return empty($xmlrpc_value->data) || range(0, count($xmlrpc_value->data) - 1) === array_keys($xmlrpc_value->data) ? 'array' : 'struct';
+    }
+    if (is_object($xmlrpc_value->data)) {
+      if (isset($xmlrpc_value->data->is_date)) {
+        return 'date';
+      }
+      if (isset($xmlrpc_value->data->is_base64)) {
+        return 'base64';
+      }
+      $xmlrpc_value->data = get_object_vars($xmlrpc_value->data);
+      return 'struct';
+    }
+    // default
+    return 'string';
+  }
+
+  /**
+   * Generates XML representing the given value.
+   *
+   * @param $xmlrpc_value
+   *   A value to be represented in XML.
+   *
+   * @return
+   *   XML representation of $xmlrpc_value.
+   */
+  function _xmlrpc_value_get_xml($xmlrpc_value) {
+    switch ($xmlrpc_value->type) {
+      case 'boolean':
+        return '<boolean>' . (($xmlrpc_value->data) ? '1' : '0') . '</boolean>';
+
+      case 'int':
+        return '<int>' . $xmlrpc_value->data . '</int>';
+
+      case 'double':
+        return '<double>' . $xmlrpc_value->data . '</double>';
+
+      case 'string':
+        // Note: we don't escape apostrophes because of the many blogging clients
+        // that don't support numerical entities (and XML in general) properly.
+        return '<string>' . htmlspecialchars($xmlrpc_value->data) . '</string>';
+
+      case 'array':
+        $return = '<array><data>' . "\n";
+        foreach ($xmlrpc_value->data as $item) {
+          $return .= '  <value>' . $this->_xmlrpc_value_get_xml($item) . "</value>\n";
+        }
+        $return .= '</data></array>';
+        return $return;
+
+      case 'struct':
+        $return = '<struct>' . "\n";
+        foreach ($xmlrpc_value->data as $name => $value) {
+          $return .= "  <member><name>" . check_plain($name) . "</name><value>";
+          $return .= $this->_xmlrpc_value_get_xml($value) . "</value></member>\n";
+        }
+        $return .= '</struct>';
+        return $return;
+
+      case 'date':
+        return $this->_xmlrpc_date_get_xml($xmlrpc_value->data);
+
+      case 'base64':
+        return $this->_xmlrpc_base64_get_xml($xmlrpc_value->data);
+    }
+    return FALSE;
+  }
+
+  /**
+   * Generates, temporarily saves, and returns an XML-RPC error object.
+   *
+   * @param $code
+   *   The error code.
+   * @param $message
+   *   The error message.
+   * @param $reset
+   *   TRUE to empty the temporary error storage. Ignored if $code is supplied.
+   *
+   * @return object
+   *   An XML-RPC error object representing $code and $message, or the most
+   *   recently stored error object if omitted.
+   */
+  function _xmlrpc_error($code = NULL, $message = NULL, $reset = FALSE) {
+    if (isset($code)) {
+      $this->xmlrpc_error = new stdClass();
+      $this->xmlrpc_error->is_error = TRUE;
+      $this->xmlrpc_error->code = $code;
+      $this->xmlrpc_error->message = $message;
+    }
+    elseif ($reset) {
+      $this->xmlrpc_error = NULL;
+    }
+    return $this->xmlrpc_error;
+  }
+
+  /**
+   * Constructs an object representing an XML-RPC message.
+   *
+   * @param $message
+   *   A string containing an XML message.
+   *
+   * @return object
+   *   An XML-RPC object containing the message.
+   *
+   * @see http://www.xmlrpc.com/spec
+   */
+  function _xmlrpc_message($message) {
+    $xmlrpc_message = new stdClass();
+    // The stack used to keep track of the current array/struct
+    $xmlrpc_message->array_structs = array();
+    // The stack used to keep track of if things are structs or array
+    $xmlrpc_message->array_structs_types = array();
+    // A stack as well
+    $xmlrpc_message->current_struct_name = array();
+    $xmlrpc_message->message = $message;
+    return $xmlrpc_message;
+  }
+
+  /**
+   * Parses an XML-RPC message.
+   *
+   * If parsing fails, the faultCode and faultString will be added to the message
+   * object.
+   *
+   * @param $xmlrpc_message
+   *   An object generated by xmlrpc_message().
+   *
+   * @return
+   *   TRUE if parsing succeeded; FALSE otherwise.
+   */
+  function _xmlrpc_message_parse($xmlrpc_message) {
+    $xmlrpc_message->_parser = xml_parser_create();
+    // Set XML parser to take the case of tags into account.
+    xml_parser_set_option($xmlrpc_message->_parser, XML_OPTION_CASE_FOLDING, FALSE);
+    // Set XML parser callback functions
+    xml_set_element_handler($xmlrpc_message->_parser, array($this, '_xmlrpc_message_tag_open'), array($this, '_xmlrpc_message_tag_close'));
+    xml_set_character_data_handler($xmlrpc_message->_parser, array($this, '_xmlrpc_message_cdata'));
+    $this->_xmlrpc_message_set($xmlrpc_message);
+    if (!xml_parse($xmlrpc_message->_parser, $xmlrpc_message->message)) {
+      return FALSE;
+    }
+    xml_parser_free($xmlrpc_message->_parser);
+
+    // Grab the error messages, if any.
+    $xmlrpc_message = $this->_xmlrpc_message_get();
+    if (!isset($xmlrpc_message->messagetype)) {
+      return FALSE;
+    }
+    elseif ($xmlrpc_message->messagetype == 'fault') {
+      $xmlrpc_message->fault_code = $xmlrpc_message->params[0]['faultCode'];
+      $xmlrpc_message->fault_string = $xmlrpc_message->params[0]['faultString'];
+    }
+    return TRUE;
+  }
+
+  /**
+   * Stores a copy of the most recent XML-RPC message object temporarily.
+   *
+   * @param $value
+   *   An XML-RPC message to store, or NULL to keep the last message.
+   *
+   * @return object
+   *   The most recently stored message.
+   *
+   * @see xmlrpc_message_get()
+   */
+  static function _xmlrpc_message_set($value = NULL) {
+    static $xmlrpc_message;
+    if ($value) {
+      $xmlrpc_message = $value;
+    }
+    return $xmlrpc_message;
+  }
+
+  /**
+   * Returns the most recently stored XML-RPC message object.
+   *
+   * @return object
+   *   The most recently stored message.
+   *
+   * @see xmlrpc_message_set()
+   */
+  static function _xmlrpc_message_get() {
+    return self::_xmlrpc_message_set();
+  }
+
+  /**
+   * Handles opening tags for XML parsing in xmlrpc_message_parse().
+   */
+  static function _xmlrpc_message_tag_open($parser, $tag, $attr) {
+    $xmlrpc_message = self::_xmlrpc_message_get();
+    $xmlrpc_message->current_tag_contents = '';
+    $xmlrpc_message->last_open = $tag;
+    switch ($tag) {
+      case 'methodCall':
+      case 'methodResponse':
+      case 'fault':
+        $xmlrpc_message->messagetype = $tag;
+        break;
+
+      // Deal with stacks of arrays and structs
+      case 'data':
+        $xmlrpc_message->array_structs_types[] = 'array';
+        $xmlrpc_message->array_structs[] = array();
+        break;
+
+      case 'struct':
+        $xmlrpc_message->array_structs_types[] = 'struct';
+        $xmlrpc_message->array_structs[] = array();
+        break;
+    }
+    self::_xmlrpc_message_set($xmlrpc_message);
+  }
+
+  /**
+   * Handles character data for XML parsing in xmlrpc_message_parse().
+   */
+  static function _xmlrpc_message_cdata($parser, $cdata) {
+    $xmlrpc_message = self::_xmlrpc_message_get();
+    $xmlrpc_message->current_tag_contents .= $cdata;
+    self::_xmlrpc_message_set($xmlrpc_message);
+  }
+
+  /**
+   * Handles closing tags for XML parsing in xmlrpc_message_parse().
+   */
+  static function _xmlrpc_message_tag_close($parser, $tag) {
+    $xmlrpc_message = self::_xmlrpc_message_get();
+    $value_flag = FALSE;
+    switch ($tag) {
+      case 'int':
+      case 'i4':
+        $value = (int)trim($xmlrpc_message->current_tag_contents);
+        $value_flag = TRUE;
+        break;
+
+      case 'double':
+        $value = (double)trim($xmlrpc_message->current_tag_contents);
+        $value_flag = TRUE;
+        break;
+
+      case 'string':
+        $value = $xmlrpc_message->current_tag_contents;
+        $value_flag = TRUE;
+        break;
+
+      case 'dateTime.iso8601':
+        $value = self::_xmlrpc_date(trim($xmlrpc_message->current_tag_contents));
+        // $value = $iso->getTimestamp();
+        $value_flag = TRUE;
+        break;
+
+      case 'value':
+        // If no type is indicated, the type is string
+        // We take special care for empty values
+        if (trim($xmlrpc_message->current_tag_contents) != '' || (isset($xmlrpc_message->last_open) && ($xmlrpc_message->last_open == 'value'))) {
+          $value = (string) $xmlrpc_message->current_tag_contents;
+          $value_flag = TRUE;
+        }
+        unset($xmlrpc_message->last_open);
+        break;
+
+      case 'boolean':
+        $value = (boolean)trim($xmlrpc_message->current_tag_contents);
+        $value_flag = TRUE;
+        break;
+
+      case 'base64':
+        $value = base64_decode(trim($xmlrpc_message->current_tag_contents));
+        $value_flag = TRUE;
+        break;
+
+      // Deal with stacks of arrays and structs
+      case 'data':
+      case 'struct':
+        $value = array_pop($xmlrpc_message->array_structs);
+        array_pop($xmlrpc_message->array_structs_types);
+        $value_flag = TRUE;
+        break;
+
+      case 'member':
+        array_pop($xmlrpc_message->current_struct_name);
+        break;
+
+      case 'name':
+        $xmlrpc_message->current_struct_name[] = trim($xmlrpc_message->current_tag_contents);
+        break;
+
+      case 'methodName':
+        $xmlrpc_message->methodname = trim($xmlrpc_message->current_tag_contents);
+        break;
+    }
+    if ($value_flag) {
+      if (count($xmlrpc_message->array_structs) > 0) {
+        // Add value to struct or array
+        if ($xmlrpc_message->array_structs_types[count($xmlrpc_message->array_structs_types) - 1] == 'struct') {
+          // Add to struct
+          $xmlrpc_message->array_structs[count($xmlrpc_message->array_structs) - 1][$xmlrpc_message->current_struct_name[count($xmlrpc_message->current_struct_name) - 1]] = $value;
+        }
+        else {
+          // Add to array
+          $xmlrpc_message->array_structs[count($xmlrpc_message->array_structs) - 1][] = $value;
+        }
+      }
+      else {
+        // Just add as a parameter
+        $xmlrpc_message->params[] = $value;
+      }
+    }
+    if (!in_array($tag, array("data", "struct", "member"))) {
+      $xmlrpc_message->current_tag_contents = '';
+    }
+    self::_xmlrpc_message_set($xmlrpc_message);
+  }
+
+  /**
+   * Converts a PHP or ISO date/time to an XML-RPC object.
+   *
+   * @param $time
+   *   A PHP timestamp or an ISO date-time string.
+   *
+   * @return object
+   *   An XML-RPC time/date object.
+   */
+  static function _xmlrpc_date($time) {
+    $xmlrpc_date = new stdClass();
+    $xmlrpc_date->is_date = TRUE;
+    // $time can be a PHP timestamp or an ISO one
+    if (is_numeric($time)) {
+      $xmlrpc_date->year = gmdate('Y', $time);
+      $xmlrpc_date->month = gmdate('m', $time);
+      $xmlrpc_date->day = gmdate('d', $time);
+      $xmlrpc_date->hour = gmdate('H', $time);
+      $xmlrpc_date->minute = gmdate('i', $time);
+      $xmlrpc_date->second = gmdate('s', $time);
+      $xmlrpc_date->iso8601 = gmdate('Ymd\TH:i:s', $time);
+    }
+    else {
+      $xmlrpc_date->iso8601 = $time;
+      $time = str_replace(array('-', ':'), '', $time);
+      $xmlrpc_date->year = substr($time, 0, 4);
+      $xmlrpc_date->month = substr($time, 4, 2);
+      $xmlrpc_date->day = substr($time, 6, 2);
+      $xmlrpc_date->hour = substr($time, 9, 2);
+      $xmlrpc_date->minute = substr($time, 11, 2);
+      $xmlrpc_date->second = substr($time, 13, 2);
+    }
+    return $xmlrpc_date;
+  }
+
 
   /** 
    * Genrate a hash with a given secret key, timestamp and random value.
