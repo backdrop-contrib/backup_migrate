@@ -131,8 +131,10 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       'Global' => array(
         'datestamp' => time(),
         'formatversion' => '2011-07-02',
-        'generator' => 'Backup and Migrate (http://drupal.org/project/backup_migrate)',
+        'generator'     => 'Backup and Migrate for Backdrop (https://github.com/backdrop-contrib/backup_migrate)',
         'generatorversion' => BACKUP_MIGRATE_VERSION, 
+        'distro'        => 'Backdrop',
+        'distroversion' => VERSION,
       ),
       'Site 0' => array(
         'version' => VERSION,

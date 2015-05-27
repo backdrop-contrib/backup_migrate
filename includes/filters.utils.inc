@@ -183,8 +183,10 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
   function add_file_info($file, $settings) {
     $file->file_info['description']       = $settings->filters['utils_description'];
     $file->file_info['datestamp']         = time();
-    $file->file_info['generator']         = 'Backup and Migrate (http://drupal.org/project/backup_migrate)';
+    $file->file_info['generator']         = 'Backup and Migrate for Backdrop (https://github.com/backdrop-contrib/backup_migrate)';
     $file->file_info['generatorversion']  = BACKUP_MIGRATE_VERSION;
+    $file->file_info['distro']            = 'Backdrop';
+    $file->file_info['distroversion']     = VERSION;
     $file->file_info['siteurl']           = url('', array('absolute' => TRUE));
     $file->file_info['sitename']          = config_get('system.core','site_name');
     $file->file_info['drupalversion']     = VERSION;
