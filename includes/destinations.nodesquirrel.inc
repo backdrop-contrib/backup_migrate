@@ -762,7 +762,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
    *   are the arguments to pass to the respective method. If multiple methods
    *   are specified, a system.multicall is performed.
    * @param $options
-   *   (optional) An array of options to pass along to drupal_http_request().
+   *   (optional) An array of options to pass along to backdrop_http_request().
    *
    * @return
    *   A single response (single request) or an array of responses (multicall
@@ -781,7 +781,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
     $options['method'] = 'POST';
     $options['headers']['Content-Type'] = 'text/xml';
     $options['data'] = $xmlrpc_request->xml;
-    $result = drupal_http_request($url, $options);
+    $result = backdrop_http_request($url, $options);
     if ($result->code != 200) {
       $this->_xmlrpc_error($result->code, $result->error);
       return FALSE;

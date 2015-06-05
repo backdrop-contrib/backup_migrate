@@ -268,7 +268,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    */
   function dir_in_webroot($directory) {
     $real_dir = backdrop_realpath($directory);
-    $real_root = backdrop_realpath(DRUPAL_ROOT);
+    $real_root = backdrop_realpath(BACKDROP_ROOT);
     if ($real_dir == $real_root || strpos($real_dir, $real_root . '/') === 0) {
       return TRUE;
     }
@@ -280,7 +280,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    */
   function test_file_readable_remotely($directory, $contents) {
     $real_dir = backdrop_realpath($directory);
-    $real_root = backdrop_realpath(DRUPAL_ROOT);
+    $real_root = backdrop_realpath(BACKDROP_ROOT);
     if ($real_dir && $real_root) {
       // Get the root relative path.
       $path = substr($real_dir, strlen($real_root));

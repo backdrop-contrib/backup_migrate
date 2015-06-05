@@ -280,11 +280,11 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     foreach ($out as $key => $val) {
       $path = trim($val, "/ \t\r\n");
       // If the path specified is a stream url or absolute path add the normalized version.
-      if ($real = drupal_realpath($path)) {
+      if ($real = backdrop_realpath($path)) {
         $out[$key] = $real;
       }
       // If the path is a relative path add it.
-      else if ($real = drupal_realpath($base_dir . $path)) {
+      else if ($real = backdrop_realpath($base_dir . $path)) {
         $out[$key] = $real;
       }
       // Otherwise add it as is even though it probably won't match any files.

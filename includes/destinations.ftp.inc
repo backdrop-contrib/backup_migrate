@@ -103,8 +103,8 @@ class backup_migrate_destination_ftp extends backup_migrate_destination_remote {
 // It's been drupalized, however, and most of the bugs from that example have been fixed.
 // - winborn 2007-06-22 - 2007-06-28
 
-define('DRUPAL_FTP_FT_DIRECTORY', 0);
-define('DRUPAL_FTP_FT_FILE', 1);
+define('BACKDROP_FTP_FT_DIRECTORY', 0);
+define('BACKDROP_FTP_FT_FILE', 1);
 
 /**
  *  creates a new ftp object. if any elements of ftp_map are missing, they'll be filled with the server defaults.
