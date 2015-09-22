@@ -1,13 +1,14 @@
-Backup Migrate for Backdrop cms 1.x
-===================================
+Backup Migrate for Backdrop CMS 
+===============================
 
-DESCRIPTION:
 This module makes the task of backing up your Backdrop database and migrating 
 data from one Backdrop install to another easier. It provides a function to 
 backup the entire database to file or download, and to restore from a previous 
 backup. 
 You can also schedule the backup operation. Compression of backup files is also
 supported.
+
+You can now backup offsite to Nodesquirrel, and it's free!
 
 There are options to exclude the data from certain tables (such as cache or
 search index tables) to increase efficiency by ignoring data that does not need
@@ -21,24 +22,27 @@ Installation
 
 * Install this module using the official Backdrop CMS instructions at
   https://backdropcms.org/guide/modules
-  
 * Put the module in your Drupal modules directory and enable it in 
-  admin/modules. 
-* Go to admin/people/permissions and grant permission to any roles that need to be 
-  able to backup or restore the database.
+  admin/modules.
+* Go to admin/people/permissions and grant permission to any roles that need to
+  be able to backup or restore the database.
 * Configure and use the module at admin/config/system/backup_migrate
-
 * Visit the configuration page under Administration > Configuration > Category >
   Backup Migrate (admin/config/category/backup_migrate) and enter the required 
   information.
 
 OPTIONAL:
 * Enable token.module to allow token replacement in backup file names.
-* To Backup to Amazon S3:
+* To backup to Amazon S3:
     - Download the S3 library from http://undesigned.org.za/2007/10/22/amazon-s3-php-class
       and place the file 'S3.php' in the includes directory in this module.
-      The stable version (0.4.0 – 20th Jul 2009) works best with Backup and Migrate.
-
+      The stable version (0.4.0 – 20th Jul 2009) works best with Backup and 
+      Migrate.
+* To backup to NodeSquirrel:
+	- Click the NodeSquirrel tab
+	- Create your free account at http://nodesquirrel.com/activate
+	- Backup now!
+	
 LIGHTTPD USERS:
 Add the following code to your lighttp.conf to secure your backup directories:
   $HTTP["url"] =~ "^/sites/default/files/backup_migrate/" {
