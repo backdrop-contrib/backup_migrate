@@ -30,9 +30,9 @@ Installation
 * Visit the configuration page under Administration > Configuration > Category >
   Backup Migrate (admin/config/category/backup_migrate) and enter the required 
   information.
+* With the token.module now in core, your site name from: admin/config/system/site-information will automatically be the backup file name.
 
 OPTIONAL:
-* Enable token.module to allow token replacement in backup file names.
 * To backup to Amazon S3:
     - Download the S3 library from http://undesigned.org.za/2007/10/22/amazon-s3-php-class
       and place the file 'S3.php' in the includes directory in this module.
