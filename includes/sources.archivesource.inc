@@ -134,10 +134,10 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         'generator'     => 'Backup and Migrate for Backdrop (https://github.com/backdrop-contrib/backup_migrate)',
         'generatorversion' => BACKUP_MIGRATE_VERSION, 
         'distro'        => 'Backdrop',
-        'distroversion' => VERSION,
+        'distroversion' => BACKDROP_VERSION,
       ),
       'Site 0' => array(
-        'version' => VERSION,
+        'version' => BACKDROP_VERSION,
         'name' => config_get('system.core','site_name'),
         'docroot' => 'docroot',
         'sitedir' => 'docroot/' . conf_path(),

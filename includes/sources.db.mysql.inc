@@ -443,11 +443,11 @@ class backup_migrate_source_db_mysql extends backup_migrate_source_db {
   function _get_sql_file_header() {
     $info = $this->_db_info();
 
-    return "-- Backup and Migrate (Drupal) MySQL Dump
+    return "-- Backup and Migrate (Backdrop) MySQL Dump
 -- Backup and Migrate Version: ". BACKUP_MIGRATE_VERSION ."
--- http://drupal.org/project/backup_migrate
--- Drupal Version: " . VERSION . "
--- http://drupal.org/
+-- http://github.com/backdrop-contrib/backup_migrate
+-- Backdrop Version: " . BACKDROP_VERSION . "
+-- http://backdropcms.org/
 --
 -- Host: " . url('', array('absolute' => TRUE)) . "
 -- Site Name: " . url('', array('absolute' => TRUE)) . "
