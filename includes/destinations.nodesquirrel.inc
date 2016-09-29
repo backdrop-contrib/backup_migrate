@@ -126,7 +126,7 @@ function backup_migrate_nodesquirrel_info_form() {
 
   $form['nodesquirrel_info']['intro'] = array(
     '#type' => 'markup',
-    '#markup' => t('<p>NodeSquirrel is the cloud backup service built by the maintainers of Backup and Migrate.</p></p>NodeSquirrel is now free for all Drupal sites, courtesy of Pantheon.</p><p>Create your free account at !signup</p>', array('!nodesquirrel' => l('nodesquirrel.com', 'http://www.nodesquirrel.com'), '!signup' => backup_migrate_nodesquirrel_get_activate_link())),
+    '#markup' => t('<p>NodeSquirrel is the cloud backup service built by the maintainers of Backup and Migrate.</p></p>NodeSquirrel is now free for all Backdrop sites, courtesy of Pantheon.</p><p>Create your free account at !signup</p>', array('!nodesquirrel' => l('nodesquirrel.com', 'http://www.nodesquirrel.com'), '!signup' => backup_migrate_nodesquirrel_get_activate_link())),
     );
   return $form;
 }
@@ -300,13 +300,13 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
 
   /* Backdrop - replace system_settings_form to utilize CMI */
   $config = config('backup_migrate.settings');
-  
+
   $form = array();
 
   $key = config_get('backup_migrate.settings','nodesquirrel_secret_key');
   $status = array();
-  if ($destination = backup_migrate_nodesquirrel_get_destination($key)) {  
-    $status = $destination->check_limits(); 
+  if ($destination = backup_migrate_nodesquirrel_get_destination($key)) {
+    $status = $destination->check_limits();
   }
 
   $form += backup_migrate_nodesquirrel_info_form();
@@ -328,7 +328,7 @@ function backup_migrate_nodesquirrel_settings_form($form_state) {
 // Backdrop - Add a submit function to process config
 function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   $config = config('backup_migrate.settings');
-  
+
   //_credentials_settings_form
   $config->set('nodesquirrel_secret_key',  $form_state['values']['nodesquirrel_secret_key']);
 
@@ -336,7 +336,7 @@ function backup_migrate_nodesquirrel_settings_form_submit($form, &$form_state) {
   $config->set('nodesquirrel_schedule_source_id', $form_state['values']['nodesquirrel_schedule_source_id']);
   $config->set('nodesquirrel_schedule', $form_state['values']['nodesquirrel_schedule']);
   $config->set('nodesquirrel_schedule_enabled', $form_state['values']['nodesquirrel_schedule_enabled']);
-  
+
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
 }
@@ -426,7 +426,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function before_backup_form_submit($settings, $form, $form_state) {
     if (isset($form_state['values']['nodesquirrel_secret_key'])) {
       $this->settings['secret_key'] = $form_state['values']['nodesquirrel_secret_key'];
-      config_get('backup_migrate.settings','nodesquirrel_secret_key');  
+      config_get('backup_migrate.settings','nodesquirrel_secret_key');
     }
   }
 
@@ -443,9 +443,9 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
       $ticket = $this->_xmlrpc('backups.getUploadTicket', array($destination, $filename, $filesize, $file->file_info));
 
       if ($ticket) {
-  
+
         $url = $ticket['url'];
-  
+
         // If the ticket requires authentication add our username/password to the url.
         if (!empty($ticket['auth']) && $ticket['auth'] = 'basic') {
           $parts = parse_url($ticket['url']);
@@ -503,7 +503,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
           $parts['pass'] = @$this->dest_url['pass'];
           $url = $this->glue_url($parts, FALSE);
         }
-  
+
         $out = backdrop_http_request($url);
 
         if ($out->code == 200) {
@@ -568,7 +568,7 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function edit_form() {
     $form = parent::edit_form();
 
-    // If this is a new destination but the default NS destination has not been created yet, 
+    // If this is a new destination but the default NS destination has not been created yet,
     // redirect to the NS config screen.
     if (!$this->get_id() && !config_get('backup_migrate.settings','nodesquirrel_secret_key')) {
       backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/nodesquirrel');
@@ -699,15 +699,15 @@ class backup_migrate_destination_nodesquirrel extends backup_migrate_destination
   function __xmlrpc($method, $args, $servers, $retry = 3) {
     if ($servers && --$retry > 0) {
       // Add the key authentication arguments if we can.
-      if ($this->_sign_request($args)) {  
+      if ($this->_sign_request($args)) {
         $url = reset($servers);
         // Try each available server in order.
         while ($url) {
-  
+
           $url = $this->add_scheme($url);
 
           $out = $this->_xmlrpc_request($url, $method, $args);
-  
+
           // Check for errors.
           $err = $this->_xmlrpc_error();
           if ($err && $err->is_error) {
@@ -1257,7 +1257,7 @@ EOD;
   }
 
 
-  /** 
+  /**
    * Genrate a hash with a given secret key, timestamp and random value.
    */
   function _get_hash($time, $nonce) {
@@ -1275,13 +1275,13 @@ EOD;
     return FALSE;
   }
 
-  /** 
+  /**
    * Genrate a hash with a given secret key, timestamp and random value.
    */
   function _sign_request(&$args) {
     $nonce  = md5(mt_rand());
     $time   = time();
-    $hash   = $this->_get_hash($time, $nonce); 
+    $hash   = $this->_get_hash($time, $nonce);
     if ($hash) {
       array_unshift($args, $nonce);
       array_unshift($args, $time);
@@ -1315,29 +1315,29 @@ EOD;
   /**
    * Post a file via http.
    *
-   * This looks a lot like a clone of backdrop_http_request but it can post a large 
+   * This looks a lot like a clone of backdrop_http_request but it can post a large
    * file without reading the whole file into memory.
    */
   function _post_file($url, $method = 'GET', $params = array(), $file = NULL, $retry = 3) {
     global $db_prefix;
-  
+
     $result = new stdClass();
-        
+
     // Parse the URL and make sure we can handle the schema.
     $uri = parse_url($url);
-  
+
     if ($uri == FALSE) {
       $result->error = 'unable to parse URL';
       $result->code = -1001;
       return $result;
     }
-  
+
     if (!isset($uri['scheme'])) {
       $result->error = 'missing schema';
       $result->code = -1002;
       return $result;
     }
-  
+
     switch ($uri['scheme']) {
       case 'http':
       case 'feed':
@@ -1356,23 +1356,23 @@ EOD;
         $result->code = -1003;
         return $result;
     }
-  
+
     // Make sure the socket opened properly.
     if (!$fp) {
       // When a network error occurs, we use a negative number so it does not
       // clash with the HTTP status codes.
       $result->code = -$errno;
       $result->error = trim($errstr);
-      
+
       // Mark that this request failed. This will trigger a check of the web
       // server's ability to make outgoing HTTP requests the next time that
       // requirements checking is performed.
       // @see system_requirements()
       config_set('system.core','backdrop_http_request_fails', TRUE);
-  
+
       return $result;
     }
-  
+
     // Construct the path to act on.
     $path = isset($uri['path']) ? $uri['path'] : '/';
     if (isset($uri['query'])) {
@@ -1390,7 +1390,7 @@ EOD;
       $data_header .= "\r\n".$value."\r\n";
       $data_header .="--$boundary\r\n";
     }
-  
+
     // Add the file header to the post payload.
     $data_header .="--$boundary\r\n";
     $data_header .= "Content-Disposition: form-data; name=\"file\"; filename=\"". $file->filename() ."\"\r\n";
@@ -1401,7 +1401,7 @@ EOD;
     $content_length = strlen($data_header . $data_footer) + filesize($file->filepath());
 
     //file_get_contents($file->filepath()));
-    
+
     // Create HTTP request.
     $defaults = array(
       // RFC 2616: "non-standard ports MUST, default ports MAY be included".
@@ -1420,7 +1420,7 @@ EOD;
 
     $request = $method .' '. $path ." HTTP/1.0\r\n";
     $request .= implode("\r\n", $defaults);
-    $request .= "\r\n\r\n";  
+    $request .= "\r\n\r\n";
     $result->request = $request;
 
     // Write the headers and start of the headers
@@ -1445,23 +1445,23 @@ EOD;
       $response .= $chunk;
     }
     fclose($fp);
-  
+
   if (config_get('backup_migrate.settings','debug_http_request')) {
     backdrop_debug(date('r'));
     backdrop_debug($request);
     backdrop_debug($response);
   }
-  
+
     // Parse response.
     list($split, $result->data) = explode("\r\n\r\n", $response, 2);
     $split = preg_split("/\r\n|\n|\r/", $split);
-  
+
     list($protocol, $code, $status_message) = explode(' ', trim(array_shift($split)), 3);
     $result->protocol = $protocol;
     $result->status_message = $status_message;
-  
+
     $result->headers = array();
-  
+
     // Parse headers.
     while ($line = trim(array_shift($split))) {
       list($header, $value) = explode(':', $line, 2);
@@ -1474,7 +1474,7 @@ EOD;
         $result->headers[$header] = trim($value);
       }
     }
-  
+
     $responses = array(
       100 => 'Continue', 101 => 'Switching Protocols',
       200 => 'OK', 201 => 'Created', 202 => 'Accepted', 203 => 'Non-Authoritative Information', 204 => 'No Content', 205 => 'Reset Content', 206 => 'Partial Content',
@@ -1487,7 +1487,7 @@ EOD;
     if (!isset($responses[$code])) {
       $code = floor($code / 100) * 100;
     }
-  
+
     switch ($code) {
       case 200: // OK
       case 304: // Not modified
@@ -1496,21 +1496,20 @@ EOD;
       case 302: // Moved temporarily
       case 307: // Moved temporarily
         $location = $result->headers['Location'];
-  
+
         if ($retry) {
           $result = backdrop_http_request($result->headers['Location'], $headers, $method, $data, --$retry);
           $result->redirect_code = $result->code;
         }
         $result->redirect_url = $location;
-  
+
         break;
       default:
         $result->error = $status_message;
     }
-  
+
     $result->code = $code;
     return $result;
   }
 
 }
-

@@ -4,7 +4,7 @@
  * @file
  * All of the schedule handling code needed for Backup and Migrate.
  */
- 
+
 define('BACKUP_MIGRATE_KEEP_ALL', 0);
 define('BACKUP_MIGRATE_STANDARD_DELETE', -1);
 define('BACKUP_MIGRATE_SMART_DELETE', -2);
@@ -143,7 +143,7 @@ class backup_migrate_schedule extends backup_migrate_item {
 
   /**
    * Get the columns needed to list the type.
-   */  
+   */
   function get_list_column_info() {
     $out = parent::get_list_column_info();
     $out = array(
@@ -160,7 +160,7 @@ class backup_migrate_schedule extends backup_migrate_item {
 
   /**
    * Get the columns needed to list the type.
-   */  
+   */
   function get_settings_path() {
     // Pull the schedules tab up a level to the top.
     return BACKUP_MIGRATE_MENU_PATH . '/' . $this->type_name;
@@ -280,7 +280,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       $settings->file_info += array(
         'schedule_id'   => $this->get_id(),
         'schedule_name' => $this->get('name'),
-      );      
+      );
     }
     return $settings;
 
@@ -431,13 +431,13 @@ class backup_migrate_schedule extends backup_migrate_item {
     $cron = $this->get('cron');
     $form['cron_settings']['cron_builtin'] = array(
       "#type" => "radio",
-      "#title" => t('Run using Drupal\'s cron'),
+      "#title" => t('Run using Backdrop\'s cron'),
       '#return_value' => BACKUP_MIGRATE_CRON_BUILTIN,
       "#description" => t('Run this schedule when !cron runs.', array('!cron' => l(t('your cron task'), 'http://drupal.org/cron'))),
       "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
       '#parents' => array('cron'),
     );
-    
+
     $form['cron_settings']['period_settings'] = array(
       '#type' => 'backup_migrate_dependent',
       '#dependencies' => array(
@@ -678,7 +678,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       if ($destination && $destination->op('delete') && $destination_files = $destination->list_files()) {
         if ($num_to_keep == BACKUP_MIGRATE_SMART_DELETE) {
           $this->smart_delete_backups(
-            $destination, 
+            $destination,
             $destination_files,
             config_get('backup_migrate.settings','backup_migrate_smart_keep_subhourly'),
             config_get('backup_migrate.settings','backup_migrate_smart_keep_hourly'),
@@ -800,4 +800,3 @@ class backup_migrate_schedule extends backup_migrate_item {
     }
   }
 }
-

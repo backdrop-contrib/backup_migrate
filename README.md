@@ -1,10 +1,10 @@
-Backup Migrate for Backdrop CMS 
+Backup Migrate for Backdrop CMS
 ===============================
 
-This module makes the task of backing up your Backdrop database and migrating 
-data from one Backdrop install to another easier. It provides a function to 
-backup the entire database to file or download, and to restore from a previous 
-backup. 
+This module makes the task of backing up your Backdrop database and migrating
+data from one Backdrop install to another easier. It provides a function to
+backup the entire database to file or download, and to restore from a previous
+backup.
 You can also schedule the backup operation. Compression of backup files is also
 supported.
 
@@ -22,27 +22,27 @@ Installation
 
 * Install this module using the official Backdrop CMS instructions at
   https://backdropcms.org/guide/modules
-* Put the module in your Drupal modules directory and enable it in 
+* Put the module in your Backdrop modules directory and enable it in
   admin/modules.
 * Go to admin/people/permissions and grant permission to any roles that need to
   be able to backup or restore the database.
 * Configure and use the module at admin/config/system/backup_migrate
 * Visit the configuration page under Administration > Configuration > Category >
-  Backup Migrate (admin/config/category/backup_migrate) and enter the required 
+  Backup Migrate (admin/config/category/backup_migrate) and enter the required
   information.
-* With the token.module now in core, your site name from: admin/config/system/site-information will automatically be the backup file name.
+* With the token.module now in Backdrop core, your site name from: admin/config/system/site-information will automatically be the backup file name. Other tokens like [site:url] may also be used.
 
 OPTIONAL:
 * To backup to Amazon S3:
     - Download the S3 library from http://undesigned.org.za/2007/10/22/amazon-s3-php-class
       and place the file 'S3.php' in the includes directory in this module.
-      The stable version (0.4.0 – 20th Jul 2009) works best with Backup and 
+      The stable version (0.4.0 – 20th Jul 2009) works best with Backup and
       Migrate.
 * To backup to NodeSquirrel:
 	- Click the NodeSquirrel tab
 	- Create your free account at http://nodesquirrel.com/activate
 	- Backup now!
-	
+
 LIGHTTPD USERS:
 Add the following code to your lighttp.conf to secure your backup directories:
   $HTTP["url"] =~ "^/sites/default/files/backup_migrate/" {
@@ -67,27 +67,27 @@ very serious security vulnerability. Backup and Migrate attempts to protect
 backup files using a .htaccess file, but this is not guaranteed to work on all
 environments (and is guaranteed to fail on web servers that are not apache). You
 should test to see if your backup files are publicly accessible, and if in doubt
-do not save backups to the server, or use the destinations feature to save to a 
+do not save backups to the server, or use the destinations feature to save to a
 folder outside of your webroot.
 
 OTHER WARNINGS:
-A failed restore can destroy your database and therefore your entire Drupal
+A failed restore can destroy your database and therefore your entire Backdrop
 installation. ALWAYS TEST BACKUP FILES ON A TEST ENVIRONMENT FIRST. If in doubt
 do not use this module.
 
-This module has only been tested with MySQL and does not work with any other dbms. 
-If you have experiences with Postgres or any other dbms and are willing to help 
-test and modify the module to work with it, please contact the developer at 
+This module has only been tested with MySQL and does not work with any other dbms.
+If you have experiences with Postgres or any other dbms and are willing to help
+test and modify the module to work with it, please contact the developer at
 ronan (at) gortonstudios (dot) com.
 
 Make sure your php timeout is set high enough to complete a backup or restore
 operation. Larger databases require more time. Also, while the module attempts
 to keep memory needs to a minimum, a backup or restore will require
-significantly more memory then most Drupal operations.
+significantly more memory then most Backdrop operations.
 
 If your backup file contains the 'sessions' table all other users will be logged
-out after you run a restore. To avoid this, exclude the sessions table when 
-creating your backups. Be aware though that you will need to recreate the 
+out after you run a restore. To avoid this, exclude the sessions table when
+creating your backups. Be aware though that you will need to recreate the
 sessions table if you use this backup on an empty database.
 
 Do not change the file extension of backup files or the restore function will be
@@ -117,4 +117,3 @@ Credits
 -------
 This module was originally written for Drupal by
 - Ronan Dowling, Gorton Studios (https://www.drupal.org/u/ronan)
-

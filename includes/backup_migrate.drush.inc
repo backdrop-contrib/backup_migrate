@@ -5,7 +5,7 @@
  * @file
  * Drush commands for backup and migrate.
  */
- 
+
 /**
  * Implementation of hook_drush_command().
  */
@@ -15,9 +15,9 @@ function backup_migrate_drush_command() {
     'description' => dt('Backup the site\'s database with Backup and Migrate.'),
     'aliases' => array('bb'),
     'examples' => array(
-      'drush bam-backup' => 'Backup the default databse to the manual backup directory using the default settings.', 
-      'drush bam-backup db scheduled mysettings' => 'Backup the database to the scheduled directory using a settings profile called "mysettings"', 
-      'drush bam-backup files' => 'Backup the files directory to the manual directory using the default settings. The Backup and Migrate Files module is required for files backups.', 
+      'drush bam-backup' => 'Backup the default databse to the manual backup directory using the default settings.',
+      'drush bam-backup db scheduled mysettings' => 'Backup the database to the scheduled directory using a settings profile called "mysettings"',
+      'drush bam-backup files' => 'Backup the files directory to the manual directory using the default settings. The Backup and Migrate Files module is required for files backups.',
     ),
     'arguments' => array(
       'source'        => "Optional. The id of the source (usually a database) to backup. Use 'drush bam-sources' to get a list of sources. Defaults to 'db'",
@@ -88,7 +88,7 @@ function backup_migrate_drush_backup($source_id = 'db', $destination_id = 'manua
   _backup_migrate_message_callback('_backup_migrate_message_drush');
 
   if (!backup_migrate_get_source($source_id)) {
-    _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam-sources' to get a list of available sources or use 'db' to backup the Drupal database.", array('@source' => $source_id), 'error');
+    _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam-sources' to get a list of available sources or use 'db' to backup the Backdrop database.", array('@source' => $source_id), 'error');
     return;
   }
   if (!backup_migrate_get_destination($destination_id)) {
@@ -118,7 +118,7 @@ function backup_migrate_drush_restore($source_id = '', $destination_id = '', $fi
   _backup_migrate_message_callback('_backup_migrate_message_drush');
 
   if (!backup_migrate_get_source($source_id)) {
-    _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam-sources' to get a list of available sources or use 'db' to backup the Drupal database.", array('@source' => $source_id), 'error');
+    _backup_migrate_message("Could not find the source '@source'. Try using 'drush bam-sources' to get a list of available sources or use 'db' to backup the Backdrop database.", array('@source' => $source_id), 'error');
     return;
   }
   if (!$destination = backup_migrate_get_destination($destination_id)) {

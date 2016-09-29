@@ -96,7 +96,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
         while (FALSE !== ($file = readdir($handle))) {
           if (substr($file, 0, 1) !== '.') {
             $filepath = $dir ."/". $file;
-            $files[$file] = new backup_file(array('filepath' => $filepath));          
+            $files[$file] = new backup_file(array('filepath' => $filepath));
           }
         }
       }
@@ -133,7 +133,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       "#title" => t("Directory path"),
       "#default_value" => $this->get_location(),
       "#required" => TRUE,
-      "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Drupal root directory. The web server must be able to write to this path.'),
+      "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Backdrop root directory. The web server must be able to write to this path.'),
     );
     $form['settings'] = array(
       '#type' => 'fieldset',
@@ -222,15 +222,15 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       return $directory;
     }
     else {
-	  //Backdrop change 
+	  //Backdrop change
       file_save_htaccess($directory, TRUE);
-  
+
       // Check the user agent to make sure we're not responding to a request from drupal itself.
       // That should prevent infinite loops which could be caused by poormanscron in some circumstances.
       if (strpos($_SERVER['HTTP_USER_AGENT'], 'Drupal') !== FALSE) {
         return FALSE;
       }
-  
+
       // Check to see if the destination is publicly accessible
       $test_contents = "this file should not be publicly accessible";
       // Create the the text.txt file if it's not already there.
@@ -245,7 +245,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
           return FALSE;
         }
       }
-  
+
       // Attempt to read the test file via http. This may fail for other reasons,
       // so it's not a bullet-proof check.
       if ($this->test_file_readable_remotely($directory .'/test.txt', $test_contents)) {
@@ -316,4 +316,3 @@ class backup_migrate_destination_files_scheduled extends backup_migrate_destinat
     parent::__construct($params + array('location' => $dir, 'name' => t('Scheduled Backups Directory')));
   }
 }
-
