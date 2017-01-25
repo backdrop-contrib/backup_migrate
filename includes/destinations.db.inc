@@ -27,7 +27,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
   function save_file($file, $settings) {
     backup_migrate_include('files');
 
-    // Set the source_id to the destination_id in the settings since for a restore, the source_id is the 
+    // Set the source_id to the destination_id in the settings since for a restore, the source_id is the
     // database that gets restored to.
     $settings->set_source($this->get_id());
 
@@ -44,7 +44,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
     $form = parent::edit_form();
     $form['scheme']['#title'] = t('Database type');
 //    $form['scheme']['#options'] = array($GLOBALS['db_type'] => $GLOBALS['db_type']);
-    $form['scheme']['#description'] = t('The type of the database. Drupal only supports one database type at a time, so this must be the same as the current database type.');
+    $form['scheme']['#description'] = t('The type of the database. Backdrop only supports one database type at a time, so this must be the same as the current database type.');
     $form['path']['#title'] = t('Database name');
     $form['path']['#description'] = t('The name of the database. The database must exist, it will not be created for you.');
     $form['user']['#description'] = t('Enter the name of a user who has write access to the database.');
@@ -113,7 +113,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    */
   function backup_settings_form($settings) {
     $objects  = $this->get_object_names();
-    $form['#description'] = t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Drupal install, so <strong>do not change these settings unless you know what you're doing</strong>.");
+    $form['#description'] = t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Backdrop install, so <strong>do not change these settings unless you know what you're doing</strong>.");
     $form['exclude_tables'] = array(
       "#type" => "select",
       "#multiple" => TRUE,
@@ -202,7 +202,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
             'port'      => empty($this->dest_url['port'])     ? NULL : $this->dest_url['port'],
             'username'  => empty($this->dest_url['user'])     ? NULL : $this->dest_url['user'],
             'password'  => empty($this->dest_url['pass'])     ? NULL : $this->dest_url['pass'],
-            'database'  => empty($this->dest_url['path'])     ? NULL : $this->dest_url['path'], 
+            'database'  => empty($this->dest_url['path'])     ? NULL : $this->dest_url['path'],
           );
           $key    = uniqid('backup_migrate_tmp_');
           $target = 'default';

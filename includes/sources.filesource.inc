@@ -41,7 +41,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       "#title" => t("Directory path"),
       "#default_value" => $this->get_location(),
       "#required" => TRUE,
-      "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Drupal root directory. The web server must be able to write to this path.'),
+      "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Backdrop root directory. The web server must be able to write to this path.'),
     );
     return $form;
   }
@@ -64,7 +64,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    * Get the form for the settings for this destination.
    *
    * Return the default directories whose data can be ignored. These directories contain
-   *  info which can be easily reproducted. Also exclude the backup and migrate folder 
+   *  info which can be easily reproducted. Also exclude the backup and migrate folder
    *  to prevent exponential bloat.
    */
   function backup_settings_default() {
@@ -133,7 +133,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       // Create a symlink in a temp directory so we can rename the file in the archive.
       $temp = backup_migrate_temp_directory();
 
-      $file->push_type('tar'); 
+      $file->push_type('tar');
       backup_migrate_exec("tar --dereference -C %input -rf %output $exclude .", array('%output' => $file->filepath(), '%input' => $this->get_realpath(), '%temp' => $temp));
       return $file;
     }
@@ -311,4 +311,3 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     return backdrop_realpath($this->get_location());
   }
 }
-

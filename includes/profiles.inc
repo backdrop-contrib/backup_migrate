@@ -110,7 +110,7 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#title" => t("Backup file name"),
     "#default_value" => $profile->filename,
   );
-  if (module_exists('token')) {
+  if (function_exists('token_replace')) {
     $form['file']['token_help'] = array(
       '#title' => t('Replacement patterns'),
       '#type' => 'fieldset',
@@ -173,7 +173,7 @@ function _backup_migrate_ui_backup_settings_form_validate($form, &$form_state) {
 function _backup_migrate_ui_backup_settings_form_submit($form, &$form_state) {
   backup_migrate_filters_settings_form_submit('backup', $form, $form_state);
 }
-  
+
 /**
  * Get the default profile.
  */
@@ -234,7 +234,7 @@ class backup_migrate_profile extends backup_migrate_item {
 
   /**
    * Get a table of all items of this type.
-   */  
+   */
   function get_list() {
     backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
     return parent::get_list();
@@ -242,7 +242,7 @@ class backup_migrate_profile extends backup_migrate_item {
 
   /**
    * Get the columns needed to list the type.
-   */  
+   */
   function get_list_column_info() {
     $out = parent::get_list_column_info();
     $out = array(
@@ -306,7 +306,7 @@ class backup_migrate_profile extends backup_migrate_item {
       $ids = $weights = array();
       if (!empty($this->destination_id)) {
         foreach ((array)$this->destination_id as $destination_id) {
-          if (!in_array($destination_id, $ids) && $destination = backup_migrate_get_destination($destination_id)) {            
+          if (!in_array($destination_id, $ids) && $destination = backup_migrate_get_destination($destination_id)) {
             $this->destinations[] = $destination;
             $weights[] = $destination->get('weight');
             $ids[] = $destination_id;
@@ -366,4 +366,3 @@ class backup_migrate_profile extends backup_migrate_item {
     return t('Are you sure you want to delete the profile %name? Any schedules using this profile will be disabled.', array('%name' => $this->get('name')));
   }
 }
-

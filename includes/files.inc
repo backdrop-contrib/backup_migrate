@@ -136,7 +136,7 @@ function _backup_migrate_filename_append_prepare($filename, $append_str) {
   }
   return $filename;
 }
-  
+
 /**
  * Construct a filename using token and some cleaning.
  */
@@ -145,7 +145,7 @@ function _backup_migrate_construct_filename($settings) {
   $filename = $settings->filename;
 
   // Replace any tokens
-  if (module_exists('token') && function_exists('token_replace')) {
+  if (function_exists('token_replace')) {
     $filename = token_replace($filename);
   }
 
@@ -174,7 +174,7 @@ function _backup_migrate_construct_filename($settings) {
  * Construct a default filename using the site's name.
  */
 function _backup_migrate_default_filename() {
-  if (module_exists('token')) {
+  if (function_exists('token_replace')) {
     return '[site:name]';
   }
   else {
@@ -213,7 +213,7 @@ class backup_file {
   /**
    * Construct a file object given a file path, or create a temp file for writing.
    */
-  function backup_file($params = array()) {
+  function __construct($params = array()) {
     if (isset($params['filepath']) && file_exists($params['filepath'])) {
       $this->set_filepath($params['filepath']);
     }
@@ -561,4 +561,3 @@ class backup_file {
     $this->path = $file;
   }
 }
-

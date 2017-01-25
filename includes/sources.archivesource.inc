@@ -134,10 +134,10 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         'generator'     => 'Backup and Migrate for Backdrop (https://github.com/backdrop-contrib/backup_migrate)',
         'generatorversion' => BACKUP_MIGRATE_VERSION, 
         'distro'        => 'Backdrop',
-        'distroversion' => VERSION,
+        'distroversion' => BACKDROP_VERSION,
       ),
       'Site 0' => array(
-        'version' => VERSION,
+        'version' => BACKDROP_VERSION,
         'name' => config_get('system.core','site_name'),
         'docroot' => 'docroot',
         'sitedir' => 'docroot/' . conf_path(),
@@ -210,7 +210,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
 
       // Move the files from the temp directory.
       if ($filepath && file_exists($filepath)) {
-        _backup_migrate_move_files($filepath, file_directory_path());
+        _backup_migrate_move_files($filepath, config_get('backup_migrate.settings','file_public_path') );
       }
       else {
         _backup_migrate_message('Files were not restored because the archive did not seem to contain a files directory or was in a format that Backup and Migrate couldn\'t read', array(), 'warning');
