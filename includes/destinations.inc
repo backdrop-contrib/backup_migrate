@@ -404,7 +404,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $options = arr
       $start = 0;
 
       if ($options['pager']) {
-        $page = isset($_GET['page']) ? $_GET['page'] : '';
+        $page = isset($_GET['page']) ? $_GET['page'] : '0';
         $start = $page * $limit;
 
         $element = 0;
