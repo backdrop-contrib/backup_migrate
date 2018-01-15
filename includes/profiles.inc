@@ -215,6 +215,25 @@ class backup_migrate_profile extends backup_migrate_item {
   var $title_singular = 'Settings Profile';
 
   /**
+   * Perform a shallow merge of the defaults and the parameters.
+   *
+   * This is needed because otherwise it will *combine* the nested arrays and
+   * make it impossible to deselect database tables from the 'nodata' setting.
+   *
+   * @param array $params
+   */
+  public function __construct(array $params = array()) {
+    $params = (array)$params;
+    $defaults = (array)$this->get_default_values();
+    foreach ($defaults as $key => $val) {
+      if (!isset($params[$key])) {
+        $params[$key] = $val;
+      }
+    }
+    $this->from_array($params);
+  }
+
+  /**
    * This function is not supposed to be called. It is just here to help the po extractor out.
    */
   function strings() {
