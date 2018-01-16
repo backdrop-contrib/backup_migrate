@@ -219,17 +219,17 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
           // If the path is not excluded.
           if (!in_array($real, $exclude)) {
             if (is_dir($real)) {
-              // Exclude multisite directories other than this site's directory and 'all'.
               $enter_subdir = TRUE;
+              // Exclude multisite directories other than this site's directory.
               $conf_path = conf_path();
-              if (strpos($conf_path, 'sites/') === 0) {
-                $this_site_dir = backdrop_substr($conf_path, 6);
+              if (strpos($conf_path, './sites/') === 0) {
+                $this_site_dir = backdrop_substr($conf_path, 8);
                 $conf_path_real = backdrop_realpath($conf_path);
                 $sites_prefix = backdrop_substr($conf_path_real, 0, strpos($conf_path_real, $this_site_dir));
                 if (strpos($real, $sites_prefix) === 0) {
                   $real_suffix = backdrop_substr($real, strpos($real, backdrop_substr($real, strlen($sites_prefix))));
                   $site_dir = backdrop_substr($real_suffix, 0, strpos($real_suffix . '/', '/'));
-                  if (!in_array($site_dir, array($this_site_dir, 'all'))) {
+                  if ($site_dir != $this_site_dir) {
                     $enter_subdir = FALSE;
                   }
                 }
