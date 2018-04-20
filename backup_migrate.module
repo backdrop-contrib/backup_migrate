@@ -74,14 +74,14 @@ function backup_migrate_help($section, $arg) {
     BACKUP_MIGRATE_MENU_PATH . '/schedule' => array(
       'title' => t('Scheduling'),
       'body' => t('Automatically backup up your database and files on a regular schedule using <a href="!cronurl">cron</a>.', 
-                  array('!cronurl' => 'http://drupal.org/cron')),
+                  array('!cronurl' => url('admin/config/system/cron'))),
       'more' => t('Each schedule will run a maximum of once per cron run, so they will not run more frequently than your cron is configured to run. If you specify a number of backups to keep for a schedule, old backups will be deleted as new ones created. <strong>If specifiy a number of files to keep other backup files in that schedule\'s destination will get deleted</strong>.'),
       'access arguments' => array('administer backup and migrate'),
     ),
     BACKUP_MIGRATE_MENU_PATH . '/settings/import' => array(
       'title' => t('Importing Settings'),
       'body' => t('Import a settings profile, backup schedule, source or destination by pasting the export code into the textarea.', 
-                  array('!cronurl' => 'http://drupal.org/cron')),
+                  array('!cronurl' => url('admin/config/system/cron'))),
     ),
   );
   if (module_exists('help')) {

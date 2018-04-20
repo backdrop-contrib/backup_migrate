@@ -433,7 +433,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#type" => "radio",
       "#title" => t('Run using Backdrop\'s cron'),
       '#return_value' => BACKUP_MIGRATE_CRON_BUILTIN,
-      "#description" => t('Run this schedule when !cron runs.', array('!cron' => l(t('your cron task'), 'http://drupal.org/cron'))),
+      "#description" => t('Run this schedule when !cron runs.', array('!cron' => l(t('your cron task'), url('admin/config/system/cron')))),
       "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
       '#parents' => array('cron'),
     );
@@ -470,13 +470,13 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#type" => "radio",
       "#title" => t('Run using Elysia cron'),
       '#return_value' => BACKUP_MIGRATE_CRON_ELYSIA,
-      "#description" => t('You can specify exactly when this schedule should run using !elysia.', array('!elysia' => l(t('the Elysia Cron module'), 'http://drupal.org/project/elysia_cron'))),
+      "#description" => t('You can specify exactly when this schedule should run using !elysia.', array('!elysia' => l(t('the Elysia Cron module'), 'https://backdropcms.org/project/elysia_cron'))),
       "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
       '#parents' => array('cron'),
     );
     if (!module_exists('elysia_cron')) {
       $form['cron_settings']['cron_elysia']['#disabled'] = TRUE;
-      $form['cron_settings']['cron_elysia']['#description'] .= ' ' . t('Install !elysia to enable this option.', array('!elysia' => l(t('Elysia Cron'), 'http://drupal.org/project/elysia_cron')));
+      $form['cron_settings']['cron_elysia']['#description'] .= ' ' . t('Install !elysia to enable this option.', array('!elysia' => l(t('Elysia Cron'), 'https://backdropcms.org/project/elysia_cron')));
     }
     $form['cron_settings']['cron_schedule_settings'] = array(
       '#type' => 'backup_migrate_dependent',
@@ -488,7 +488,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#type" => "textfield",
       "#title" => t('Cron Schedule'),
       '#length' => 10,
-      "#description" => t('Specify the frequecy of the schedule using standard cron notation. For more information see the !elysiareadme.', array('!elysiareadme' => l(t('the Elysia Cron README'), 'http://drupalcode.org/project/elysia_cron.git/blob/refs/heads/7.x-1.x:/README.txt'))),
+      "#description" => t('Specify the frequency of the schedule using standard cron notation. For more information see the !elysiareadme.', array('!elysiareadme' => l(t('the Elysia Cron README'), 'https://backdropcms.org/project/elysia_cron'))),
       "#default_value" => $this->get('cron_schedule'),
       '#parents' => array('cron_schedule'),
     );
@@ -497,7 +497,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       "#type" => "radio",
       "#title" => t('Do not run automatically'),
       '#return_value' => 'none',
-      "#description" => t('Do not run this schedule automatically. You can still run it using !drush.', array('!drush' => l(t('Drush'), 'http://drupal.org/project/drush'))),
+      "#description" => t('Do not run this schedule automatically. You can still run it using !drush.', array('!drush' => l(t('Drush'), 'https://backdropcms.org/project/drush'))),
       "#default_value" => $cron ? $cron : BACKUP_MIGRATE_CRON_BUILTIN,
       '#parents' => array('cron'),
     );
