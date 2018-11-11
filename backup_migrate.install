@@ -486,4 +486,22 @@ function backup_migrate_update_1005() {
     'default' => 'builtin',
   ));
 }
+/**
+ * Store 'last run' info as state instead of config.
+ */
+function backup_migrate_update_1006() {
+  // Get schedule
+  backup_migrate_include('sources', 'schedules', 'profiles');
+  $schedules = backup_migrate_get_schedules();
+  foreach ($schedules as $schedule_id => $schedule) {
+    // Check for existing last_run variable
+    $last_run = config_get('backup_migrate.settings', 'backup_migrate_schedule_last_run_' . $schedule_id);
+    if (!empty($last_run)) {
+      // Store value as state
+      state_set('backup_migrate_schedule_last_run_' . $schedule_id, $last_run);
+      // Delete config
+      config_clear('backup_migrate.settings', 'backup_migrate_schedule_last_run_' . $schedule_id);
+    }
+  }
+}
 
