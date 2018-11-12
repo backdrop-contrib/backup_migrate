@@ -656,14 +656,14 @@ class backup_migrate_schedule extends backup_migrate_item {
     if ($timestamp === NULL) {
       $timestamp = time();
     }
-    config_set('backup_migrate.settings','backup_migrate_schedule_last_run_' . $this->get('id'), $timestamp);
+    state_set('backup_migrate_schedule_last_run_' . $this->get('id'), $timestamp);
   }
 
   /**
    * Set the last run time of a schedule to the given timestamp, or now if none specified.
    */
   function get_last_run() {
-    return config_get('backup_migrate.settings','backup_migrate_schedule_last_run_' . $this->get('id'));
+    return state_get('backup_migrate_schedule_last_run_' . $this->get('id'));
   }
 
   /**
