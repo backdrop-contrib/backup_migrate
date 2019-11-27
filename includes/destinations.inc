@@ -53,14 +53,6 @@ function backup_migrate_backup_migrate_destination_subtypes() {
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.browser.inc',
       'class' => 'backup_migrate_destination_browser_upload',
     ),
-    'nodesquirrel' => array(
-      'description' => t('Save the backup files to the NodeSquirrel.com backup service.'),
-      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.nodesquirrel.inc',
-      'class' => 'backup_migrate_destination_nodesquirrel',
-      'type_name' => t('NodeSquirrel.com'),
-      'can_create' => TRUE,
-      'remote' => TRUE,
-    ),
     'ftp' => array(
       'description' => t('Save the backup files to any a directory on an FTP server.'),
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/destinations.ftp.inc',
