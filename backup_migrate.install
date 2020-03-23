@@ -509,6 +509,7 @@ function backup_migrate_update_1006() {
  * NodeSquirel support has been removed.
  */
 function backup_migrate_update_1007() {
+  module_load_include('module', 'backup_migrate', 'backup_migrate');
   backup_migrate_include('destinations');
   backup_migrate_include('schedules');
   foreach (backup_migrate_get_schedules() as $schedule) {
