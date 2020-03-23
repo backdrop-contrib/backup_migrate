@@ -161,13 +161,11 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
   function s3_object() {
     // Try to use libraries module if available to find the path.
     if (function_exists('libraries_get_path')) {
-      $library_paths[] = libraries_get_path('s3-php5-curl');
+      $library_paths[] = libraries_get_path('amazon-s3-php-class');
     }
     else {
-      $library_paths[] = 'sites/all/libraries/s3-php5-curl';
+      $library_paths[] = 'libraries/amazon-s3-php-class';
     }
-    $library_paths[] = backdrop_get_path('module', 'backup_migrate') . '/includes/s3-php5-curl';
-    $library_paths[] = backdrop_get_path('module', 'backup_migrate') . '/includes';
 
     foreach($library_paths as $path) {
       if (file_exists($path . '/S3.php')) {
@@ -178,7 +176,7 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
         return $this->s3;
       }
     }
-    backdrop_set_message(t('Due to backdropcms.org code hosting policies, the S3 library needed to use an S3 destination is no longer distributed with this module. You must download the library from !link and place it in one of these locations: %locations.', array('%locations' => implode(', ', $library_paths), '!link' => l('http://undesigned.org.za/2007/10/22/amazon-s3-php-class', 'http://undesigned.org.za/2007/10/22/amazon-s3-php-class'))), 'error', FALSE);
+    backdrop_set_message(t('The S3 library is not distributed with this module. You must download the library from !link and place it in one of these locations: %locations.', array('%locations' => implode(', ', $library_paths), '!link' => l('https://github.com/tpyo/amazon-s3-php-class', 'https://github.com/tpyo/amazon-s3-php-class'))), 'error', FALSE);
     return NULL;
   }
 }
