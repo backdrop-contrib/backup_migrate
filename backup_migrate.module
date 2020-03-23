@@ -26,6 +26,8 @@ function backup_migrate_config_info() {
 /**
  * Implements hook_help().
  */
+/** Backdrop does not utilize hook_help so this section has been removed */
+/*
 function backup_migrate_help($section, $arg) {
   $help = array(
     array(
@@ -116,7 +118,8 @@ function backup_migrate_help($section, $arg) {
     return $out;
   }
 }
-
+ END of HOOK_HELP REMOVAL */
+ 
 /**
  * Implements hook_menu().
  */
