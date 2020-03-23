@@ -505,3 +505,50 @@ function backup_migrate_update_1006() {
   }
 }
 
+/**
+ * NodeSquirel support has been removed.
+ */
+function backup_migrate_update_1007() {
+  module_load_include('module', 'backup_migrate', 'backup_migrate');
+  backup_migrate_include('destinations');
+  backup_migrate_include('schedules');
+  foreach (backup_migrate_get_schedules() as $schedule) {
+    // Look for backups which use NodeSquirrel as its destination.
+    if ($schedule->destination_id == 'nodesquirrel') {
+      $name = $schedule->name;
+
+      // If this schedule had a second destination, swap the destinations.
+      if (!empty($schedule->copy_destination_id)) {
+        $destination = backup_migrate_get_destination($schedule->copy_destination_id);
+        $schedule->destination_id = $schedule->copy_destination_id;
+        $schedule->copy_destination_id = '';
+        $schedule->name = $destination->name;
+        $schedule->save();
+        backdrop_set_message(t('The backup schedule named "%backup" was renamed and now just backups to %destination.', array('%backup' => $name, '%destination' => $destination->name)));
+      }
+
+      // Just delete it.
+      else {
+        $schedule->delete();
+        backdrop_set_message(t('The backup schedule named "%backup" as been deleted.', array('%backup' => $name)));
+      }
+    }
+
+    // Backups which used NodeSquirrel as the second destination will have the
+    // second destination disabled.
+    elseif ($schedule->copy_destination_id == 'nodesquirrel') {
+      $schedule->copy_destination_id = '';
+      $schedule->save();
+      backdrop_set_message(t('The backup schedule named "%backup" no longer keeps a second backup on NodeSquirrel.', array('%backup' => $schedule->name)));
+    }
+  }
+
+  // Clear the cache so that the NodeSquirrel plugin is no longer loaded.
+  cache_clear_all('*', 'cache', TRUE);
+
+  // Rebuild the menus so that the NodeSquirrel menu item is removed.
+  state_set('menu_rebuild_needed', TRUE);
+
+  // @todo Remove the configuration later.
+  backdrop_set_message(t('<a href="!url">NodeSquirel stopped being usable as a backup destination</a> on October 1st, 2019 and ceased operations entirely on November 1st, 2019. Because of this, the Nodesquirrel functonality as been disabled. Please switch to an alternate destination if necessary. Please note that the NodeSquirrel configuration itself has not been removed.', array('!url' => 'https://pantheon.io/nodesquirrel-service-end-life')));
+}

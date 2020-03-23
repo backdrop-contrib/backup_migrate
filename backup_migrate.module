@@ -438,20 +438,6 @@ function backup_migrate_backup_migrate_schedules() {
   //   );
   //   $schedules[$id] = backup_migrate_crud_create_item('schedule', $schedule);
   // }
-  
-  if (config_get('backup_migrate.settings','nodesquirrel_secret_key') != FALSE) {
-      $schedule = array(
-        'machine_name' => 'nodesquirrel',
-        'name' => 'NodeSquirrel',
-        'source_id' => config_get('backup_migrate.settings','nodesquirrel_schedule_source_id'),
-        'destination_id' => 'nodesquirrel',
-        'profile_id' => 'default',
-        'period' => config_get('backup_migrate.settings','nodesquirrel_schedule'),
-        'enabled' => config_get('backup_migrate.settings','nodesquirrel_schedule_enabled') && config_get('backup_migrate.settings','nodesquirrel_secret_key') != FALSE,
-        'keep' => config_get('backup_migrate.settings','nodesquirrel_schedule_keep')
-      );
-      $schedules['nodesquirrel'] = backup_migrate_crud_create_item('schedule', $schedule);
-    }
 
   return $schedules;
 }
@@ -1388,9 +1374,8 @@ function backup_migrate_ui_saved_backups() {
   // Add a remote backups warning if there are no remote backups.
   if (!$remote && user_access('administer backup and migrate')) {
       backdrop_set_message(
-        t('You do not have any offsite backups. For the highest level of protection, <a href="!addurl">create an offsite destination</a> or <a href="!nsurl">set up NodeSquirrel</a> to save your backups to.', 
+        t('You do not have any offsite backups. For the highest level of protection, <a href="!addurl">create an offsite destination</a> to save your backups to.',
             array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'),
-                  '!nsurl' => url(BACKUP_MIGRATE_MENU_PATH . '/nodesquirrel')
         )), 'warning', FALSE);
   }
 
