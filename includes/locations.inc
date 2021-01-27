@@ -234,7 +234,7 @@ class backup_migrate_location extends backup_migrate_item {
   function get_list_row() {
     $out = parent::get_list_row();
 
-    // Supress locations with no actions as there's no value in showing them (and they may confuse new users).
+    // Suppress locations with no actions as there's no value in showing them (and they may confuse new users).
     if (empty($out['actions'])) {
       return NULL;
     }
