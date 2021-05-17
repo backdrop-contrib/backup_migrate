@@ -307,7 +307,7 @@ function backup_migrate_schema() {
 
 /**
  * Implementation of hook_install().
- * Backdrop - save all intial DEFAULT settings to CMI .settings 
+ * Backdrop - save all initial DEFAULT settings to CMI .settings
  * commented out because now all settings are pulled from .json file but
  * if new settings are needed or changed, set them below.
  */
@@ -550,5 +550,5 @@ function backup_migrate_update_1007() {
   state_set('menu_rebuild_needed', TRUE);
 
   // @todo Remove the configuration later.
-  backdrop_set_message(t('<a href="!url">NodeSquirel stopped being usable as a backup destination</a> on October 1st, 2019 and ceased operations entirely on November 1st, 2019. Because of this, the Nodesquirrel functonality as been disabled. Please switch to an alternate destination if necessary. Please note that the NodeSquirrel configuration itself has not been removed.', array('!url' => 'https://pantheon.io/nodesquirrel-service-end-life')));
+  backdrop_set_message(t('<a href="!url">NodeSquirrel stopped being usable as a backup destination</a> on October 1st, 2019 and ceased operations entirely on November 1st, 2019. Because of this, the Nodesquirrel functonality as been disabled. Please switch to an alternate destination if necessary. Please note that the NodeSquirrel configuration itself has not been removed.', array('!url' => 'https://pantheon.io/nodesquirrel-service-end-life')));
 }

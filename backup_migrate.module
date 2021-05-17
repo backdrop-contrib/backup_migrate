@@ -77,7 +77,7 @@ function backup_migrate_help($section, $arg) {
       'title' => t('Scheduling'),
       'body' => t('Automatically backup up your database and files on a regular schedule using <a href="!cronurl">cron</a>.', 
                   array('!cronurl' => url('admin/config/system/cron'))),
-      'more' => t('Each schedule will run a maximum of once per cron run, so they will not run more frequently than your cron is configured to run. If you specify a number of backups to keep for a schedule, old backups will be deleted as new ones created. <strong>If specifiy a number of files to keep other backup files in that schedule\'s destination will get deleted</strong>.'),
+      'more' => t('Each schedule will run a maximum of once per cron run, so they will not run more frequently than your cron is configured to run. If you specify a number of backups to keep for a schedule, old backups will be deleted as new ones are created. <strong>If you specify a number of files to keep, other backup files in that schedule\'s destination will get deleted</strong>.'),
       'access arguments' => array('administer backup and migrate'),
     ),
     BACKUP_MIGRATE_MENU_PATH . '/settings/import' => array(
@@ -671,7 +671,7 @@ function backup_migrate_ui_schedule_form($form, &$form_state, $sources, $schedul
         '#type' => 'markup',
         '#markup' => l(t('Advanced Settings.'), BACKUP_MIGRATE_MENU_PATH . '/settings/schedule/edit/' . $id, array('query' => backdrop_get_destination())),
       );
-      // Set the parent for the setttings up a level.
+      // Set the parent for the settings up a level.
       foreach (element_children($form['quickschedule'][$key]['settings']) as $child) {
         $form['quickschedule'][$key]['settings'][$child]['#parents'] = array('quickschedule', $key, $child);
       }
@@ -695,7 +695,7 @@ function backup_migrate_ui_schedule_form($form, &$form_state, $sources, $schedul
  */
 function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
   backup_migrate_include('schedules');
-  if (user_access('adminsiter backup and migrate')) {
+  if (user_access('administer backup and migrate')) {
     // Override the backups.
     foreach ($form_state['values']['quickschedule'] as $key => $values) {
       $id = $values['id'];
@@ -860,7 +860,7 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   $form['quickbackup']['destination']['copy']["#prefix"] = '<div class="container-inline backup-migrate-inline">';
   $form['quickbackup']['destination']['copy']["#suffix"] = $replacements['!to'] . '</div>';
   // This is not good translation practice as it relies on the structure of english
-  // If I add the pulldown to the label, howerver, the box toggles when the pulldown is clicked.
+  // If I add the pulldown to the label, however, the box toggles when the pulldown is clicked.
   //$form['quickbackup']['destination']['copy']['#title']  = t('Save a copy to');
 
   unset($form['quickbackup']['source_id']);
@@ -1199,7 +1199,7 @@ function _backup_migrate_filter_before_action_form($settings, $op) {
  * Perform an actual manual backup and tell the user of the progress.
  */
 function backup_migrate_ui_manual_backup_perform($settings) {
-  // Peform the actual backup.
+  // Perform the actual backup.
   backup_migrate_perform_backup($settings);
 }
 
@@ -1345,7 +1345,7 @@ function backup_migrate_ui_export_form($form, &$form_state, $item) {
 }
 
 /**
- * List the previously created backups from accross multiple destinations.
+ * List the previously created backups from across multiple destinations.
  */
 function backup_migrate_ui_saved_backups() {
   backup_migrate_include('profiles', 'destinations', 'sources');
@@ -1496,7 +1496,7 @@ function backup_migrate_perform_backup(&$settings) {
 }
 
 /**
- * Format an elapsed time given in milleseconds.
+ * Format an elapsed time given in milliseconds.
  */
 
 function backup_migrate_format_elapsed_time($time) {
@@ -1588,7 +1588,7 @@ function backup_migrate_backup_fail($message, $params, $settings) {
 }
 
 /**
- * Clean up when a backup operation suceeds.
+ * Clean up when a backup operation succeeds.
  */
 function backup_migrate_backup_succeed($message, $params, $settings) {
   backup_migrate_include('filters', 'files');
@@ -1610,7 +1610,7 @@ function backup_migrate_restore_fail($message, $params, $settings) {
 }
 
 /**
- * Clean up when a restore operation suceeds.
+ * Clean up when a restore operation succeeds.
  */
 function backup_migrate_restore_succeed($message, $params, $settings) {
   backup_migrate_include('filters', 'files');

@@ -273,7 +273,7 @@ class backup_migrate_profile extends backup_migrate_item {
   }
 
   /**
-   * Set the source of this setings profile. Takes either a source object or source id.
+   * Set the source of this settings profile. Takes either a source object or source id.
    */
   function set_source($source) {
     if (is_object($source)) {

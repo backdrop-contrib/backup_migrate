@@ -65,7 +65,7 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    * Get the form for the settings for this destination.
    *
    * Return the default tables whose data can be ignored. These tables mostly contain
-   *  info which can be easily reproducted (such as cache or search index)
+   *  info which can be easily reproduced (such as cache or search index)
    *  but also tables which can become quite bloated but are not necessarily extremely
    *  important to back up or migrate during development (such ass access log and watchdog)
    */

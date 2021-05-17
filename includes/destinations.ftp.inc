@@ -307,7 +307,7 @@ function backdrop_ftp_file_list($directory, &$ftp) {
 
   // Save the list of files
   if (@is_array($file_list)) {
-    // Interate through the array
+    // Iterate through the array
     foreach ($file_list as $file) {
       $file_array[] = array(
         'filename' => $file,

@@ -667,7 +667,7 @@ class backup_migrate_schedule extends backup_migrate_item {
   }
 
   /**
-   * Remove older backups keeping only the number specified by the aministrator.
+   * Remove older backups keeping only the number specified by the administrator.
    */
   function remove_expired_backups() {
     backup_migrate_include('destinations');
@@ -694,7 +694,7 @@ class backup_migrate_schedule extends backup_migrate_item {
   }
 
   /**
-   * Remove older backups keeping only the number specified by the aministrator.
+   * Remove older backups keeping only the number specified by the administrator.
    */
   function delete_backups($destination, $files, $num_to_keep) {
     backup_migrate_include('destinations');

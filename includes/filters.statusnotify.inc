@@ -3,7 +3,7 @@
 
 /**
  * @file
- * A filter for compressing bckups with zip, gz bzip etc.
+ * A filter for compressing backups with zip, gz bzip etc.
  */
 
 /**

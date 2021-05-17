@@ -428,7 +428,7 @@ class backup_file {
       array('key' => 'Content-Disposition', 'value' => 'attachment; filename="'. $this->filename() .'"'),
     );
     // In some circumstances, web-servers will double compress gzipped files.
-    // This may help aleviate that issue by disabling mod-deflate.
+    // This may help alleviate that issue by disabling mod-deflate.
     if ($this->mimetype() == 'application/x-gzip') {
       $headers[] = array('key' => 'Content-Encoding', 'value' => 'gzip');
     }

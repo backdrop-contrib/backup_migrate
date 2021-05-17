@@ -46,7 +46,7 @@ function backup_migrate_crud_type_info($type) {
 }
 
 /**
- * Get a list of avaiable classes of each crud type.
+ * Get a list of available classes of each crud type.
  */
 function backup_migrate_crud_subtypes($type) {
   $out = array();
@@ -427,7 +427,7 @@ class backup_migrate_item {
 
 
   /**
-   * Constructor, set the basic info pulled from the db or generated programatically.
+   * Constructor, set the basic info pulled from the db or generated programmatically.
    */
   function __construct($params = array()) {
     $this->from_array($this->_merge_defaults((array)$params, (array)$this->get_default_values()));

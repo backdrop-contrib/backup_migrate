@@ -3,7 +3,7 @@
 
 /**
  * @file
- * A filter for encrypting bckups with AES.
+ * A filter for encrypting backups with AES.
  */
 
 /**

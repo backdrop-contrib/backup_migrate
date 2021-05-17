@@ -76,14 +76,14 @@ ronan (at) gortonstudios (dot) com.
 Make sure your php timeout is set high enough to complete a backup or restore
 operation. Larger databases require more time. Also, while the module attempts
 to keep memory needs to a minimum, a backup or restore will require
-significantly more memory then most Backdrop operations.
+significantly more memory than most Backdrop operations.
 
 If your backup file contains the 'sessions' table all other users will be logged
 out after you run a restore. To avoid this, exclude the sessions table when
 creating your backups. Be aware though that you will need to recreate the
 sessions table if you use this backup on an empty database.
 
-Do not change the file extension of backup files or the restore function will be
+Do not change the file extension of backup files, or the restore function will be
 unable to determine the compression type the file and will not function
 correctly.
 
