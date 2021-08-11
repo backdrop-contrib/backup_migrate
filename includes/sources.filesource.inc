@@ -42,8 +42,8 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       "#default_value" => $this->get_location(),
       "#required" => TRUE,
       "#description" => t('Enter a filesystem path to the source directory that
-        you wish to include in the backup file. Use a relative path to your
-        Backdrop root directory. The web server must be able to read to this
+        you wish to include in the backup file. Use a relative path to the
+        Backdrop root directory. The web server must be able to read this
         path.'
       ),
     );
