@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * A destination type for saving locally to the server.
