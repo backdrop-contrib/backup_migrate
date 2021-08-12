@@ -1,7 +1,4 @@
 <?php
-
-
-
 /**
  * @file
  * Create (manually or scheduled) and restore backups of your Backdrop MySQL
@@ -31,10 +28,10 @@ function backup_migrate_config_info() {
 function backup_migrate_help($section, $arg) {
   $help = array(
     array(
-      'body' => 
+      'body' =>
        t('Backup and Migrate makes the task of backing up your Backdrop database and migrating data from one Backdrop install to another easier. It provides a function to backup the entire database to file or download, and to restore from a previous backup. You can also schedule the backup operation. Compression of backup files is also supported.  The database backup files created with this module can be imported into this or any other Backdrop installation with the !restorelink, or you can use a database tool such as <a href="!phpmyadminurl">phpMyAdmin</a> or the mysql command line command.',
          array(
-            '!restorelink' => user_access('restore from backup') ? l(t('restore feature'), BACKUP_MIGRATE_MENU_PATH . '/restore') : t('restore feature'), 
+            '!restorelink' => user_access('restore from backup') ? l(t('restore feature'), BACKUP_MIGRATE_MENU_PATH . '/restore') : t('restore feature'),
             '!phpmyadminurl' => 'http://www.phpmyadmin.net'
           )
         )
@@ -46,7 +43,7 @@ function backup_migrate_help($section, $arg) {
     ),
     BACKUP_MIGRATE_MENU_PATH . '/export/advanced' => array(
       'title' => t('Advanced Backup Tab'),
-      'body' => t('Use this form to run manual backups of your database and files with more advanced options. If you have any !profilelink saved you can load those settings. You can save any of the changes you make to these settings as a new settings profile.', 
+      'body' => t('Use this form to run manual backups of your database and files with more advanced options. If you have any !profilelink saved you can load those settings. You can save any of the changes you make to these settings as a new settings profile.',
                   array("!profilelink" => user_access('administer backup and migrate') ? l(t('settings profiles'), BACKUP_MIGRATE_MENU_PATH . '/profile') : t('settings profiles'), '!restorelink' => user_access('restore from backup') ? l(t('restore feature'), BACKUP_MIGRATE_MENU_PATH . '/restore') : t('restore feature'), '!phpmyadminurl' => 'http://www.phpmyadmin.net')),
       'access arguments' => array('perform backup'),
     ),
@@ -75,14 +72,14 @@ function backup_migrate_help($section, $arg) {
     ),
     BACKUP_MIGRATE_MENU_PATH . '/schedule' => array(
       'title' => t('Scheduling'),
-      'body' => t('Automatically backup up your database and files on a regular schedule using <a href="!cronurl">cron</a>.', 
+      'body' => t('Automatically backup up your database and files on a regular schedule using <a href="!cronurl">cron</a>.',
                   array('!cronurl' => url('admin/config/system/cron'))),
       'more' => t('Each schedule will run a maximum of once per cron run, so they will not run more frequently than your cron is configured to run. If you specify a number of backups to keep for a schedule, old backups will be deleted as new ones are created. <strong>If you specify a number of files to keep, other backup files in that schedule\'s destination will get deleted</strong>.'),
       'access arguments' => array('administer backup and migrate'),
     ),
     BACKUP_MIGRATE_MENU_PATH . '/settings/import' => array(
       'title' => t('Importing Settings'),
-      'body' => t('Import a settings profile, backup schedule, source or destination by pasting the export code into the textarea.', 
+      'body' => t('Import a settings profile, backup schedule, source or destination by pasting the export code into the textarea.',
                   array('!cronurl' => url('admin/config/system/cron'))),
     ),
   );
@@ -119,7 +116,7 @@ function backup_migrate_help($section, $arg) {
   }
 }
  END of HOOK_HELP REMOVAL */
- 
+
 /**
  * Implements hook_menu().
  */
@@ -261,9 +258,8 @@ function form_process_backup_migrate_file_list($element) {
  */
 function backup_migrate_form_update_script_selection_form_alter(&$form, $form_state) {
   $msg = t('Before you run any database updates, <strong>make sure you have a backup of your database.</strong> Use !backup_migrate to create that backup now.', array('!backup_migrate' => l(t('Backup and Migrate'), BACKUP_MIGRATE_MENU_PATH)));
-  
+
   backdrop_set_message($msg, 'warning');
-  
 }
 
 /**
@@ -298,7 +294,7 @@ function backup_migrate_cronapi($op, $job = NULL) {
       $items['backup_migrate_' . $id] = array(
         'description' => t('Run the Backup and Migrate \'!name\' schedule', array('!name' => $schedule->get('name'))),
         'rule' => $schedule->get('cron_schedule'),
-        'callback' => 'backup_migrate_schedule_run', 
+        'callback' => 'backup_migrate_schedule_run',
         'arguments' => array($id),
         'file' => 'includes/schedules.inc',
       );
@@ -484,7 +480,7 @@ function backup_migrate_include() {
     if (!isset($used[$file])) {
       require_once backup_migrate_include_path($file);
     }
-  
+
     $used[$file] = TRUE;
   }
 }
@@ -952,7 +948,7 @@ function theme_backup_migrate_file_list($vars) {
 
   // Render the radios so they can be placed in the file list rendering.
   $vars['element']['#display_options']['form_elements'] = array();
-  if (isset($vars['element']['files']) && count($vars['element']['files'])) {  
+  if (isset($vars['element']['files']) && count($vars['element']['files'])) {
     foreach (element_children($vars['element']['files']) as $id) {
       $vars['element']['files'][$id]['#title'] = '';
       $vars['element']['#display_options']['form_elements'][$id] = render($vars['element']['files'][$id]);
@@ -978,7 +974,6 @@ function theme_backup_migrate_group($vars) {
   $output = '<div class="backup-migrate-group">' . $output . '</div>';
   return $output;
 }
-
 
 /**
  * The backup/export form.
@@ -1141,7 +1136,7 @@ function _backup_migrate_ui_action_form($form, &$form_state, $op = 'backup') {
 }
 
 /**
- * Allow filters, sources and destinations to present additional form elements 
+ * Allow filters, sources and destinations to present additional form elements
  * to the end user before an action is submitted.
  **/
 function backup_migrate_ui_action_form_pre_validate($form, &$form_state) {
@@ -1151,7 +1146,7 @@ function backup_migrate_ui_action_form_pre_validate($form, &$form_state) {
 }
 
 /**
- * Allow filters, sources and destinations to present additional form elements 
+ * Allow filters, sources and destinations to present additional form elements
  * to the end user before an action is submitted.
  **/
 function backup_migrate_ui_action_form_post_validate($form, &$form_state) {
@@ -1167,14 +1162,14 @@ function backup_migrate_ui_action_form_post_validate($form, &$form_state) {
         $form_state['rebuild'] = TRUE;
       }
       else {
-        backup_migrate_filters_before_action_form_validate($form_state['values']['settings'], $form_state['values']['operation'], $form, $form_state);  
+        backup_migrate_filters_before_action_form_validate($form_state['values']['settings'], $form_state['values']['operation'], $form, $form_state);
       }
     }
   }
 }
 
 /**
- * Allow filters, sources and destinations to present additional form elements 
+ * Allow filters, sources and destinations to present additional form elements
  * to the end user before an action is submitted.
  **/
 function backup_migrate_ui_action_form_pre_submit($form, &$form_state) {
@@ -1263,9 +1258,9 @@ function backup_migrate_ui_manual_restore_form() {
   $form['backup_migrate_restore_saved']['file'] = array(
     '#type' => 'backup_migrate_file_list',
     '#display_options' => array(
-      'limit' => 5, 
-      'pager' => FALSE, 
-      'more' => BACKUP_MIGRATE_MENU_PATH . '/backups', 
+      'limit' => 5,
+      'pager' => FALSE,
+      'more' => BACKUP_MIGRATE_MENU_PATH . '/backups',
       'operations' => FALSE,
     ),
     '#default_value' => $default,
@@ -1325,8 +1320,7 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
   }
   else if ($values['from'] == 'saved' && $file = $values['file']) {
     list($destination, $file_id) = explode('/', $file, 2);
-    $file = 
-    backup_migrate_perform_restore($destination, $file_id, $form_state['values']);
+    $file = backup_migrate_perform_restore($destination, $file_id, $form_state['values']);
   }
 
   $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH . '/restore';
@@ -1476,7 +1470,7 @@ function backup_migrate_perform_backup(&$settings) {
     return FALSE;
   }
 
-  // Backup succeeded, 
+  // Backup succeeded,
   $time = timer_stop('backup_migrate_backup');
   $message = '%source backed up successfully to %file (%size) in destination %dest in !time. !action';
   $params = array(
@@ -1797,7 +1791,7 @@ function _backup_migrate_check_timeout() {
  * Convert an associated array to an ini format string.
  */
 function _backup_migrate_array_to_ini($data, $prefix = '') {
-  $content = ""; 
+  $content = "";
   foreach ($data as $key => $val) {
     if ($prefix) {
       $key = $prefix . '[' . $key .']';
