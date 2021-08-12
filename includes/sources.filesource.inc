@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * A destination type for saving locally to the server.
@@ -11,7 +10,6 @@
  *
  * @ingroup backup_migrate_destinations
  */
-
 class backup_migrate_destination_filesource extends backup_migrate_source {
   var $supported_ops = array('restore', 'configure', 'delete', 'source');
 
@@ -24,9 +22,31 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    */
   function sources() {
     $out  = array();
-    $out['files'] = backup_migrate_create_destination('filesource', array('machine_name' => 'files', 'location' => 'public://', 'name' => t('Public Files Directory'), 'show_in_list' => FALSE));
+    global $config_directories;
+
+    $out['files'] = backup_migrate_create_destination('filesource', array(
+      'machine_name' => 'files',
+      'location' => 'public://',
+      'name' => t('Public Files Directory'),
+      'show_in_list' => FALSE,
+    ));
+
     if (config_get('backup_migrate.settings','file_private_path')) {
-      $out['files_private'] = backup_migrate_create_destination('filesource', array('machine_name' => 'files', 'location' => 'private://', 'name' => t('Private Files Directory'), 'show_in_list' => FALSE));
+      $out['files_private'] = backup_migrate_create_destination('filesource', array(
+        'machine_name' => 'files',
+        'location' => 'private://',
+        'name' => t('Private Files Directory'),
+        'show_in_list' => FALSE,
+      ));
+    }
+
+    foreach ($config_directories as $key => $config_dir) {
+      $out["config_files_$key"] = backup_migrate_create_destination('filesource', array(
+        'machine_name' => 'config_files_' . $key,
+        'location' => $config_directories[$key],
+        'name' => t('Configuration Files Directory (!key)', array('!key' => ucfirst($key))),
+        'show_in_list' => FALSE,
+      ));
     }
     return $out;
   }
