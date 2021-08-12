@@ -632,11 +632,9 @@ function backup_migrate_ui_schedule_form($form, &$form_state, $sources, $schedul
         '#default_value' => $period,
       );
       $form['quickschedule'][$key]['settings']['destination'] = _backup_migrate_get_destination_pulldown('scheduled backup', $schedule->get('destination_id'), $schedule->get('copy_destination_id'));
-
       $form['quickschedule'][$key]['settings']['destination']['destination_id']['#parents'] = array('quickschedule', $key, 'destination_id');
       $form['quickschedule'][$key]['settings']['destination']['copy']['#parents'] = array('quickschedule', $key, 'copy');
       $form['quickschedule'][$key]['settings']['destination']['copy_destination']['copy_destination_id']['#parents'] = array('quickschedule', $key, 'copy_destination_id');
-
 
       array(
         '#type' => 'select',
@@ -704,8 +702,6 @@ function backup_migrate_ui_schedule_form_submit($form, &$form_state) {
   }
 }
 
-
-
 /**
  * The quick backup form.
  */
@@ -729,7 +725,6 @@ function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline
   );
 
   $form['quickbackup']['source_id'] = _backup_migrate_get_source_pulldown(config_get('backup_migrate.settings','backup_migrate_source_id'));
-
   $form['quickbackup']['destination'] = _backup_migrate_get_destination_pulldown('manual backup', config_get('backup_migrate.settings','backup_migrate_destination_id'), config_get('backup_migrate.settings','backup_migrate_copy_destination_id'));
 
   $profile_options = _backup_migrate_get_profile_form_item_options();
@@ -837,7 +832,7 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   unset($form['quickbackup']['profile_id']['#title']);
   unset($form['quickbackup']['destination']['copy_destination']['copy_destination_id']['#title']);
 
-  $replacements = array(
+  $options = array(
     '!from' => backdrop_render($form['quickbackup']['source_id']),
     '!to' => backdrop_render($form['quickbackup']['destination']['destination_id']),
     '!profile' => backdrop_render($form['quickbackup']['profile_id']),
@@ -847,16 +842,19 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
     '#type'   => 'markup',
     "#prefix" => '<div class="container-inline backup-migrate-inline">',
     "#suffix" => '</div>',
-    '#markup'  => t('Backup my !from to !to using !profile', $replacements),
+    '#markup'  => t('Backup my !from to !to using !profile', $options),
   );
 
-  $replacements = array(
+  $destination = array(
     '!to' => backdrop_render($form['quickbackup']['destination']['copy_destination']['copy_destination_id']),
   );
   $form['quickbackup']['destination']['copy']["#prefix"] = '<div class="container-inline backup-migrate-inline">';
-  $form['quickbackup']['destination']['copy']["#suffix"] = $replacements['!to'] . '</div>';
-  // This is not good translation practice as it relies on the structure of english
-  // If I add the pulldown to the label, however, the box toggles when the pulldown is clicked.
+  $form['quickbackup']['destination']['copy']["#suffix"] = $destination['!to'] . '</div>';
+  // This is not good translation practice as it relies on the structure of
+  // english.
+  // If I add the pulldown to the label, however, the box toggles when the
+  // pulldown is clicked.
+  //
   //$form['quickbackup']['destination']['copy']['#title']  = t('Save a copy to');
 
   unset($form['quickbackup']['source_id']);
@@ -864,6 +862,7 @@ function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   unset($form['quickbackup']['destination']['copy_destination']);
   unset($form['quickbackup']['profile_id']);
   //unset($form['quickbackup']['submit']);
+
   return backdrop_render_children($form);
 }
 
@@ -917,7 +916,6 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
 
   return backdrop_render_children($form);
 }
-
 
 /**
  * Theme the dependent form section.
@@ -1370,10 +1368,10 @@ function backup_migrate_ui_saved_backups() {
 
   // Add a remote backups warning if there are no remote backups.
   if (!$remote && user_access('administer backup and migrate')) {
-      backdrop_set_message(
-        t('You do not have any offsite backups. For the highest level of protection, <a href="!addurl">create an offsite destination</a> to save your backups to.',
-            array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'),
-        )), 'warning', FALSE);
+    backdrop_set_message(
+      t('You do not have any offsite backups. For the highest level of protection, <a href="!addurl">create an offsite destination</a> to save your backups to.',
+        array('!addurl' => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/add'),
+      )), 'warning', FALSE);
   }
 
   return $out;
@@ -1400,7 +1398,7 @@ function backup_migrate_get_saved_backups($refresh = FALSE) {
         $remote = TRUE;
       }
 
-      // Refresh the destination
+      // Refresh the destination.
       if ($refresh) {
         $destination->file_cache_clear();
       }
@@ -1614,7 +1612,6 @@ function backup_migrate_restore_succeed($message, $params, $settings) {
   return FALSE;
 }
 
-
 /**
  * Cleanup after a success or failure.
  */
@@ -1625,9 +1622,8 @@ function backup_migrate_cleanup() {
   }
 }
 
-
 /**
- * Shutdown callback. Called when the script terminates even if the script timed out.
+ * Shutdown callback when the script terminates even if the script timed out.
  */
 function backup_migrate_shutdown($settings) {
   // If we ran out of time, set an error so the user knows what happened
@@ -1692,7 +1688,7 @@ function backup_migrate_action_info() {
 }
  */
 
-/*
+/**
  * Action callback.
  */
 function backup_migrate_action_backup() {
@@ -1714,7 +1710,8 @@ function _backup_migrate_backup_with_defaults($destination_id = "manual") {
 }
 
 /**
- * Helper function to set a backdrop message and watchdog message depending on whether the module is being run interactively.
+ * Helper function to set a backdrop message and watchdog message depending on
+ * whether the module is being run interactively.
  */
 function _backup_migrate_message($message, $replace = array(), $type = 'status') {
   // Only set a message if there is a callback handler to handle the message.
@@ -1722,12 +1719,14 @@ function _backup_migrate_message($message, $replace = array(), $type = 'status')
     $callback($message, $replace, $type);
   }
 
-  // Store the message in case it's needed (for the status notification filter for example).
+  // Store the message in case it's needed (for the status notification filter
+  // for example).
   _backup_migrate_messages($message, $replace, $type);
 }
 
 /**
- * Helper function to set a backdrop message and watchdog message depending on whether the module is being run interactively.
+ * Helper to set a backdrop message and watchdog message depending on
+ * whether the module is being run interactively.
  */
 function _backup_migrate_messages($message = NULL, $replace = array(), $type = 'status') {
   static $messages = array();
