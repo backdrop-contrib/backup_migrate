@@ -189,7 +189,7 @@ function backup_migrate_crud_ui_edit($type, $item_id = NULL) {
 
 /**
  * Does a crud item with the given name exist.
- * 
+ *
  * Callback for the 'machine_name' form type.
  */
 function backup_migrate_crud_item_exists($machine_name, $element, $form_state) {
@@ -259,7 +259,7 @@ function backup_migrate_crud_delete_confirm_form($form, &$form_state, $item) {
   } else {
     $message = $item->delete_confirm_message();
     return confirm_form($form, t('Are you sure?'), $item->get_settings_path(), $message, t('Delete'), t('Cancel'));
-  }  
+  }
 }
 
 /**
@@ -425,7 +425,6 @@ class backup_migrate_item {
     t('Export !type');
   }
 
-
   /**
    * Constructor, set the basic info pulled from the db or generated programmatically.
    */
@@ -459,7 +458,7 @@ class backup_migrate_item {
 
   /**
    * Save the item to the database.
-   */  
+   */
   function save() {
     if (!$this->get_id()) {
       $this->unique_id();
@@ -470,7 +469,7 @@ class backup_migrate_item {
 
   /**
    * Delete the item from the database.
-   */  
+   */
   function delete() {
     $keys = (array)$this->get_machine_name_field();
     db_query('DELETE FROM {' . $this->db_table . '} WHERE ' . $keys[0] . ' = :id', array(':id' => $this->get_id()));
@@ -634,7 +633,7 @@ class backup_migrate_item {
 
     // Unset the autoincrement field so it can be regenerated.
     foreach ((array)$this->get_primary_key() as $key) {
-      $this->{$key} = NULL;    
+      $this->{$key} = NULL;
     }
 
     // If the item doesn't have an ID or if it's id is already taken, generate random one.
@@ -652,7 +651,7 @@ class backup_migrate_item {
 
   /**
    * Get the member with the given key.
-   */  
+   */
   function get($key) {
     if (method_exists($this, 'get_'. $key)) {
       return $this->{'get_'. $key}();
@@ -691,7 +690,7 @@ class backup_migrate_item {
 
   /**
    * Get a table of all items of this type.
-   */  
+   */
   function get_list() {
     $items = $this->all_items();
     $rows = array();
@@ -716,14 +715,14 @@ class backup_migrate_item {
 
   /**
    * Get the columns needed to list the type.
-   */  
+   */
   function show_in_list() {
     return $this->show_in_list;
   }
 
   /**
    * Get the columns needed to list the type.
-   */  
+   */
   function get_settings_path() {
     return BACKUP_MIGRATE_MENU_PATH . $this->settings_path . $this->type_name;
   }
@@ -731,7 +730,7 @@ class backup_migrate_item {
 
   /**
    * Get the columns needed to list the type.
-   */  
+   */
   function get_list_column_info() {
     return array(
       'actions' => array('title' => t('Operations'), 'html' => TRUE),
@@ -740,7 +739,7 @@ class backup_migrate_item {
 
   /**
    * Get header for a lost of this type.
-   */  
+   */
   function get_list_header() {
     $out = array();
     foreach ($this->get_list_column_info() as $key => $col) {
@@ -751,7 +750,7 @@ class backup_migrate_item {
 
   /**
    * Get a row of data to be used in a list of items of this type.
-   */  
+   */
   function get_list_row() {
     $out = array();
     foreach ($this->get_list_column_info() as $key => $col) {
@@ -837,7 +836,7 @@ class backup_migrate_item {
     return t('Are you sure you want to revert the !type %name back to the default settings?', array('!type' => t($this->singular), '%name' => $this->get('name')));
   }
 
-  /* Static Functions */ 
+  /* Static Functions */
   /**
    * Get the menu items for manipulating this type.
    */
