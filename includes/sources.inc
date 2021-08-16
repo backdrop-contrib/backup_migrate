@@ -85,7 +85,7 @@ function backup_migrate_backup_migrate_source_subtypes() {
  * Get the built in backup sources and those in the db.
  */
 function backup_migrate_backup_migrate_sources() {
-  $out              = array();
+  $out = array();
 
   // Expose the configured databases as sources.
   backup_migrate_include('filters');
