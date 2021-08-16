@@ -18,7 +18,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   }
 
   /**
-   * Declare the current files directory as a backup source..
+   * Declare the current files directory as a backup source.
    */
   function sources() {
     $out  = array();
