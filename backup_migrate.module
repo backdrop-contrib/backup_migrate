@@ -731,7 +731,7 @@ function backup_migrate_ui_manual_quick_backup_form($form, &$form_state, $inline
   $form['quickbackup']['profile_id'] = array(
     "#type" => "select",
     "#title" => t("Settings Profile"),
-    '#default_value' => config_get('backup_migrate.settings','backup_migrate_profile_id'),
+    '#default_value' => config_get('backup_migrate.settings', 'backup_migrate_profile_id'),
     "#options" => $profile_options,
   );
 
@@ -822,7 +822,6 @@ function backup_migrate_ui_manual_quick_backup_form_submit($form, &$form_state) 
  */
 function theme_backup_migrate_ui_manual_quick_backup_form_inline($form) {
   backdrop_add_css(backdrop_get_path('module', 'backup_migrate') .'/backup_migrate.css');
-
   $form = $form['form'];
 
   // Remove the titles so that the pulldowns can be displayed inline.
@@ -906,7 +905,6 @@ function theme_backup_migrate_ui_quick_schedule_form_inline($form) {
   );
   $form['settings']['destination']['copy']["#prefix"] = '<div class="container-inline backup-migrate-inline">';
   $form['settings']['destination']['copy']["#suffix"] = $replacements['!to'] . '</div>';
-
 
   unset($form['settings']['period']);
   unset($form['settings']['destination']['destination_id']);
