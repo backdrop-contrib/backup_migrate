@@ -313,7 +313,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   }
 
   /**
-   * Break the excpluded paths string into a usable list of paths.
+   * Break the excluded paths string into a usable list of paths.
    */
   function get_excluded_paths($settings) {
     $base_dir = $this->get_realpath() . '/';
@@ -326,7 +326,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
         $out[$key] = $real;
       }
       // If the path is a relative path add it.
-      else if ($real = backdrop_realpath($base_dir . $path)) {
+      elseif ($real = backdrop_realpath($base_dir . $path)) {
         $out[$key] = $real;
       }
       // Otherwise add it as is even though it probably won't match any files.
