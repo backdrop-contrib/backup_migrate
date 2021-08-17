@@ -45,7 +45,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
         'machine_name' => 'config_files_' . $key,
         'location' => $config_directories[$key],
         'name' => t('Configuration Files Directory (!key)', array('!key' => ucfirst($key))),
-        'show_in_list' => FALSE,
+        'show_in_list' => TRUE,
       ));
     }
     return $out;
