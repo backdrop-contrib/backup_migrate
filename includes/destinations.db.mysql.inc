@@ -1,25 +1,28 @@
 <?php
 
-backup_migrate_include('destinations.db');
-
 /**
  * @file
  * Functions to handle the direct to database destination.
  */
+
+backup_migrate_include('destinations.db');
 
 /**
  * A destination type for saving to a database server.
  *
  * @ingroup backup_migrate_destinations
  */
-
 class backup_migrate_destination_db_mysql extends backup_migrate_destination_db {
+
+  /**
+   * Type name.
+   */
   function type_name() {
     return t("MySQL Database");
   }
 
   /**
-   * Return a list of backup filetypes.
+   * Return a list of backup file types.
    */
   function file_types() {
     return array(
@@ -39,29 +42,31 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   }
 
   /**
-   * Declare any mysql databases defined in the settings.php file as a possible destination.
+   * Declare any databases defined in settings.php as a possible destination.
    */
   function destinations() {
     $out = array();
     global $databases;
-    foreach ((array)$databases as $db_key => $target) {
-      foreach ((array)$target as $tgt_key => $info) {
+    foreach ((array) $databases as $db_key => $target) {
+      foreach ((array) $target as $tgt_key => $info) {
         // Only mysql/mysqli supported by this destination.
         $key = $db_key . ':' . $tgt_key;
         if ($info['driver'] === 'mysql') {
           $url = $info['driver'] . '://' . $info['username'] . ':' . $info['password'] . '@' . $info['host'] . (isset($info['port']) ? ':' . $info['port'] : '') . '/' . $info['database'];
           if ($destination = backup_migrate_create_destination('mysql', array('url' => $url))) {
-            // Treat the default database differently because it is probably the only one available.
+            // Treat the default database differently because it is probably the
+            // only one available.
             if ($key == 'default:default') {
               $destination->set_id('db');
               $destination->set_name(t('Default Database'));
-              // Disallow backing up to the default database because that's confusing and potentially dangerous.
+              // Disallow backing up to the default database because that's
+              // confusing and potentially dangerous.
               $destination->remove_op('scheduled backup');
               $destination->remove_op('manual backup');
             }
             else {
-              $destination->set_id('db:'. $key);
-              $destination->set_name($key .": ". $destination->get_display_location());
+              $destination->set_id('db:' . $key);
+              $destination->set_name($key . ": " . $destination->get_display_location());
             }
             $out[$destination->get_id()] = $destination;
           }
@@ -88,19 +93,23 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
       "#type" => "checkbox",
       "#title" => t("Use mysqldump command"),
       "#default_value" => !empty($settings['use_mysqldump']),
-      "#description" => t("Use the mysqldump command line tool if available. This can be faster for large databases but will not work on all servers. Also exporting SQL views is not really solid with this option. EXPERIMENTAL"),
+      "#description" => t("Use the mysqldump command line tool if available.
+        This can be faster for large databases but will not work on all
+        servers. Also exporting SQL views is not really solid with this
+        option. EXPERIMENTAL"
+      ),
     );
 
     return $form;
   }
 
-
   /**
    * Backup the databases to a file.
    *
-   *  Returns a list of sql commands, one command per line.
-   *  That makes it easier to import without loading the whole file into memory.
-   *  The files are a little harder to read, but human-readability is not a priority
+   * Returns a list of sql commands, one command per line.
+   * That makes it easier to import without loading the whole file into memory.
+   * The files are a little harder to read, but human-readability is not a
+   * priority.
    */
   function _backup_db_to_file($file, $settings) {
     if (!empty($settings->filters['use_mysqldump']) && $this->_backup_db_to_file_mysqldump($file, $settings)) {
@@ -145,7 +154,6 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     }
   }
 
-
   /**
    * Backup the databases to a file using the mysqldump command.
    */
@@ -153,9 +161,8 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     $success = FALSE;
     $nodata_tables = array();
     $alltables = $this->_get_tables();
-
-
     $command = 'mysqldump --result-file=%file --opt -Q --host=%host --port=%port --user=%user --password=%pass %db';
+
     $args = array(
       '%file' => $file->filepath(),
       '%host' => $this->dest_url['host'],
@@ -168,17 +175,17 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     // Ignore the excluded and no-data tables.
     $db = $this->dest_url['path'];
     if (!empty($settings->filters['exclude_tables'])) {
-      foreach ((array)$settings->filters['exclude_tables'] as $table) {
+      foreach ((array) $settings->filters['exclude_tables'] as $table) {
         if (isset($alltables[$table])) {
-          $command .= ' --ignore-table='. $db .'.'. $table;
+          $command .= ' --ignore-table=' . $db . '.' . $table;
         }
       }
     }
     if (!empty($settings->filters['nodata_tables'])) {
-      foreach ((array)$settings->filters['nodata_tables'] as $table) {
+      foreach ((array) $settings->filters['nodata_tables'] as $table) {
         if (isset($alltables[$table])) {
           $nodata_tables[] = $table;
-          $command .= ' --ignore-table='. $db .'.'. $table;
+          $command .= ' --ignore-table=' . $db . '.' . $table;
         }
       }
     }
@@ -206,7 +213,8 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
           return FALSE;
         }
         if ($line) {
-          // Prepare and execute the statement instead of the api function to avoid substitution of '{' etc.
+          // Prepare and execute the statement instead of the api function to
+          // avoid substitution of '{' etc.
           $stmt = $conn->prepare($line);
           $stmt->execute();
           $num++;
@@ -222,11 +230,11 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     return $num;
   }
 
-
   /**
    * Read a multiline sql command from a file.
    *
-   * Supports the formatting created by mysqldump, but won't handle multiline comments.
+   * Supports the formatting created by mysqldump, but won't handle multiline
+   * comments.
    */
   function _read_sql_command_from_file($file) {
     $out = '';
@@ -234,7 +242,8 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
       $first2 = substr($line, 0, 2);
       $first3 = substr($line, 0, 2);
 
-      // Ignore single line comments. This function doesn't support multiline comments or inline comments.
+      // Ignore single line comments. This function doesn't support multiline
+      // comments or inline comments.
       if ($first2 != '--' && ($first2 != '/*' || $first3 == '/*!')) {
         $out .= ' ' . trim($line);
         // If a line ends in ; or */ it is a sql command.
@@ -275,9 +284,9 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     if ($tables) {
       $tables_escaped = array();
       foreach ($tables as $table) {
-        $tables_escaped[] = '`'. db_escape_table($table) .'`  WRITE';
+        $tables_escaped[] = '`' . db_escape_table($table) . '`  WRITE';
       }
-      $this->query('LOCK TABLES '. implode(', ', $tables_escaped));
+      $this->query('LOCK TABLES ' . implode(', ', $tables_escaped));
     }
   }
 
@@ -293,11 +302,11 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    */
   function _get_tables() {
     $out = array();
-    // get auto_increment values and names of all tables
+    // Get auto_increment values and names of all tables.
     $tables = $this->query("show table status", array(), array('fetch' => PDO::FETCH_ASSOC));
     foreach ($tables as $table) {
-      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default query behavior was changed.
-      // See: http://drupal.org/node/1171866
+      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default
+      // query behavior was changed. See: http://drupal.org/node/1171866.
       $table = array_change_key_case($table);
       if (!empty($table['engine'])) {
         $out[$table['name']] = $table;
@@ -311,11 +320,11 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    */
   function _get_views() {
     $out = array();
-    // get auto_increment values and names of all tables
+    // Get auto_increment values and names of all tables.
     $tables = $this->query("show table status", array(), array('fetch' => PDO::FETCH_ASSOC));
     foreach ($tables as $table) {
-      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default query behavior was changed.
-      // See: http://drupal.org/node/1171866
+      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default
+      // query behavior was changed. See: http://drupal.org/node/1171866
       $table = array_change_key_case($table);
       if (empty($table['engine'])) {
         $out[$table['name']] = $table;
@@ -329,34 +338,36 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    */
   function _get_table_structure_sql($table) {
     $out = "";
-    $result = $this->query("SHOW CREATE TABLE `". $table['name'] ."`", array(), array('fetch' => PDO::FETCH_ASSOC));
+    $result = $this->query("SHOW CREATE TABLE `" . $table['name'] . "`", array(), array('fetch' => PDO::FETCH_ASSOC));
     foreach ($result as $create) {
-      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default query behavior was changed.
-      // See: http://drupal.org/node/1171866
+      // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default
+      // query behavior was changed. See: http://drupal.org/node/1171866
       $create = array_change_key_case($create);
-      $out .= "DROP TABLE IF EXISTS `". $table['name'] ."`;\n";
-      // Remove newlines and convert " to ` because PDO seems to convert those for some reason.
+      $out .= "DROP TABLE IF EXISTS `" . $table['name'] . "`;\n";
+      // Remove newlines and convert " to ` because PDO seems to convert those
+      // for some reason.
       $out .= strtr($create['create table'], array("\n" => ' ', '"' => '`'));
       if ($table['auto_increment']) {
-        $out .= " AUTO_INCREMENT=". $table['auto_increment'];
+        $out .= " AUTO_INCREMENT=" . $table['auto_increment'];
       }
       $out .= ";\n";
     }
     return $out;
   }
-  
+
   /**
    * Get the sql for the structure of the given table.
    */
   function _get_view_create_sql($view) {
     $out = "";
-    // Switch SQL mode to get rid of "CREATE ALGORITHM..." what requires more permissions + troubles with the DEFINER user
+    // Switch SQL mode to get rid of "CREATE ALGORITHM..." what requires more
+    // permissions + troubles with the DEFINER user.
     $sql_mode = $this->query("SELECT @@SESSION.sql_mode")->fetchField();
     $this->query("SET sql_mode = 'ANSI'");
     $result = $this->query("SHOW CREATE VIEW `" . $view['name'] . "`", array(), array('fetch' => PDO::FETCH_ASSOC));
     $this->query("SET SQL_mode = :mode", array(':mode' => $sql_mode));
     foreach ($result as $create) {
-      $out .= "DROP VIEW IF EXISTS `". $view['name'] ."`;\n";
+      $out .= "DROP VIEW IF EXISTS `" . $view['name'] . "`;\n";
       $out .= "SET sql_mode = 'ANSI';\n";
       $out .= strtr($create['Create View'], "\n", " ") . ";\n";
       $out .= "SET sql_mode = '$sql_mode';\n";
@@ -365,47 +376,46 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   }
 
   /**
-   *  Get the sql to insert the data for a given table
+   * Get the sql to insert the data for a given table.
    */
   function _dump_table_data_sql_to_file($file, $table) {
-    $rows_per_line = config_get('backup_migrate.settings','backup_migrate_data_rows_per_line');
-    $bytes_per_line = config_get('backup_migrate.settings','backup_migrate_data_bytes_per_line');
-  
+    $rows_per_line = config_get('backup_migrate.settings', 'backup_migrate_data_rows_per_line');
+    $bytes_per_line = config_get('backup_migrate.settings', 'backup_migrate_data_bytes_per_line');
     $lines = 0;
-    $data = $this->query("SELECT * FROM `". $table['name'] ."`", array(), array('fetch' => PDO::FETCH_ASSOC));
+    $data = $this->query("SELECT * FROM `" . $table['name'] . "`", array(), array('fetch' => PDO::FETCH_ASSOC));
     $rows = $bytes = 0;
 
-    // Escape backslashes, PHP code, special chars
+    // Escape backslashes, PHP code, special chars.
     $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
     $replace = array('\\\\', "''", '\0', '\n', '\r', '\Z');
-  
+
     $line = array();
     foreach ($data as $row) {
       // DB Escape the values.
       $items = array();
       foreach ($row as $key => $value) {
-        $items[] = is_null($value) ? "null" : "'". str_replace($search, $replace, $value) ."'";
+        $items[] = is_null($value) ? "null" : "'" . str_replace($search, $replace, $value) . "'";
       }
-  
+
       // If there is a row to be added.
       if ($items) {
         // Start a new line if we need to.
         if ($rows == 0) {
-          $file->write("INSERT INTO `". $table['name'] ."` VALUES ");
+          $file->write("INSERT INTO `" . $table['name'] . "` VALUES ");
           $bytes = $rows = 0;
         }
         // Otherwise add a comma to end the previous entry.
         else {
           $file->write(",");
         }
-  
+
         // Write the data itself.
         $sql = implode(',', $items);
-        $file->write('('. $sql .')');
+        $file->write('(' . $sql . ')');
         $bytes += strlen($sql);
         $rows++;
-  
-        // Finish the last line if we've added enough items
+
+        // Finish the last line if we've added enough items.
         if ($rows >= $rows_per_line || $bytes >= $bytes_per_line) {
           $file->write(";\n");
           $lines++;
@@ -418,7 +428,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
       $file->write(";\n");
       $lines++;
     }
-  
+
     return $lines;
   }
 
@@ -442,34 +452,34 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   }
 
   /**
-   * The header for the top of the sql dump file. These commands set the connection
-   *  character encoding to help prevent encoding conversion issues.
+   * The header for the top of the sql dump file.
+   *
+   * These commands set the connection character encoding to help prevent
+   * encoding conversion issues.
    */
   function _get_sql_file_header() {
     return "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
-
-SET NAMES utf8;
-
-";
+      /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+      /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+      /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+      /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+      /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
+      SET NAMES utf8;
+    ";
   }
-  
+
   /**
    * The footer of the sql dump file.
    */
   function _get_sql_file_footer() {
     return "
-  
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-";
+      /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+      /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+      /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+      /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+      /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+      /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+    ";
   }
+
 }
