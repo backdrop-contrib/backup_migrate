@@ -280,10 +280,7 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
       foreach ($this->get_table_names() as $table) {
         // There's no need to lock excluded or structure only tables because it
         // doesn't matter if they change.
-        if (empty($settings->filters['exclude_tables']) || !in_array(
-          $table,
-          (array) $settings->filters['exclude_tables'],
-        )) {
+        if (empty($settings->filters['exclude_tables']) || !in_array( $table, (array) $settings->filters['exclude_tables'])) {
           $tables[] = $table;
         }
       }

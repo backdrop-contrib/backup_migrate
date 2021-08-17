@@ -161,8 +161,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
         '#title' => t('Change file group (chgrp)'),
         '#size' => 5,
         '#default_value' => $this->settings('chgrp'),
-        '#description' => t('Enter a new group file permission or leave it blank to use the system default.',
-        ),
+        '#description' => t('Enter a new group file permission or leave it blank to use the system default.'),
       );
     }
     return $form;

@@ -447,45 +447,51 @@ class backup_migrate_source_db_mysql extends backup_migrate_source_db {
    *
    * These commands set the  connection character encoding to help prevent
    * encoding conversion issues.
+   * NOTE: some versions of mysql are sensitive to the spacing in the dump
+   *       file. Do not add indents or remove empty lines
    */
   function _get_sql_file_header() {
     $info = $this->_db_info();
 
     return "-- Backup and Migrate (Backdrop) MySQL Dump
-      -- Backup and Migrate Version: " . BACKUP_MIGRATE_VERSION . "
-      -- http://github.com/backdrop-contrib/backup_migrate
-      -- Backdrop Version: " . BACKDROP_VERSION . "
-      -- http://backdropcms.org/
-      --
-      -- Host: " . url('', array('absolute' => TRUE)) . "
-      -- Site Name: " . url('', array('absolute' => TRUE)) . "
-      -- Generation Time: " . format_date(time(), 'custom', 'r') . "
-      -- MySQL Version: " . $info['version'] . "
+-- Backup and Migrate Version: " . BACKUP_MIGRATE_VERSION . "
+-- http://github.com/backdrop-contrib/backup_migrate
+-- Backdrop Version: " . BACKDROP_VERSION . "
+-- http://backdropcms.org/
+--
+-- Host: " . url('', array('absolute' => TRUE)) . "
+-- Site Name: " . url('', array('absolute' => TRUE)) . "
+-- Generation Time: " . format_date(time(), 'custom', 'r') . "
+-- MySQL Version: " . $info['version'] . "
 
-      /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-      /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-      /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-      /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-      /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-      /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
 
-      SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";
-      SET NAMES utf8;
-    ";
+SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";
+SET NAMES utf8;
+
+";
   }
 
   /**
    * The footer of the sql dump file.
+   * NOTE: some versions of mysql are sensitive to the spacing in the dump
+   *       file. Do not add indents or remove empty lines
    */
   function _get_sql_file_footer() {
     return "
-      /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-      /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-      /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-      /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-      /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-      /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-    ";
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+";
   }
 
   /**
