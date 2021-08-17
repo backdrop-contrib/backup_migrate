@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * Functions to handle the direct to database destination.
@@ -15,7 +14,6 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
   var $supported_ops = array('configure', 'source');
   var $db_target = 'default';
   var $connection = null;
-
 
   function type_name() {
     return t("Database");
@@ -118,7 +116,7 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
    * Get the form for the backup settings for this destination.
    */
   function backup_settings_form($settings) {
-    $objects  = $this->get_object_names();
+    $objects = $this->get_object_names();
     $form['#description'] = t("You may omit specific tables, or specific table data from the backup file. Only omit data that you know you will not need such as cache data, or tables from other applications. Excluding tables can break your Backdrop install, so <strong>do not change these settings unless you know what you're doing</strong>.");
     $form['exclude_tables'] = array(
       "#type" => "select",
@@ -167,9 +165,16 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
   function restore_from_file($file, &$settings) {
     $num = 0;
     $type = $this->get_file_type_id();
-    // Open the file using the file wrapper. Check that the dump is of the right type (allow .sql for legacy reasons).
+    // Open the file using the file wrapper. Check that the dump is of the right
+    //  type (allow .sql for legacy reasons).
     if ($file->type_id() !== $this->get_file_type_id() && $file->type_id() !== 'sql') {
-      _backup_migrate_message("Unable to restore from file %file because a %type file can't be restored to this database.", array("%file" => $file->filepath(), '%type' => $file->type_id()), 'error');
+      _backup_migrate_message("Unable to restore from file %file because a %type file can't be restored to this database.",
+        array(
+          "%file" => $file->filepath(),
+          '%type' => $file->type_id(),
+        ),
+      'error'
+      );
     }
     else {
       backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
@@ -200,14 +205,14 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
         // If the url is specified build it into a connection info array.
         if (!empty($this->dest_url)) {
           $info = array(
-            'driver'    => empty($this->dest_url['scheme'])   ? NULL : $this->dest_url['scheme'],
-            'host'      => empty($this->dest_url['host'])     ? NULL : $this->dest_url['host'],
-            'port'      => empty($this->dest_url['port'])     ? NULL : $this->dest_url['port'],
-            'username'  => empty($this->dest_url['user'])     ? NULL : $this->dest_url['user'],
-            'password'  => empty($this->dest_url['pass'])     ? NULL : $this->dest_url['pass'],
-            'database'  => empty($this->dest_url['path'])     ? NULL : $this->dest_url['path'],
+            'driver' => empty($this->dest_url['scheme']) ? NULL : $this->dest_url['scheme'],
+            'host' => empty($this->dest_url['host']) ? NULL : $this->dest_url['host'],
+            'port' => empty($this->dest_url['port']) ? NULL : $this->dest_url['port'],
+            'username' => empty($this->dest_url['user']) ? NULL : $this->dest_url['user'],
+            'password' => empty($this->dest_url['pass']) ? NULL : $this->dest_url['pass'],
+            'database' => empty($this->dest_url['path']) ? NULL : $this->dest_url['path'],
           );
-          $key    = uniqid('backup_migrate_tmp_');
+          $key = uniqid('backup_migrate_tmp_');
           $target = 'default';
           Database::addConnectionInfo($key, $target, $info);
         }
@@ -273,8 +278,12 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
     if ($settings->filters['utils_lock_tables']) {
       $tables = array();
       foreach ($this->get_table_names() as $table) {
-        // There's no need to lock excluded or structure only tables because it doesn't matter if they change.
-        if (empty($settings->filters['exclude_tables']) || !in_array($table, (array)$settings->filters['exclude_tables'])) {
+        // There's no need to lock excluded or structure only tables because it
+        // doesn't matter if they change.
+        if (empty($settings->filters['exclude_tables']) || !in_array(
+          $table,
+          (array) $settings->filters['exclude_tables'],
+        )) {
           $tables[] = $table;
         }
       }

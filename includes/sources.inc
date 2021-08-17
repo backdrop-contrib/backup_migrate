@@ -85,7 +85,7 @@ function backup_migrate_backup_migrate_source_subtypes() {
  * Get the built in backup sources and those in the db.
  */
 function backup_migrate_backup_migrate_sources() {
-  $out              = array();
+  $out = array();
 
   // Expose the configured databases as sources.
   backup_migrate_include('filters');
@@ -128,7 +128,6 @@ function _backup_migrate_get_source_form($source_id = 'db') {
  * Get pulldown to select existing source options.
  */
 function _backup_migrate_get_source_pulldown($source_id = NULL) {
-  $sources = _backup_migrate_get_source_form_item_options();
   $form = array(
     "#type" => "select",
     "#title" => t("Backup Source"),

@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * A destination type for saving locally to the server.
@@ -11,7 +10,6 @@
  *
  * @ingroup backup_migrate_destinations
  */
-
 class backup_migrate_destination_filesource extends backup_migrate_source {
   var $supported_ops = array('restore', 'configure', 'delete', 'source');
 
@@ -20,13 +18,35 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   }
 
   /**
-   * Declare the current files directory as a backup source..
+   * Declare the current files directory as a backup source.
    */
   function sources() {
-    $out  = array();
-    $out['files'] = backup_migrate_create_destination('filesource', array('machine_name' => 'files', 'location' => 'public://', 'name' => t('Public Files Directory'), 'show_in_list' => FALSE));
-    if (config_get('backup_migrate.settings','file_private_path')) {
-      $out['files_private'] = backup_migrate_create_destination('filesource', array('machine_name' => 'files', 'location' => 'private://', 'name' => t('Private Files Directory'), 'show_in_list' => FALSE));
+    $out = array();
+    global $config_directories;
+
+    $out['files'] = backup_migrate_create_destination('filesource', array(
+      'machine_name' => 'files',
+      'location' => 'public://',
+      'name' => t('Public Files Directory'),
+      'show_in_list' => FALSE,
+    ));
+
+    if (config_get('backup_migrate.settings', 'file_private_path')) {
+      $out['files_private'] = backup_migrate_create_destination('filesource', array(
+        'machine_name' => 'files',
+        'location' => 'private://',
+        'name' => t('Private Files Directory'),
+        'show_in_list' => FALSE,
+      ));
+    }
+
+    foreach ($config_directories as $key => $config_dir) {
+      $out["config_files_$key"] = backup_migrate_create_destination('filesource', array(
+        'machine_name' => 'config_files_' . $key,
+        'location' => $config_directories[$key],
+        'name' => t('Configuration Files Directory (!key)', array('!key' => ucfirst($key))),
+        'show_in_list' => TRUE,
+      ));
     }
     return $out;
   }
@@ -68,12 +88,12 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   /**
    * Get the form for the settings for this destination.
    *
-   * Return the default directories whose data can be ignored. These directories contain
-   *  info which can be easily reproduced. Also exclude the backup and migrate folder
-   *  to prevent exponential bloat.
+   * Return the default directories whose data can be ignored. These directories
+   * contain info which can be easily reproduced. Also exclude the backup and
+   * migrate folder to prevent exponential bloat.
    */
   function backup_settings_default() {
-     return array(
+    return array(
       'exclude_filepaths' => "backup_migrate\nstyles\ncss\njs\nctools\nless",
     );
   }
@@ -135,11 +155,16 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       }
       $exclude = implode(' ', $exclude);
 
-      // Create a symlink in a temp directory so we can rename the file in the archive.
+      // Create a symlink in a temp directory so we can rename the file in the
+      // archive.
       $temp = backup_migrate_temp_directory();
 
       $file->push_type('tar');
-      backup_migrate_exec("tar --dereference -C %input -rf %output $exclude .", array('%output' => $file->filepath(), '%input' => $this->get_realpath(), '%temp' => $temp));
+      backup_migrate_exec("tar --dereference -C %input -rf %output $exclude .", array(
+        '%output' => $file->filepath(),
+        '%input' => $this->get_realpath(),
+        '%temp' => $temp,
+      ));
       return $file;
     }
     return FALSE;
@@ -169,10 +194,10 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       $tar->extractModify($temp, $file->name);
 
       // Older B&M Files format included a base 'files' directory.
-      if (file_exists($temp .'/files')) {
+      if (file_exists($temp . '/files')) {
         $temp = $temp . '/files';
       }
-      if (file_exists($temp .'/'. $file->name .'/files')) {
+      if (file_exists($temp . '/' . $file->name . '/files')) {
         $temp = $temp . '/files';
       }
 
@@ -190,25 +215,33 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   function _restore_from_file_cli($file, &$settings) {
     if (!empty($settings->filters['use_cli']) && function_exists('backup_migrate_exec')) {
       $temp = backup_migrate_temp_directory();
-      backup_migrate_exec("tar -C %temp -xf %input", array('%input' => $file->filepath(), '%temp' => $temp));
+      backup_migrate_exec("tar -C %temp -xf %input", array(
+        '%input' => $file->filepath(),
+        '%temp' => $temp,
+      ));
 
       // Older B&M Files format included a base 'files' directory.
-      if (file_exists($temp .'/files')) {
+      if (file_exists($temp . '/files')) {
         $temp = $temp . '/files';
       }
-      if (file_exists($temp .'/'. $file->name .'/files')) {
+      if (file_exists($temp . '/' . $file->name . '/files')) {
         $temp = $temp . '/files';
       }
 
       // Move the files from the temp directory.
-      backup_migrate_exec("mv -rf %temp/* %output", array('%output' => $this->get_realpath(), '%temp' => $temp));
+      backup_migrate_exec("mv -rf %temp/* %output", array(
+        '%output' => $this->get_realpath(),
+        '%temp' => $temp,
+      ));
       return $file;
     }
     return FALSE;
   }
 
   /**
-   * Get a list of files to backup from the given set if dirs. Exclude any that match the array $exclude.
+   * Get a list of files to backup from the given set if dirs.
+   *
+   * Exclude any that match the array $exclude.
    */
   function get_files_to_backup($dir, $settings, $exclude = array()) {
     $out = $errors = array();
@@ -241,7 +274,8 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
               }
               if ($enter_subdir) {
                 $subdir = $this->get_files_to_backup($real, $settings, $exclude);
-                // If there was an error reading the subdirectory then abort the backup.
+                // If there was an error reading the subdirectory then abort
+                // the backup.
                 if ($subdir === FALSE) {
                   closedir($handle);
                   return FALSE;
@@ -293,7 +327,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   }
 
   /**
-   * Break the excpluded paths string into a usable list of paths.
+   * Break the excluded paths string into a usable list of paths.
    */
   function get_excluded_paths($settings) {
     $base_dir = $this->get_realpath() . '/';
@@ -301,12 +335,13 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     $out = explode("\n", $paths);
     foreach ($out as $key => $val) {
       $path = trim($val, "/ \t\r\n");
-      // If the path specified is a stream url or absolute path add the normalized version.
+      // If the path specified is a stream url or absolute path add the
+      // normalized version.
       if ($real = backdrop_realpath($path)) {
         $out[$key] = $real;
       }
       // If the path is a relative path add it.
-      else if ($real = backdrop_realpath($base_dir . $path)) {
+      elseif ($real = backdrop_realpath($base_dir . $path)) {
         $out[$key] = $real;
       }
       // Otherwise add it as is even though it probably won't match any files.
@@ -321,8 +356,9 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
    * Check that the required libraries are installed.
    */
   function check_libs() {
-    $result = true;
-    // Drupal 7 has Archive_Tar built in so there should be no need to include anything here.
+    $result = TRUE;
+    // Drupal 7 has Archive_Tar built in so there should be no need to include
+    // anything here.
     return $result;
   }
 
@@ -332,4 +368,5 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
   function get_realpath() {
     return backdrop_realpath($this->get_location());
   }
+
 }
