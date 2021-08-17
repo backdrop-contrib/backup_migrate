@@ -130,10 +130,13 @@ class backup_migrate_destination_files extends backup_migrate_destination {
     $form = parent::edit_form();
     $form['location'] = array(
       "#type" => "textfield",
-      "#title" => t("Directory path"),
+      "#title" => t("Destination directory"),
       "#default_value" => $this->get_location(),
       "#required" => TRUE,
-      "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Backdrop root directory. The web server must be able to write to this path.'),
+      "#description" => t('Enter a filesystem path to the backup destination
+        directory. The path is relative to the Backdrop root directory. The web
+        server must be able to write to this path.'
+      ),
     );
     $form['settings'] = array(
       '#type' => 'fieldset',
@@ -148,7 +151,9 @@ class backup_migrate_destination_files extends backup_migrate_destination {
         '#title' => t('Change file mode (chmod)'),
         '#size' => 5,
         '#default_value' => $this->settings('chmod'),
-        '#description' => t('If you enter a value here, backup files will be chmoded with the mode you specify. Specify the mode in octal form (e.g. 644 or 0644) or leave blank to disable this feature.'),
+        '#description' => t('Enter an octal value such as 644 or 0644 to change
+          the file mode permission or leave it blank to use the system default.'
+        ),
       );
     }
     if (function_exists('chgrp')) {
@@ -157,7 +162,8 @@ class backup_migrate_destination_files extends backup_migrate_destination {
         '#title' => t('Change file group (chgrp)'),
         '#size' => 5,
         '#default_value' => $this->settings('chgrp'),
-        '#description' => t('If you enter a value here, backup files will be chgrped to the group you specify. Leave blank to disable this feature.'),
+        '#description' => t('Enter a new group file permission or leave it blank to use the system default.',
+        ),
       );
     }
     return $form;
@@ -169,7 +175,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function edit_form_validate($form, &$form_state) {
     $values = $form_state['values'];
     if (isset($values['settings']['chmod']) && !empty($values['settings']['chmod']) && !preg_match('/0?[0-7]{3}/', $values['settings']['chmod'])) {
-      form_set_error('chmod', t('You must enter a valid chmod octal value (e.g. 644 or 0644) in the change mode field, or leave it blank.'));
+      form_set_error('chmod', t('Enter a valid chmod octal value such as 644 or 0644 in the change mode field, or leave it blank.'));
     }
     parent::edit_form_validate($form, $form_state);
   }
@@ -201,7 +207,12 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function check_dir($directory) {
     if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       // Unable to create destination directory.
-      _backup_migrate_message("Unable to create or write to the save directory '%directory'. Please check the file permissions of that directory and try again.", array('%directory' => $directory), "error");
+      _backup_migrate_message("Unable to create or write to the distination
+        directory '%directory'. Check the file permissions of the destination
+        directory to make sure it is writable by the web server.",
+        array('%directory' => $directory),
+        "error"
+      );
       return FALSE;
     }
 
