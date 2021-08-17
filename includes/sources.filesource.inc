@@ -38,16 +38,21 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     $form = parent::edit_form();
     $form['location'] = array(
       "#type" => "textfield",
-      "#title" => t("Directory path"),
+      "#title" => t("Source directory path"),
       "#default_value" => $this->get_location(),
       "#required" => TRUE,
-      "#description" => t('Enter the path to the directory to save the backups to. Use a relative path to pick a path relative to your Backdrop root directory. The web server must be able to write to this path.'),
+      "#description" => t('Enter a filesystem path to the source directory that
+        you wish to include in the backup file. Use a relative path to the
+        Backdrop root directory. The web server must be able to read this
+        path.'
+      ),
     );
+
     return $form;
   }
 
   /**
-   * Return a list of backup filetypes.
+   * Return a list of backup file types.
    */
   function file_types() {
     return array(
@@ -321,7 +326,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     return $result;
   }
 
- /**
+  /**
    * Get the file location.
    */
   function get_realpath() {
