@@ -15,6 +15,11 @@ to be backed up or migrated.
 The backup files are a list of SQL statements which can be executed with a tool
 such as phpMyAdmin or the command-line mysql client.
 
+**PHP 8 NOTE**:
+Due to changes in Backdrop CMS 1.19 and newer to be PHP 8 compatible, the backup_migrate
+module *must* be updated when you update your Backdrop installation.
+See [Issue #64](https://github.com/backdrop-contrib/backup_migrate/issues/64) for more details.
+
 Installation
 ------------
 
@@ -28,7 +33,7 @@ Installation
 * Visit the configuration page under Administration > Configuration > Category >
   Backup Migrate (admin/config/category/backup_migrate) and enter the required
   information.
-* With the token.module now in Backdrop core, your site name from: admin/config/system/site-information will automatically be the backup file name. Other tokens like [site:url] may also be used.
+* With the token.module now in Backdrop core, your site name from: admin/config/system/site-information will automatically be the backup file name. Other tokens like `[site:url]` may also be used.
 
 OPTIONAL:
 * To backup to Amazon S3:
@@ -38,17 +43,11 @@ OPTIONAL:
 
 LIGHTTPD USERS:
 Add the following code to your lighttp.conf to secure your backup directories:
-  $HTTP["url"] =~ "^/sites/default/files/backup_migrate/" {
-       url.access-deny = ( "" )
-  }
-You may need to adjust the path to reflect the actual path to the files.
 
-IIS 7 USERS:
-Add the following code to your web.config code to secure your backup directories:
-<rule name="postinst-redirect" stopProcessing="true">
-   <match url="sites/default/files/backup_migrate" />
-   <action type="Rewrite" url=""/>
-</rule>
+    $HTTP["url"] =~ "^/sites/default/files/backup_migrate/" {
+         url.access-deny = ( "" )
+    }
+    
 You may need to adjust the path to reflect the actual path to the files.
 
 -------------------------------------------------------------------------------
@@ -69,9 +68,6 @@ installation. ALWAYS TEST BACKUP FILES ON A TEST ENVIRONMENT FIRST. If in doubt
 do not use this module.
 
 This module has only been tested with MySQL and does not work with any other dbms.
-If you have experiences with Postgres or any other dbms and are willing to help
-test and modify the module to work with it, please contact the developer at
-ronan (at) gortonstudios (dot) com.
 
 Make sure your php timeout is set high enough to complete a backup or restore
 operation. Larger databases require more time. Also, while the module attempts
