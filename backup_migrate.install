@@ -491,6 +491,7 @@ function backup_migrate_update_1005() {
  */
 function backup_migrate_update_1006() {
   // Get schedule
+  module_load_include('module', 'backup_migrate', 'backup_migrate');
   backup_migrate_include('sources', 'schedules', 'profiles');
   $schedules = backup_migrate_get_schedules();
   foreach ($schedules as $schedule_id => $schedule) {
