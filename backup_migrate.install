@@ -321,14 +321,6 @@ function backup_migrate_install() {
   $config->set('file_private_path', FALSE);
   $config->set('file_public_path', FALSE);
   $config->set('backup_migrate_allow_backup_to_download', TRUE);
-  $config->set('nodesquirrel_activate_url', 'http://manage.nodesquirrel.com/activate');
-  $config->set('nodesquirrel_manage_url', 'https://manage.nodesquirrel.com');
-  $config->set('nodesquirrel_schedule', 60*60*24);
-  $config->set('nodesquirrel_schedule_enabled', TRUE);
-  $config->set('nodesquirrel_schedule_source_id', 'db');
-  $config->set('nodesquirrel_secret_key', '');
-  $config->set('nodesquirrel_endpoint_urls', array());
-  $config->set('nodesquirrel_default_endpoint_urls', array('api.nodesquirrel.com/services/xmlrpc'));
   $config->set('debug_http_request', FALSE);
   $config->set('dev_query', 0);
   $config->set('site_offline_message', '[site_name] is currently under maintenance. We should be back shortly. Thank you for your patience.');
@@ -338,20 +330,18 @@ function backup_migrate_install() {
   $config->set('backup_migrate_cleanup_temp_files', TRUE);
   $config->set('backup_migrate_profile_id', 'default');
   $config->set('backup_migrate_smart_keep_hourly', 24);
-  $config->set('backup_migrate_smart_keep_daily', 30);
-  $config->set('backup_migrate_smart_keep_weekly', PHP_INT_MAX);
+  $config->set('backup_migrate_smart_keep_daily', 7);
+  $config->set('backup_migrate_smart_keep_weekly', 12);
   $config->set('backup_migrate_schedule_buffer', 0.01);
   $config->set('backup_migrate_data_rows_per_line', 30);
   $config->set('backup_migrate_data_bytes_per_line', 2000);
   $config->set('backup_migrate_default_schedule', 60*60);
-  $config->set('nodesquirrel_schedule_source_id', 'db');
   $config->set('backup_migrate_source_id', NULL);
   $config->set('backup_migrate_destination_id', 'download');
   $config->set('backup_migrate_copy_destination_id', '');
   $config->set('backup_migrate_backup_max_time', 1200);
   $config->set('backup_migrate_restore_max_time', 1200);
   $config->set('backup_migrate_timeout_buffer', 5);
-  $config->set('nodesquirrel_schedule_keep', -2);
   $config->save();
 */
 }
@@ -378,14 +368,6 @@ function backup_migrate_update_1000() {
   $config->set('file_private_path', update_variable_get('file_private_path',FALSE));
   $config->set('file_public_path', update_variable_get('file_public_path',FALSE));
   $config->set('backup_migrate_allow_backup_to_download', update_variable_get('backup_migrate_allow_backup_to_download',TRUE));
-  $config->set('nodesquirrel_activate_url', update_variable_get('nodesquirrel_activate_url','http://manage.nodesquirrel.com/activate'));
-  $config->set('nodesquirrel_manage_url', update_variable_get('nodesquirrel_manage_url','https://manage.nodesquirrel.com'));
-  $config->set('nodesquirrel_schedule', update_variable_get('nodesquirrel_schedule',60*60*24));
-  $config->set('nodesquirrel_schedule_enabled', update_variable_get('nodesquirrel_schedule_enabled',TRUE));
-  $config->set('nodesquirrel_schedule_source_id', update_variable_get('nodesquirrel_schedule_source_id','db'));
-  $config->set('nodesquirrel_secret_key', update_variable_get('nodesquirrel_secret_key',''));
-  $config->set('nodesquirrel_endpoint_urls', update_variable_get('nodesquirrel_endpoint_urls',array()));
-  $config->set('nodesquirrel_default_endpoint_urls', update_variable_get('nodesquirrel_default_endpoint_urls',array('api.nodesquirrel.com/services/xmlrpc')));
   $config->set('debug_http_request', update_variable_get('debug_http_request',FALSE));
   $config->set('dev_query', update_variable_get('dev_query',0));
   $config->set('site_offline_message', update_variable_get('site_offline_message','[site_name] is currently under maintenance. We should be back shortly. Thank you for your patience.'));
@@ -395,20 +377,18 @@ function backup_migrate_update_1000() {
   $config->set('backup_migrate_cleanup_temp_files', update_variable_get('backup_migrate_cleanup_temp_files', TRUE));
   $config->set('backup_migrate_profile_id', update_variable_get('backup_migrate_profile_id','default'));
   $config->set('backup_migrate_smart_keep_hourly', update_variable_get('backup_migrate_smart_keep_hourly',24));
-  $config->set('backup_migrate_smart_keep_daily', update_variable_get('backup_migrate_smart_keep_daily',30));
-  $config->set('backup_migrate_smart_keep_weekly', update_variable_get('backup_migrate_smart_keep_weekly',PHP_INT_MAX));
+  $config->set('backup_migrate_smart_keep_daily', update_variable_get('backup_migrate_smart_keep_daily',7));
+  $config->set('backup_migrate_smart_keep_weekly', update_variable_get('backup_migrate_smart_keep_weekly',12));
   $config->set('backup_migrate_schedule_buffer', update_variable_get('backup_migrate_schedule_buffer',0.01));
   $config->set('backup_migrate_data_rows_per_line', update_variable_get('backup_migrate_data_rows_per_line',30));
   $config->set('backup_migrate_data_bytes_per_line', update_variable_get('backup_migrate_data_bytes_per_line',2000));
   $config->set('backup_migrate_default_schedule', update_variable_get('backup_migrate_default_schedule',60*60));
-  $config->set('nodesquirrel_schedule_source_id', update_variable_get('nodesquirrel_schedule_source_id', 'db'));
   $config->set('backup_migrate_source_id', update_variable_get('backup_migrate_source_id',NULL));
   $config->set('backup_migrate_destination_id', update_variable_get('backup_migrate_destination_id','download'));
   $config->set('backup_migrate_copy_destination_id', update_variable_get('backup_migrate_copy_destination_id',''));
   $config->set('backup_migrate_backup_max_time', update_variable_get('backup_migrate_backup_max_time',1200));
   $config->set('backup_migrate_restore_max_time', update_variable_get('backup_migrate_restore_max_time',1200));
   $config->set('backup_migrate_timeout_buffer', update_variable_get('backup_migrate_timeout_buffer',5));
-  $config->set('nodesquirrel_schedule_keep', update_variable_get('nodesquirrel_schedule_keep',-2));
 
   $config->save();
   
@@ -420,14 +400,6 @@ function backup_migrate_update_1000() {
   update_variable_del('file_private_path');
   update_variable_del('file_public_path');
   update_variable_del('backup_migrate_allow_backup_to_download');
-  update_variable_del('nodesquirrel_activate_url');
-  update_variable_del('nodesquirrel_manage_url');
-  update_variable_del('nodesquirrel_schedule');
-  update_variable_del('nodesquirrel_schedule_enabled');
-  update_variable_del('nodesquirrel_schedule_source_id');
-  update_variable_del('nodesquirrel_secret_key');
-  update_variable_del('nodesquirrel_endpoint_urls');
-  update_variable_del('nodesquirrel_default_endpoint_urls');
   update_variable_del('debug_http_request');
   update_variable_del('dev_query');
   update_variable_del('site_offline_message');
@@ -443,14 +415,12 @@ function backup_migrate_update_1000() {
   update_variable_del('backup_migrate_data_rows_per_line');
   update_variable_del('backup_migrate_data_bytes_per_line');
   update_variable_del('backup_migrate_default_schedule');
-  update_variable_del('nodesquirrel_schedule_source_id');
   update_variable_del('backup_migrate_source_id');
   update_variable_del('backup_migrate_destination_id');
   update_variable_del('backup_migrate_copy_destination_id');
   update_variable_del('backup_migrate_backup_max_time');
   update_variable_del('backup_migrate_restore_max_time');
   update_variable_del('backup_migrate_timeout_buffer');
-  update_variable_del('nodesquirrel_schedule_keep');
 }  
 
 /**

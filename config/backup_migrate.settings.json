@@ -7,19 +7,9 @@
     "file_private_path": false,
     "file_public_path": false,
     "backup_migrate_allow_backup_to_download": true,
-    "nodesquirrel_activate_url": "http://manage.nodesquirrel.com/activate",
-    "nodesquirrel_manage_url": "https://manage.nodesquirrel.com",
-    "nodesquirrel_schedule": 86400,
-    "nodesquirrel_schedule_enabled": true,
-    "nodesquirrel_schedule_source_id": "db",
-    "nodesquirrel_secret_key": "",
-    "nodesquirrel_endpoint_urls": [],
-    "nodesquirrel_default_endpoint_urls": [
-        "api.nodesquirrel.com/services/xmlrpc"
-    ],
     "debug_http_request": false,
     "dev_query": 0,
-    "site_offline_message": "backdropdev is currently under maintenance. We should be back shortly. Thank you for your patience.",
+    "site_offline_message": "This site is currently down for maintenance. We should be back shortly. Thank you for your patience.",
     "maintenance_mode": 0,
     "maintenance_mode_message": null,
     "backup_migrate_cleanup_time": 21600,
@@ -35,6 +25,5 @@
     "backup_migrate_copy_destination_id": "",
     "backup_migrate_backup_max_time": 1200,
     "backup_migrate_restore_max_time": 1200,
-    "backup_migrate_timeout_buffer": 5,
-    "nodesquirrel_schedule_keep": -2
+    "backup_migrate_timeout_buffer": 5
 }
