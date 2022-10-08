@@ -45,6 +45,16 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
     $form['path']['#title'] = t('Database name');
     $form['path']['#description'] = t('The name of the database. The database must exist, it will not be created for you.');
     $form['user']['#description'] = t('Enter the name of a user who has write access to the database.');
+
+    $form['port'] = array(
+      '#title' => t('Port number'),
+      '#type' => 'number',
+      '#step' => 1,
+      '#default_value' => @$this->dest_url['port'],
+      '#weight' => 50,
+      '#description' => t('If left blank, the default port number will be used.')
+    );
+
     return $form;
   }
 
