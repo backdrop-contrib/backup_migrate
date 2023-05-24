@@ -310,7 +310,7 @@ function backdrop_ftp_file_list($directory, &$ftp) {
     // Iterate through the array
     foreach ($file_list as $file) {
       $file_array[] = array(
-        'filename' => $file,
+        'filename' => ltrim($file, './'),
         'filesize' => ftp_size($ftp->__conn, $directory ."/". $file),
         'filetime' => ftp_mdtm($ftp->__conn, $directory ."/". $file),
       );
