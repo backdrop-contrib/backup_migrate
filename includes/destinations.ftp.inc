@@ -185,7 +185,7 @@ function backdrop_ftp_connected(&$ftp) {
     return FALSE;
   }
 
-  if (!@ftp_systype($ftp->__conn)) {
+  if (empty($ftp->__conn) || !@ftp_systype($ftp->__conn)) {
     // The connection is dead
     return FALSE;
   }
