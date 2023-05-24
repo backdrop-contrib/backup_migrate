@@ -925,7 +925,7 @@ class backup_migrate_item {
         TRUE, $this->type_name,
       ),
       'access arguments' => array('administer backup and migrate'),
-      'type' => MENU_CALLBACK,
+      'type' => MENU_VISIBLE_IN_BREADCRUMB,
     );
     $items[$path . '/export'] = array(
       'title' => 'Export !type',
