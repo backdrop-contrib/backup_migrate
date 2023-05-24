@@ -101,6 +101,7 @@ Current Maintainers
 -------------------
 
 - Jason Ramsey (https://github.com/quackers8me)
+- [argiepiano](https://github.com/argiepiano)
 
 Credits
 -------
