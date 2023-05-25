@@ -718,9 +718,6 @@ class backup_migrate_item {
     else {
       $out = t('There are no !items to display.', array('!items' => $this->plural));
     }
-    if (user_access('administer backup and migrate')) {
-      $out .= ' ' . l(t('Create a new !item', array('!item' => $this->singular)), $this->get_settings_path() . '/add');
-    }
     return $out;
   }
 
