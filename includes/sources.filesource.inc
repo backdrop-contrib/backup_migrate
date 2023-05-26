@@ -11,7 +11,7 @@
  * @ingroup backup_migrate_destinations
  */
 class backup_migrate_destination_filesource extends backup_migrate_source {
-  var $supported_ops = array('restore', 'configure', 'delete', 'source');
+  public $supported_ops = array('restore', 'configure', 'delete', 'source');
 
   function type_name() {
     return t("Files Directory");
