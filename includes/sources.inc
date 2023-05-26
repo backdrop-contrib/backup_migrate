@@ -152,12 +152,12 @@ function _backup_migrate_get_source_form_item_options() {
  * A base class for creating sources.
  */
 class backup_migrate_source extends backup_migrate_location {
-  var $db_table = "backup_migrate_sources";
-  var $type_name = 'source';
-  var $singular = 'source';
-  var $plural = 'sources';
-  var $title_plural = 'Sources';
-  var $title_singular = 'Source';
+  public $db_table = "backup_migrate_sources";
+  public $type_name = 'source';
+  public $singular = 'source';
+  public $plural = 'sources';
+  public $title_plural = 'Sources';
+  public $title_singular = 'Source';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.

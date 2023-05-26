@@ -1,10 +1,10 @@
 (function($) {
-  Drupal.behaviors.backupMigrate = {
+  Backdrop.behaviors.backupMigrate = {
     attach: function(context) {
-      if (Drupal.settings.backup_migrate !== undefined) { 
-        if (Drupal.settings.backup_migrate.dependents !== undefined) {
-          for (key in Drupal.settings.backup_migrate.dependents) {
-            info = Drupal.settings.backup_migrate.dependents[key];
+      if (Backdrop.settings.backup_migrate !== undefined) { 
+        if (Backdrop.settings.backup_migrate.dependents !== undefined) {
+          for (key in Backdrop.settings.backup_migrate.dependents) {
+            info = Backdrop.settings.backup_migrate.dependents[key];
             dependent = $('#edit-' + info['dependent']);
             for (key in info['dependencies']) {
               $('[name="' + key + '"]').each(function() {
@@ -40,8 +40,8 @@
               });
             }
           }
-          for (key in Drupal.settings.backup_migrate.destination_selectors) {
-            var info = Drupal.settings.backup_migrate.destination_selectors[key];
+          for (key in Backdrop.settings.backup_migrate.destination_selectors) {
+            var info = Backdrop.settings.backup_migrate.destination_selectors[key];
             (function(info) {
               var selector = $('#' + info['destination_selector']);
               var copy = $('#' + info['copy'])
@@ -80,7 +80,7 @@
             var self = this;
             $(self).after(
               $('<div class="description backup-migrate-checkbox-link"></div>').append(
-                $('<a>'+ Drupal.settings.backup_migrate.checkboxLinkText +'</a>').click(function() {
+                $('<a>'+ Backdrop.settings.backup_migrate.checkboxLinkText +'</a>').click(function() {
                   var $select = $(self);
                   var $checkboxes = $('<div></div>').addClass('backup-migrate-tables-checkboxes');
                   $('option', $select).each(function(i) {
