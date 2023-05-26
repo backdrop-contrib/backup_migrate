@@ -40,7 +40,7 @@ class backup_migrate_destination_email extends backup_migrate_destination {
   function edit_form() {
     $form = parent::edit_form();
     $form['location'] = array(
-      "#type" => "textfield",
+      "#type" => "email",
       "#title" => t("Email Address"),
       "#default_value" => $this->get_location(),
       "#required" => TRUE,
@@ -52,8 +52,8 @@ class backup_migrate_destination_email extends backup_migrate_destination {
   /**
    * Validate the configuration form. Make sure the email address is valid.
    */
-  function settings_form_validate($values) {
-    if (!valid_email_address($values['location'])) {
+  function edit_form_validate($form, &$form_state) {
+    if (!valid_email_address($form_state['values']['location'])) {
       form_set_error('[location]', t('The e-mail address %mail is not valid.', array('%mail' => $form_state['values']['location'])));
     }
   }

@@ -291,14 +291,14 @@ class backup_migrate_destination_db extends backup_migrate_destination_remote {
    */
   function unlock_tables($settings) {
     if ($settings->filters['utils_lock_tables']) {
-      $this->_unlock_tables();
+      $this->_unlock_tables($settings);
     }
   }
 
   /**
    * Unlock the list of given tables in the database.
    */
-  function _unlock_tables($tables) {
+  function _unlock_tables($settings) {
     // Must be overridden.
   }
 
