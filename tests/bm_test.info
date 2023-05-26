@@ -1,0 +1,8 @@
+name = "Backup and Migrate Mock Module"
+type = module
+description = "Mock module for testing the Backup and Migrate module."
+package = Other
+backdrop = 1.x
+hidden = TRUE
+dependencies[] = simpletest
+dependencies[] = backup_migrate

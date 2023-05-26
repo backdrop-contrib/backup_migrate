@@ -106,20 +106,19 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#title" => t("Backup file name"),
     "#default_value" => $profile->filename,
   );
-  if (function_exists('token_replace')) {
-    $form['file']['token_help'] = array(
-      '#title' => t('Replacement patterns'),
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $form['file']['token_help']['help'] = array(
-      '#theme' => 'token_tree',
-      '#token_types' => array('current-date', 'site'),
-      '#global_types' => FALSE,
-    );
-    $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
-  }
+  
+  $form['file']['token_help'] = array(
+    '#title' => t('Replacement patterns'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['file']['token_help']['help'] = array(
+    '#theme' => 'token_tree',
+    '#token_types' => array('current-date', 'site'),
+    '#global_types' => FALSE,
+  );
+  $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
 
   $form['file']['append_timestamp'] = array(
     "#type" => "checkbox",
