@@ -12,7 +12,7 @@
  */
 
 class backup_migrate_destination_files extends backup_migrate_destination {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'local backup', 'restore', 'list files', 'configure', 'delete');
+  public $supported_ops = array('scheduled backup', 'manual backup', 'local backup', 'restore', 'list files', 'configure', 'delete');
 
   function type_name() {
     return t("Server Directory");
@@ -22,7 +22,10 @@ class backup_migrate_destination_files extends backup_migrate_destination {
    * Get the file location.
    */
   function get_realpath() {
-    return backdrop_realpath($this->get_location());
+    if ($realpath = backdrop_realpath($this->get_location())) {
+      return $realpath;
+    }
+    return $this->get_location();
   }
 
   /**
@@ -31,13 +34,17 @@ class backup_migrate_destination_files extends backup_migrate_destination {
   function _save_file($file, $settings) {
     if ($this->confirm_destination() && $dir = $this->get_location()) {
       $filepath = rtrim($dir, "/") ."/". $file->filename();
+
+      // Allow files to be overwritten by the filesystem.
+      $replace_method = $settings->append_timestamp == 2 ? FILE_EXISTS_REPLACE : FILE_EXISTS_RENAME;
+
       // Copy the file if there are multiple destinations.
       if (count($settings->get_destinations()) > 1) {
-        file_unmanaged_copy($file->filepath(), $filepath);
+        file_unmanaged_copy($file->filepath(), $filepath, $replace_method);
       }
       // Otherwise we can move it and save a delete.
       else {
-        file_unmanaged_move($file->filepath(), $filepath);
+        file_unmanaged_move($file->filepath(), $filepath, $replace_method);
       }
 
       // chmod, chown and chgrp the file if needed.
@@ -236,7 +243,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
 
       // Check the user agent to make sure we're not responding to a request from drupal itself.
       // That should prevent infinite loops which could be caused by poormanscron in some circumstances.
-      if (strpos($_SERVER['HTTP_USER_AGENT'], 'Drupal') !== FALSE) {
+      if (strpos($_SERVER['HTTP_USER_AGENT'], 'Backdrop') !== FALSE) {
         return FALSE;
       }
 
@@ -260,6 +267,7 @@ class backup_migrate_destination_files extends backup_migrate_destination {
       if ($this->test_file_readable_remotely($directory .'/test.txt', $test_contents)) {
         $message = t("Security notice: Backup and Migrate will not save backup files to the server because the destination directory is publicly accessible. If you want to save files to the server, please secure the '%directory' directory", array('%directory' => $directory));
         backdrop_set_message($message, "error");
+        unlink($directory . '/test.txt');
         return FALSE;
       }
       // Directory tested OK, so we mark it as tested.
@@ -308,7 +316,8 @@ class backup_migrate_destination_files extends backup_migrate_destination {
  * The manual files directory.
  */
 class backup_migrate_destination_files_manual extends backup_migrate_destination_files {
-  var $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
+  public $supported_ops = array('manual backup', 'restore', 'list files', 'configure', 'delete');
+  
   function __construct($params = array()) {
     $dir = 'private://backup_migrate/manual';
     parent::__construct($params + array('location' => $dir, 'name' => t('Manual Backups Directory')));
@@ -319,7 +328,8 @@ class backup_migrate_destination_files_manual extends backup_migrate_destination
  * The scheduled files directory.
  */
 class backup_migrate_destination_files_scheduled extends backup_migrate_destination_files {
-  var $supported_ops = array('scheduled backup', 'restore', 'list files', 'configure', 'delete');
+  public $supported_ops = array('scheduled backup', 'restore', 'list files', 'configure', 'delete');
+  
   function __construct($params = array()) {
     $dir = 'private://backup_migrate/scheduled';
     parent::__construct($params + array('location' => $dir, 'name' => t('Scheduled Backups Directory')));

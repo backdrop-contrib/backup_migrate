@@ -82,16 +82,20 @@ function backup_migrate_get_location($id) {
  * A base class for creating locations.
  */
 class backup_migrate_location extends backup_migrate_item {
-  var $db_table = "backup_migrate_destinations";
-  var $type_name = "location";
-  var $default_values = array('settings' => array());
-  var $singular = 'location';
-  var $plural = 'locations';
-  var $title_plural = 'Locations';
-  var $title_singular = 'Location';
+  public $db_table = "backup_migrate_destinations";
+  public $type_name = "location";
+  public $default_values = array('settings' => array());
+  public $singular = 'location';
+  public $plural = 'locations';
+  public $title_plural = 'Locations';
+  public $title_singular = 'Location';
 
-  var $subtype = "";
-  var $supported_ops = array();
+  public $location;
+  public $settings;
+  public $dest_url;
+
+  public $subtype = "";
+  public $supported_ops = array();
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.

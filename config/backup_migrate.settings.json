@@ -1,7 +1,7 @@
 {
     "_config_name": "backup_migrate.settings",
-    "backup_migrate_data_rows_per_line": 30,
-    "backup_migrate_data_bytes_per_line": 2000,
+    "backup_migrate_data_rows_per_line": 10,
+    "backup_migrate_data_bytes_per_line": 2048,
     "backup_migrate_max_email_size": 20971520,
     "backup_migrate_allow_backup_to_file": true,
     "file_private_path": false,
@@ -25,5 +25,9 @@
     "backup_migrate_copy_destination_id": "",
     "backup_migrate_backup_max_time": 1200,
     "backup_migrate_restore_max_time": 1200,
-    "backup_migrate_timeout_buffer": 5
+    "backup_migrate_timeout_buffer": 5,
+    "backup_migrate_memory_limit" : "256M",
+    "backup_migrate_verbose" : null,
+    "backup_migrate_disable_cron" : false,
+    "backup_migrate_data_rows_per_query" : 50000
 }

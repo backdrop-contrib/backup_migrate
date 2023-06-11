@@ -162,7 +162,13 @@ class backup_migrate_source_db extends backup_migrate_source_remote {
     //$this->lock_tables($settings);
 
     // Switch to a different db if specified.
+    if (config_get('backup_migrate.settings', 'backup_migrate_verbose')) {
+      _backup_migrate_message('Start peak memory usage: %mem', array('%mem' => backup_migrate_get_peak_memory_usage() . 'MB'), 'success');
+    }
     $success = $this->_backup_db_to_file($file, $settings);
+    if (config_get('backup_migrate.settings', 'backup_migrate_verbose')) {
+      _backup_migrate_message('Finish peak memory usage: %mem', array('%mem' => backup_migrate_get_peak_memory_usage() . 'MB'), 'success');
+    }
 
     //$this->unlock_tables($settings);
 

@@ -12,6 +12,124 @@
  */
 function backup_migrate_requirements($phase) {
   $requirements = array();
+
+  // Ensure translations don't break during installation.
+  $t = get_t();
+
+  if ($phase == 'runtime') {
+    // Get a list of all destinations, make sure none of them are publicly
+    // accessible.
+    // @todo Expand the API to add methods to specifically check this.
+    require_once dirname(__FILE__) . '/includes/destinations.inc';
+
+    foreach (backup_migrate_get_destinations() as $dest_name => $destination) {
+      if (method_exists($destination, 'get_display_location')) {
+        $dest_path = $destination->get_display_location();
+        if (!empty($dest_path) && file_valid_uri($dest_path)) {
+          $scheme = file_uri_scheme($dest_path);
+          // Support public and private storage and raw server paths.
+          if ($scheme === 'private' || $scheme === 'public' || substr($dest_path, 0, 1) == '/') {
+            // Check if the path exists.
+            $path_exists = file_prepare_directory($dest_path, FILE_CREATE_DIRECTORY);
+            if ($path_exists) {
+              $real_path = backdrop_realpath($dest_path);
+              // See if the private path is somewhere inside the main Backdrop
+              // directory structure.
+              if (strpos($real_path, BACKDROP_ROOT) === 0) {
+                // Extract the relative path from the Backdrop root path, and
+                // then add the base URL, theoretically creating a fully
+                // qualified URL to the storage directory.
+                $url = substr($real_path, strlen(BACKDROP_ROOT) + 1);
+                $url = url($url, array('absolute' => TRUE));
+                $result = backdrop_http_request($url);
+
+                // If the HTTP request comes back as a status 200 that means
+                // there is a directory listing of some sort; directory paths
+                // should return a 503 error.
+                if (!empty($result->code) && $result->code == 200) {
+                  // Get the human readable information for this destination.
+                  $dest_spec = $destination->get_list_row();
+
+                  // Display a warning message.
+                  $requirements['bmdest_' . $dest_name] = array(
+                    'severity' => REQUIREMENT_ERROR,
+                    'title' => 'Backup Migrate',
+                    'value' => $t('Backup destination "%dest" is publicly accessible!', array('%dest' => $dest_spec['name'])),
+                    'description' => $t('The backup destination, "%dest", stores its files in the "%path" directory. This directory is publicly available from the web server and urgently needs to be secured! Please see the Backdrop manual on <a href="@manual">configuring the private directory path</a> on how to fix this problem.',
+                      array(
+                        '%dest' => $dest_spec['name'],
+                        '%path'  => $real_path,
+                        '@manual' => 'https://docs.backdropcms.org/documentation/managing-file-locations-and-access',
+                      )),
+                  );
+                }
+
+                // Check an individual file.
+                else {
+                  $files = scandir($real_path);
+                  if (!empty($files)) {
+                    foreach ($files as $file) {
+                      // Skip the base field pointers.
+                      if ($file == '.' || $file == '..') {
+                        continue;
+                      }
+
+                      $result = backdrop_http_request($url . '/' . $file);
+
+                      // If the HTTP request comes back as a status 200 that
+                      // means the file is accessible.
+                      if (!empty($result->code) && $result->code == 200) {
+                        // Get the human readable information for this
+                        // destination.
+                        $dest_spec = $destination->get_list_row();
+
+                        // Display a warning message.
+                        $requirements['bmdest_' . $dest_name] = array(
+                          'severity' => REQUIREMENT_ERROR,
+                          'title' => 'Backup Migrate',
+                          'value' => $t('Files in "%dest" are publicly accessible!', array('%dest' => $dest_spec['name'])),
+                          'description' => $t('The backup destination, "%dest", stores its files in the "%path" directory. These file(s) are publicly available from the web server and urgently need to be secured! Please see the Backdrop manual on <a href="@manual">configuring the private directory path</a> on how to fix this problem.',
+                            array(
+                              '%dest' => $dest_spec['name'],
+                              '%path'  => $real_path,
+                              '@manual' => 'https://docs.backdropcms.org/documentation/managing-file-locations-and-access',
+                            )),
+                        );
+                      }
+
+                      // Only need to check one file.
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // Leave a note if there were no problems.
+    // @todo No point in displaying this until the API has been expanded.
+    // @code
+    // if (empty($requirements)) {
+    //   $requirements['bmdest_' . $dest_name] = array(
+    //     'severity' => REQUIREMENT_INFO,
+    //     'title' => 'Backup Migrate',
+    //     'value' => $t('Backup destinations are safe'),
+    //     'description' => $t('The backup destinations were all checked and none of them were exposing files to the public. This is a good thing.'),
+    //   );
+    // }
+    // @endcode
+
+    if (config_get('backup_migrate.settings', 'backup_migrate_disable_cron')) {
+      $requirements['bm_disable_cron'] = array(
+        'severity' => REQUIREMENT_INFO,
+        'title' => 'Backup Migrate',
+        'value' => $t('Cron tasks are disabled'),
+        'description' => $t('The cron tasks have been disabled, so scheduled backups will not run. See the Backup & Migrate module\'s README.txt file for further details.'),
+      );
+    }
+  }
   return $requirements;
 }
 
@@ -20,6 +138,8 @@ function backup_migrate_requirements($phase) {
  */
 function backup_migrate_schema() {
   $schema['backup_migrate_profiles'] = array(
+    // The export keys was used by CTools exportables in D7. It has no effect
+    // in Backdrop. 
     'export' => array(
       'key' => 'machine_name',
       'key name' => 'Profile ID',
@@ -86,6 +206,8 @@ function backup_migrate_schema() {
     'primary key' => array('profile_id'),
   );
   $schema['backup_migrate_destinations'] = array(
+    // The export keys was used by CTools exportables in D7. It has no effect
+    // in Backdrop.
     'export' => array(
       'key' => 'machine_name',
       'key name' => 'Destination ID',
@@ -143,6 +265,8 @@ function backup_migrate_schema() {
     'primary key' => array('destination_id'),
   );
   $schema['backup_migrate_sources'] = array(
+    // The export keys was used by CTools exportables in D7. It has no effect
+    // in Backdrop.
     'export' => array(
       'key' => 'machine_name',
       'key name' => 'Source ID',
@@ -201,6 +325,8 @@ function backup_migrate_schema() {
   );
 
   $schema['backup_migrate_schedules'] = array(
+    // The export keys was used by CTools exportables in D7. It has no effect
+    // in Backdrop.
     'export' => array(
       'key' => 'machine_name',
       'key name' => 'Source ID',
@@ -303,47 +429,6 @@ function backup_migrate_schema() {
   );
 
   return $schema;
-}
-
-/**
- * Implementation of hook_install().
- * Backdrop - save all initial DEFAULT settings to CMI .settings
- * commented out because now all settings are pulled from .json file but
- * if new settings are needed or changed, set them below.
- */
-function backup_migrate_install() {
-/*  $config = config('backup_migrate.settings');
-
-  $config->set('backup_migrate_data_rows_per_line', 30);
-  $config->set('backup_migrate_data_bytes_per_line', 2000);
-  $config->set('backup_migrate_max_email_size', 20971520);
-  $config->set('backup_migrate_allow_backup_to_file', TRUE);
-  $config->set('file_private_path', FALSE);
-  $config->set('file_public_path', FALSE);
-  $config->set('backup_migrate_allow_backup_to_download', TRUE);
-  $config->set('debug_http_request', FALSE);
-  $config->set('dev_query', 0);
-  $config->set('site_offline_message', '[site_name] is currently under maintenance. We should be back shortly. Thank you for your patience.');
-  $config->set('maintenance_mode', 0);
-  $config->set('maintenance_mode_message', NULL);
-  $config->set('backup_migrate_cleanup_time', 21600);
-  $config->set('backup_migrate_cleanup_temp_files', TRUE);
-  $config->set('backup_migrate_profile_id', 'default');
-  $config->set('backup_migrate_smart_keep_hourly', 24);
-  $config->set('backup_migrate_smart_keep_daily', 7);
-  $config->set('backup_migrate_smart_keep_weekly', 12);
-  $config->set('backup_migrate_schedule_buffer', 0.01);
-  $config->set('backup_migrate_data_rows_per_line', 30);
-  $config->set('backup_migrate_data_bytes_per_line', 2000);
-  $config->set('backup_migrate_default_schedule', 60*60);
-  $config->set('backup_migrate_source_id', NULL);
-  $config->set('backup_migrate_destination_id', 'download');
-  $config->set('backup_migrate_copy_destination_id', '');
-  $config->set('backup_migrate_backup_max_time', 1200);
-  $config->set('backup_migrate_restore_max_time', 1200);
-  $config->set('backup_migrate_timeout_buffer', 5);
-  $config->save();
-*/
 }
 
 /**
@@ -522,4 +607,24 @@ function backup_migrate_update_1007() {
 
   // @todo Remove the configuration later.
   backdrop_set_message(t('<a href="!url">NodeSquirrel stopped being usable as a backup destination</a> on October 1st, 2019 and ceased operations entirely on November 1st, 2019. Because of this, the Nodesquirrel functonality as been disabled. Please switch to an alternate destination if necessary. Please note that the NodeSquirrel configuration itself has not been removed.', array('!url' => 'https://pantheon.io/nodesquirrel-service-end-life')));
+}
+
+/**
+ * Add new advanced settings.
+ */
+function backup_migrate_update_1008() {
+  $config = config('backup_migrate.settings');
+  $values = $config->get();
+  $defaults = array(
+    'backup_migrate_memory_limit' => '256M',
+    'backup_migrate_verbose' => NULL,
+    'backup_migrate_disable_cron' => FALSE,
+    'backup_migrate_data_rows_per_query' => 50000,
+  );
+  foreach ($defaults as $key => $value) {
+    if (!isset($values[$key])) {
+      $config->set($key, $value);
+    }
+  }
+  $config->save();
 }

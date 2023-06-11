@@ -12,10 +12,10 @@
  * @ingroup backup_migrate_destinations
  */
 class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
-  var $supported_ops = array('scheduled backup', 'manual backup', 'remote backup', 'restore', 'list files', 'configure', 'delete');
-  var $s3 = NULL;
-  var $cache_files = TRUE;
-
+  public $supported_ops = array('scheduled backup', 'manual backup', 'remote backup', 'restore', 'list files', 'configure', 'delete');
+  public $s3 = NULL;
+  public $cache_files = TRUE;
+  public $got_library = FALSE;
 
   /**
    * Save to to the s3 destination.
@@ -80,6 +80,11 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
   function edit_form() {
     // Check for the library.
     $this->s3_object();
+
+    // Do not return the form if library is not found.
+    if (!$this->got_library) {
+      return array();
+    }
 
     $form = parent::edit_form();
     $form['scheme']['#type'] = 'value';
@@ -166,13 +171,21 @@ class backup_migrate_destination_s3 extends backup_migrate_destination_remote {
     else {
       $library_paths[] = 'libraries/amazon-s3-php-class';
     }
+    $library_paths[] = backdrop_get_path('module', 'backup_migrate') . '/includes/s3-php5-curl';
+    $library_paths[] = backdrop_get_path('module', 'backup_migrate') . '/includes';
 
     foreach($library_paths as $path) {
       if (file_exists($path . '/S3.php')) {
         require_once $path . '/S3.php';
         if (!$this->s3 && !empty($this->dest_url['user'])) {
-          $this->s3 = new S3($this->dest_url['user'], $this->dest_url['pass']);
+          // The hostname can be overridden.
+          $host = 's3.amazonaws.com';
+          if (isset($this->dest_url['host'])) {
+            $host = $this->dest_url['host'];
+          }
+          $this->s3 = new S3($this->dest_url['user'], $this->dest_url['pass'], FALSE, $host);
         }
+        $this->got_library = TRUE;
         return $this->s3;
       }
     }

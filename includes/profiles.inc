@@ -106,24 +106,28 @@ function _backup_migrate_ui_backup_settings_form($profile) {
     "#title" => t("Backup file name"),
     "#default_value" => $profile->filename,
   );
-  if (function_exists('token_replace')) {
-    $form['file']['token_help'] = array(
-      '#title' => t('Replacement patterns'),
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
-    $form['file']['token_help']['help'] = array(
-      '#theme' => 'token_tree',
-      '#token_types' => array('current-date', 'site'),
-      '#global_types' => FALSE,
-    );
-    $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
-  }
+  
+  $form['file']['token_help'] = array(
+    '#title' => t('Replacement patterns'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['file']['token_help']['help'] = array(
+    '#theme' => 'token_tree',
+    '#token_types' => array('current-date', 'site'),
+    '#global_types' => FALSE,
+  );
+  $form['file']['filename']['#description'] = t('You can use tokens in the file name.');
 
   $form['file']['append_timestamp'] = array(
-    "#type" => "checkbox",
-    "#title" => t("Append a timestamp."),
+    "#type" => "radios",
+    '#options' => array(
+      0 => t('Create separate backups if `Backup file name` already exists'),
+      2 => t('Overwrite the existing backup file'),
+      1 => t('Append the timestamp'),
+    ),
+    "#title" => t("Save mode"),
     "#default_value" => $profile->append_timestamp,
   );
   $form['file']['timestamp_format_wrapper'] = array(
@@ -203,12 +207,17 @@ function _backup_migrate_profile_saved_default_profile($profile_id = NULL) {
  * A profile class for crud operations.
  */
 class backup_migrate_profile extends backup_migrate_item {
-  var $db_table = "backup_migrate_profiles";
-  var $type_name = "profile";
-  var $singular = 'settings profile';
-  var $plural = 'settings profiles';
-  var $title_plural = 'Settings Profiles';
-  var $title_singular = 'Settings Profile';
+  public $db_table = "backup_migrate_profiles";
+  public $type_name = "profile";
+  public $singular = 'settings profile';
+  public $plural = 'settings profiles';
+  public $title_plural = 'Settings Profiles';
+  public $title_singular = 'Settings Profile';
+
+  public $source;
+  public $source_id;
+  public $destinations;
+  public $destination_id;
 
   /**
    * Perform a shallow merge of the defaults and the parameters.

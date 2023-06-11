@@ -97,13 +97,19 @@ function backup_migrate_get_schedule($schedule_id) {
  * A schedule class for crud operations.
  */
 class backup_migrate_schedule extends backup_migrate_item {
-  var $db_table = "backup_migrate_schedules";
-  var $type_name = 'schedule';
-  var $singular = 'schedule';
-  var $plural = 'schedules';
-  var $title_plural = 'Schedules';
-  var $title_singular = 'Schedule';
-  var $default_values = array();
+  public $db_table = "backup_migrate_schedules";
+  public $type_name = 'schedule';
+  public $singular = 'schedule';
+  public $plural = 'schedules';
+  public $title_plural = 'Schedules';
+  public $title_singular = 'Schedule';
+  public $default_values = array();
+
+  public $period;
+  public $enabled;
+  public $keep;
+  public $exclude_tables;
+  public $nodata_tables;
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.
@@ -645,7 +651,7 @@ class backup_migrate_schedule extends backup_migrate_item {
       $this->remove_expired_backups();
     }
     else {
-      backup_migrate_backup_fail("Schedule '%schedule' could not be run because requires a profile which is missing.", array('%schedule' => $schedule->get_name()), $settings);
+      backup_migrate_backup_fail("Schedule '%schedule' could not be run because requires a profile which is missing.", array('%schedule' => $this->get_name()), $settings);
     }
   }
 
