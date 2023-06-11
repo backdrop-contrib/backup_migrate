@@ -681,18 +681,33 @@ class backup_migrate_item {
     $path = $this->get_settings_path();
 
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB || @$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
-      $out['edit'] = l(t("edit"), $path . "/edit/$item_id");
+      $out['edit'] = array(
+        'title' => t('edit'),
+        'href' => $path . "/edit/$item_id",
+      );
     }
     elseif (@$this->storage == BACKUP_MIGRATE_STORAGE_NONE) {
-      $out['edit'] = l(t("override"), $path . "/edit/$item_id");
+      $out['edit'] = array(
+        'title' => t('override'),
+        'href' => $path . "/edit/$item_id",
+      );
     }
     if (@$this->storage == BACKUP_MIGRATE_STORAGE_DB) {
-      $out['delete'] = l(t("delete"), $path . "/delete/$item_id");
+      $out['delete'] = array(
+        'title' => t('delete'),
+        'href' => $path . "/delete/$item_id",
+      );
     }
     elseif (@$this->storage == BACKUP_MIGRATE_STORAGE_OVERRIDEN) {
-      $out['delete'] = l(t("revert"), $path . "/delete/$item_id");
+      $out['delete'] = array(
+        'title' => t('revert'),
+        'href' => $path . "/delete/$item_id",
+      );
     }
-    $out['export'] = l(t("export"), $path . "/export/$item_id");
+    $out['export'] =  array(
+      'title' => t("export"),
+      'href' => $path . "/export/$item_id"
+    );
 
     return $out;
   }
@@ -779,7 +794,11 @@ class backup_migrate_item {
    */
   function get_actions() {
     $links = $this->get_action_links();
-    return implode(" &nbsp; ", $links);
+    $operations = array(
+      '#type' => 'operations',
+      '#links' => $links,
+    );
+    return backdrop_render($operations);
   }
 
   /**

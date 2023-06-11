@@ -1058,7 +1058,12 @@ class backup_migrate_destination extends backup_migrate_location {
 
     // Don't display the download/delete/restore ops if they are not available for this destination.
     if ($this->op('list files') && user_access("access backup files")) {
-      $out = array('list files' => l(t("list files"), $this->get_settings_path() . '/list/files/'. $item_id)) + $out;
+      $out = array(
+        'list files' => array(
+          'title' => t("list files"),
+          'href' => $this->get_settings_path() . '/list/files/'. $item_id,
+        ),
+      ) + $out;
     }
     if (!$this->op('configure') || !user_access('administer backup and migrate')) {
       unset($out['edit']);
