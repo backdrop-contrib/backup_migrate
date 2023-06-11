@@ -58,7 +58,7 @@ class backup_migrate_filter_compression extends backup_migrate_filter {
     return array(
       "gzip" => array(
         "extension" => "gz",
-        "filemime" => "application/x-gzip",
+        "filemime" => "application/octet-stream",
         "backup" => TRUE,
         "restore" => TRUE,
       ),
