@@ -1393,7 +1393,7 @@ function backup_migrate_perform_backup(&$settings) {
     $php_memory_limit_bytes = _backup_migrate_to_bytes($php_memory_limit);
 
     // Get the current Backup Migrate memory limit.
-    $backup_migrate_memory_limit = config_get('backup_migrate.settings', 'backup_migrate_memory_limit');
+    $backup_migrate_memory_limit = config_get('backup_migrate', 'backup_migrate_memory_limit');
 
     // Convert the Backup Migrate memory limit to bytes.
     $backup_migrate_memory_limit_bytes = _backup_migrate_to_bytes($backup_migrate_memory_limit);
