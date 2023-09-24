@@ -450,8 +450,6 @@ function backup_migrate_update_1000() {
   $config->set('backup_migrate_data_bytes_per_line', update_variable_get('backup_migrate_data_bytes_per_line',2000));
   $config->set('backup_migrate_max_email_size', update_variable_get( 'backup_migrate_max_email_size',20971520));
   $config->set('backup_migrate_allow_backup_to_file', update_variable_get('backup_migrate_allow_backup_to_file',TRUE));
-  $config->set('file_private_path', update_variable_get('file_private_path',FALSE));
-  $config->set('file_public_path', update_variable_get('file_public_path',FALSE));
   $config->set('backup_migrate_allow_backup_to_download', update_variable_get('backup_migrate_allow_backup_to_download',TRUE));
   $config->set('debug_http_request', update_variable_get('debug_http_request',FALSE));
   $config->set('dev_query', update_variable_get('dev_query',0));
@@ -482,8 +480,6 @@ function backup_migrate_update_1000() {
   update_variable_del('backup_migrate_data_bytes_per_line');
   update_variable_del('backup_migrate_max_email_size');
   update_variable_del('backup_migrate_allow_backup_to_file');
-  update_variable_del('file_private_path');
-  update_variable_del('file_public_path');
   update_variable_del('backup_migrate_allow_backup_to_download');
   update_variable_del('debug_http_request');
   update_variable_del('dev_query');
