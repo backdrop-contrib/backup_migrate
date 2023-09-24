@@ -4,12 +4,6 @@ description = Run through basic scenarios and functionality.
 group = Backup and Migrate
 file = BmTestBasics.test
 
-[BmTestCtools]
-name = CTools tests
-description = Test integration with the CTools module.
-group = Backup and Migrate
-file = BmTestCtools.test
-
 [BmTestEmail]
 name = Email handling
 description = Confirm email handling works as intended.
