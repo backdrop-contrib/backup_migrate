@@ -38,46 +38,46 @@ class BmTestProfiles extends BmTestBase {
   /**
    * Confirm adding a new backup process works.
    */
-  // public function testAddDefaultProfile() {
-  //   require_once dirname(__FILE__) . '/../includes/files.inc';
-  //   require_once dirname(__FILE__) . '/../includes/profiles.inc';
+  public function testAddDefaultProfile() {
+    require_once dirname(__FILE__) . '/../includes/files.inc';
+    require_once dirname(__FILE__) . '/../includes/profiles.inc';
 
-  //   // Load the main B&M page.
-  //   $this->backdropGet(BACKUP_MIGRATE_MENU_PATH . '/settings/profile/add');
-  //   $this->assertResponse(200);
+    // Load the main B&M page.
+    $this->backdropGet(BACKUP_MIGRATE_MENU_PATH . '/settings/profile/add');
+    $this->assertResponse(200);
 
-  //   $filename = _backup_migrate_default_filename();
-  //   $defaults = _backup_migrate_profile_default_profile();
+    $filename = _backup_migrate_default_filename();
+    $defaults = _backup_migrate_profile_default_profile();
 
-  //   // Verify all of the expected fields exist.
-  //   $this->assertFieldByName('name');
-  //   $this->assertFieldByName('name', 'Untitled Profile');
-  //   $this->assertFieldByName('machine_name');
-  //   $this->assertFieldByName('filename');
-  //   $this->assertFieldByName('filename', $filename);
-  //   // @todo Confirm all of the expected options are present.
-  //   $this->assertFieldByName('append_timestamp');
-  //   $this->assertFieldByName('timestamp_format');
-  //   $this->assertFieldByName('timestamp_format', $defaults['timestamp_format']);
-  //   $this->assertFieldByName('filters[compression]');
-  //   $items = $this->supportedCompressors();
-  //   $this->assertSelectOptions('edit-filters-compression', $items);
-  //   $this->assertOptionSelected('edit-filters-compression', 'gzip');
-  //   $this->assertFieldByName('filters[sources][db][exclude_tables][]');
-  //   $this->assertFieldByName('filters[sources][db][nodata_tables][]');
-  //   $this->assertFieldByName('filters[sources][db][utils_lock_tables]');
-  //   $this->assertFieldByName('filters[sources][files][exclude_filepaths]');
-  //   $this->assertFieldByName('filters[sources][archive][exclude_filepaths]');
-  //   $this->assertFieldByName('filters[utils_site_offline]');
-  //   $this->assertFieldByName('filters[utils_site_offline_message]');
-  //   $this->assertFieldByName('filters[utils_description]');
-  //   $this->assertFieldByName('filters[use_cli]');
-  //   $this->assertFieldByName('filters[ignore_errors]');
-  //   $this->assertFieldByName('filters[notify_success_enable]');
-  //   $this->assertFieldByName('filters[notify_success_email]');
-  //   $this->assertFieldByName('filters[notify_failure_enable]');
-  //   $this->assertFieldByName('filters[notify_failure_email]');
-  // }
+    // Verify all of the expected fields exist.
+    $this->assertFieldByName('name');
+    $this->assertFieldByName('name', 'Untitled Profile');
+    $this->assertFieldByName('machine_name');
+    $this->assertFieldByName('filename');
+    $this->assertFieldByName('filename', $filename);
+    // @todo Confirm all of the expected options are present.
+    $this->assertFieldByName('append_timestamp');
+    $this->assertFieldByName('timestamp_format');
+    $this->assertFieldByName('timestamp_format', $defaults['timestamp_format']);
+    $this->assertFieldByName('filters[compression]');
+    $items = $this->supportedCompressors();
+    $this->assertSelectOptions('edit-filters-compression', $items);
+    $this->assertOptionSelected('edit-filters-compression', 'gzip');
+    $this->assertFieldByName('filters[sources][db][exclude_tables][]');
+    $this->assertFieldByName('filters[sources][db][nodata_tables][]');
+    $this->assertFieldByName('filters[sources][db][utils_lock_tables]');
+    $this->assertFieldByName('filters[sources][files][exclude_filepaths]');
+    $this->assertFieldByName('filters[sources][archive][exclude_filepaths]');
+    $this->assertFieldByName('filters[utils_site_offline]');
+    $this->assertFieldByName('filters[utils_site_offline_message]');
+    $this->assertFieldByName('filters[utils_description]');
+    $this->assertFieldByName('filters[use_cli]');
+    $this->assertFieldByName('filters[ignore_errors]');
+    $this->assertFieldByName('filters[notify_success_enable]');
+    $this->assertFieldByName('filters[notify_success_email]');
+    $this->assertFieldByName('filters[notify_failure_enable]');
+    $this->assertFieldByName('filters[notify_failure_email]');
+  }
 
   /**
    * Confirm the backup filename processes work as expected.
