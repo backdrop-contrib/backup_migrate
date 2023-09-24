@@ -434,7 +434,7 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
     $rows_per_line = config_get('backup_migrate.settings', 'backup_migrate_data_rows_per_line');
     $bytes_per_line = config_get('backup_migrate.settings', 'backup_migrate_data_bytes_per_line');
 
-    if (config_get('backup_migrate', 'backup_migrate_verbose')) {
+    if (config_get('backup_migrate.settings', 'backup_migrate_verbose')) {
       _backup_migrate_message('Table: %table', array('%table' => $table['name']), 'success');
     }
 
