@@ -145,7 +145,7 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         'database-file-driver' => 'mysql',
       ),
     );
-    if ($private = config_get('backup_migrate.settings','file_private_path')) {
+    if ($private = config_get('system.core','file_private_path')) {
       $info['Site 0']['files-private'] = 'docroot/' . $private;
     }
     $info['Site 0']['files-public'] = 'docroot/' . config_get('backup_migrate.settings','file_public_path');

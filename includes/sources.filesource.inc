@@ -31,7 +31,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
       'show_in_list' => FALSE,
     ));
 
-    if (config_get('backup_migrate.settings', 'file_private_path')) {
+    if (config_get('system.core', 'file_private_path')) {
       $out['files_private'] = backup_migrate_create_destination('filesource', array(
         'machine_name' => 'files',
         'location' => 'private://',
