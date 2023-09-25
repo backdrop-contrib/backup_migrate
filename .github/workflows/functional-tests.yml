@@ -28,12 +28,12 @@ jobs:
           coverage: none
 
       - name: Checkout Backdrop core
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: backdrop/backdrop
 
       - name: Checkout module
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: modules/${{ env.REPO_NAME }}
 
@@ -52,4 +52,4 @@ jobs:
           cp modules/${{ env.REPO_NAME }}/.github/misc/settings.local.php .
           core/scripts/install.sh --db-url=mysql://root:root@127.0.0.1/backdrop
       - name: Run functional tests
-        run: core/scripts/run-tests.sh --force --directory=modules/${{ env.REPO_NAME }} --verbose --concurrency=color --concurrency=3 --cache 2>&1
+        run: core/scripts/run-tests.sh --force --directory=modules/${{ env.REPO_NAME }} --verbose --color --concurrency=3 --cache 2>&1
