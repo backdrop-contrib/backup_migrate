@@ -202,6 +202,7 @@ class backup_file {
   public $path = "";
   public $name = "";
   public $handle = NULL;
+  public $destination = "";
 
   /**
    * Construct a file object given a file path, or create a temp file for writing.

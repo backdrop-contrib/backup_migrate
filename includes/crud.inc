@@ -398,6 +398,7 @@ function backup_migrate_crud_create_item($type, $params) {
 /**
  * A base class for items which can be stored in the database.
  */
+#[AllowDynamicProperties]
 class backup_migrate_item {
   public $show_in_list = TRUE;
   public $settings_path = '/settings/';
