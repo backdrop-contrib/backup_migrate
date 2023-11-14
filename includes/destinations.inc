@@ -753,20 +753,23 @@ function _backup_migrate_get_destination_form_item_options($op) {
  * A base class for creating destinations.
  */
 class backup_migrate_destination extends backup_migrate_location {
-  var $db_table = "backup_migrate_destinations";
-  var $type_name = "destination";
-  var $default_values = array('settings' => array());
-  var $singular = 'destination';
-  var $plural = 'destinations';
-  var $title_plural = 'Destinations';
-  var $title_singular = 'Destination';
-  var $cache_files = FALSE;
-  var $fetch_time = NULL;
-  var $cache_expire = 86400; // 24 hours
-  var $weight = 0;
-
-  var $destination_type = "";
-  var $supported_ops = array();
+  public $db_table = "backup_migrate_destinations";
+  public $type_name = "destination";
+  public $default_values = array('settings' => array());
+  public $singular = 'destination';
+  public $plural = 'destinations';
+  public $title_plural = 'Destinations';
+  public $title_singular = 'Destination';
+  public $cache_files = FALSE;
+  public $fetch_time = NULL;
+  public $cache_expire = 86400; // 24 hours
+  public $weight = 0;
+  public $destination_type = "";
+  public $supported_ops = array();
+  public $settings = array();
+  public $name = '';
+  public $location = '';
+  public $machine_name = '';
 
   /**
    * This function is not supposed to be called. It is just here to help the po extractor out.

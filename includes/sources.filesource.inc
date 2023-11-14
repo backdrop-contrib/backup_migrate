@@ -12,6 +12,10 @@
  */
 class backup_migrate_destination_filesource extends backup_migrate_source {
   public $supported_ops = array('restore', 'configure', 'delete', 'source');
+  public $settings = array();
+  public $name = "";
+  public $location = "";
+  public $machine_name = "";
 
   function type_name() {
     return t("Files Directory");
