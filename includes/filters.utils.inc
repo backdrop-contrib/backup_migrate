@@ -12,8 +12,22 @@
  * @ingroup backup_migrate_filters
  */
 class backup_migrate_filter_utils extends backup_migrate_filter {
-  var $op_weights = array('pre_backup' => -1000, 'post_backup' => 1000);
-  var $saved_devel_query = NULL;
+  public $op_weights = array('pre_backup' => -1000, 'post_backup' => 1000);
+  public $saved_devel_query = NULL;
+
+
+  /**
+   * Temporarily stores site maintenance status.
+   * 
+   * @var bool $saved_site_offline
+   */
+  public $saved_site_offline;
+
+  /**
+   * Temporarily stores original maintenance mode message.
+   */
+  public $saved_site_offline_message;
+
 
   /**
    * Get the default backup settings for this filter.
@@ -216,8 +230,8 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     // Save the current state of the site in case a restore overwrites it.
     $this->saved_site_offline = config_get('backup_migrate.settings','maintenance_mode');
     if (@$settings->filters['utils_site_offline']) {
-      $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
       if (!empty($settings->filters['utils_site_offline_message'])) {
+        // Store system message temporarily.
         $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
         config_set('backup_migrate.settings','maintenance_mode_message', $settings->filters['utils_site_offline_message']);
       }
