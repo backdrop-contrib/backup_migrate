@@ -234,8 +234,8 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       if (@$settings->filters['utils_site_offline']) {
         $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
         if (!empty($settings->filters['utils_site_offline_message'])) {
-          $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
-          config_set('backup_migrate.settings','maintenance_mode_message', $settings->filters['utils_site_offline_message']);
+          $this->saved_site_offline_message = config_get('system.core','maintenance_mode_message');
+          config_set('system.core','maintenance_mode_message', $settings->filters['utils_site_offline_message']);
         }
         state_set('maintenance_mode', 1);
         _backup_migrate_message('Site was taken offline.');
@@ -252,7 +252,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
       state_set('maintenance_mode', 0);
       if ($settings->filters['utils_site_offline']) {
         if (!empty($this->saved_site_offline_message)) {
-          config_set('backup_migrate.settings','maintenance_mode_message', $this->saved_site_offline_message);
+          config_set('system.core','maintenance_mode_message', $this->saved_site_offline_message);
         }
         _backup_migrate_message('Site was taken online.');
       }
