@@ -230,6 +230,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     // Save the current state of the site in case a restore overwrites it.
     $this->saved_site_offline = config_get('backup_migrate.settings','maintenance_mode');
     if (@$settings->filters['utils_site_offline']) {
+      $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
       if (!empty($settings->filters['utils_site_offline_message'])) {
         // Store system message temporarily.
         $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
