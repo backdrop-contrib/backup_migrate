@@ -35,7 +35,7 @@
                     else {
                       dependent.slideUp();
                     }
-                  }).load();
+                  }).trigger('load');
                 })(dependent, dependency);
               });
             }
@@ -71,7 +71,7 @@
                       }
                     }
                   }
-                }).load();
+                }).trigger('load');
               });
             })(info);
           }
@@ -95,7 +95,7 @@
                                 else {
                                   $(this).parent().removeClass('checked');
                                 }
-                              }).load()
+                              }).trigger('load')
                         )
                       )
                     );
