@@ -17,7 +17,7 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
 
 
   /**
-   * Temporarily stores site maintenance status.
+   * Flag to indicate we have put the site in maintenance mode.
    * 
    * @var bool $saved_site_offline
    */
