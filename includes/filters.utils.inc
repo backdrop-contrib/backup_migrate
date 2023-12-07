@@ -230,11 +230,10 @@ class backup_migrate_filter_utils extends backup_migrate_filter {
     // If the site is already offline then don't do anything.
     if (!state_get('maintenance_mode', 0)) {
       // Save the current state of the site in case a restore overwrites it.
-      $this->saved_site_offline = config_get('backup_migrate.settings','maintenance_mode');
-      if (@$settings->filters['utils_site_offline']) {
-        $this->saved_site_offline_message = config_get('backup_migrate.settings','maintenance_mode_message');
+      if (!empty($settings->filters['utils_site_offline'])) {
+        $this->saved_site_offline = TRUE;
+        $this->saved_site_offline_message = config_get('system.core','maintenance_mode_message');
         if (!empty($settings->filters['utils_site_offline_message'])) {
-          $this->saved_site_offline_message = config_get('system.core','maintenance_mode_message');
           config_set('system.core','maintenance_mode_message', $settings->filters['utils_site_offline_message']);
         }
         state_set('maintenance_mode', 1);
