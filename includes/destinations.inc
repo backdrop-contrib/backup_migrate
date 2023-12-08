@@ -537,7 +537,7 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
   }
   _backup_migrate_message('Cannot restore from the the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
   if ($destination_id && user_access('access backup files')) {
-    backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/' . $destination_id);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination_id);
   }
   backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
@@ -565,7 +565,7 @@ function backup_migrate_ui_destination_restore_file_confirm($form, &$form_state,
 
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
-  $form = confirm_form($form, t('Are you sure you want to restore the database?'), BACKUP_MIGRATE_MENU_PATH . "/destination/list/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));
+  $form = confirm_form($form, t('Are you sure you want to restore the database?'), BACKUP_MIGRATE_MENU_PATH . "/settings/destination/list/files/". $destination_id, t('Are you sure you want to restore the database from the backup file %file_id? This will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>', array('%file_id' => $file_id)), t('Restore'), t('Cancel'));
   backdrop_set_message(t('Restoring will delete some or all of your data and cannot be undone. <strong>Always test your backups on a non-production server!</strong>'), 'warning', FALSE);
   $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
   $form['actions']['#weight'] = 100;
@@ -590,7 +590,7 @@ function backup_migrate_ui_destination_restore_file_confirm_submit($form, &$form
   if ($destination_id && $file_id) {
     backup_migrate_perform_restore($destination_id, $file_id, $form_state['values']);
   }
-  $redir = user_access('access backup files') ? BACKUP_MIGRATE_MENU_PATH . "/destination/list/files/". $destination_id : BACKUP_MIGRATE_MENU_PATH;
+  $redir = user_access('access backup files') ? BACKUP_MIGRATE_MENU_PATH . "/settings/destination/list/files/". $destination_id : BACKUP_MIGRATE_MENU_PATH;
   $form_state['redirect'] = $redir;
 }
 
@@ -603,7 +603,7 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
   }
   _backup_migrate_message('Cannot delete the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
   if ($destination_id && user_access('access backup files')) {
-    backdrop_goto(BACKUP_MIGRATE_MENU_PATH .'/destination/list/files/' . $destination_id);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH .'/settings/destination/list/files/' . $destination_id);
   }
   backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
@@ -614,7 +614,7 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
 function backup_migrate_ui_destination_delete_file_confirm($form, &$form_state, $destination_id, $file_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
-  return confirm_form($form, t('Are you sure you want to delete the backup file?'), BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/'. $destination_id, t('Are you sure you want to delete the backup file %file_id? <strong>This action cannot be undone.</strong>', array('%file_id' => $file_id)), t('Delete'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to delete the backup file?'), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/'. $destination_id, t('Are you sure you want to delete the backup file %file_id? <strong>This action cannot be undone.</strong>', array('%file_id' => $file_id)), t('Delete'), t('Cancel'));
 }
 
 /**
@@ -627,7 +627,7 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
     backup_migrate_destination_delete_file($destination_id, $file_id);
     _backup_migrate_message('Database backup file deleted: %file_id', array('%file_id' => $file_id));
   }
-  $form_state['redirect'] = user_access('access backup files') ? BACKUP_MIGRATE_MENU_PATH . "/destination/list/files/". $destination_id : BACKUP_MIGRATE_MENU_PATH;
+  $form_state['redirect'] = user_access('access backup files') ? BACKUP_MIGRATE_MENU_PATH . "/settings/destination/list/files/". $destination_id : BACKUP_MIGRATE_MENU_PATH;
 }
 
 /* Utilities */
