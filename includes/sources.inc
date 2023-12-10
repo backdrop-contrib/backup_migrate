@@ -67,6 +67,13 @@ function backup_migrate_backup_migrate_source_subtypes() {
       'type_name' => t('File Directory'),
       'can_create' => TRUE,
     ),
+    'db_config' => array(
+      'description' => t('Database and active config folder.'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/sources.dbconfigsource.inc',
+      'class' => 'BackupMigrateFilesDestinationDbConfirSource',
+      'type_name' => t('Database and active config'),
+      'can_create' => FALSE,
+    ),
     'archive' => array(
       'description' => t('Create an archive of your entire site.'),
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/sources.archivesource.inc',
