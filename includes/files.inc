@@ -518,7 +518,9 @@ class backup_file {
   function set_file_info($file_info) {
     $this->file_info = $file_info;
 
-    $this->ext = explode('.', @$this->file_info['filename']);
+    if (!empty($this->file_info['filename'])) {
+      $this->ext = explode('.', $this->file_info['filename']);
+    }
     // Remove the underscores added to file extensions by Drupal's upload security.
     foreach ($this->ext as $key => $val) {
       $this->ext[$key] = trim($val, '_');
