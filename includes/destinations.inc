@@ -410,9 +410,8 @@ function _backup_migrate_ui_destination_display_file_list($files, $options = arr
           t('oldest »'),
           );
         $pager = theme('pager', $tags, $limit, $element, array(), ceil($total/$limit));
-
-        $end = min($total - 1, $start + $limit);
       }
+      $end = min($total - 1, $start + $limit - 1);
       if ($total > $limit && $options['more']) {
         $more = ' ' . l(t('view all'), $options['more']);
       }
