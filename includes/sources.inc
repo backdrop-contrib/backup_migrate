@@ -69,9 +69,9 @@ function backup_migrate_backup_migrate_source_subtypes() {
     ),
     'db_config' => array(
       'description' => t('Database and active config folder.'),
-      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/sources.dbconfigsource.inc',
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationDbConfirSource.inc',
       'class' => 'BackupMigrateFilesDestinationDbConfirSource',
-      'type_name' => t('Database and active config'),
+      'type_name' => t('Database and active config directory'),
       'can_create' => FALSE,
     ),
     'archive' => array(
