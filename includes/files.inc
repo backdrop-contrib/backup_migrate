@@ -326,21 +326,30 @@ class backup_file {
    * Can this file be used to backup to.
    */
   public function can_backup() {
-    return @$this->type['backup'];
+    if (!empty($this->type)) {
+      return $this->type['backup'];
+    }
+    return FALSE;
   }
 
   /**
    * Can this file be used to restore to.
    */
   public function can_restore() {
-    return @$this->type['restore'];
+    if (!empty($this->type)) {
+      return $this->type['restore'];
+    }
+    return FALSE;
   }
 
   /**
    * Can this file be used to restore to.
    */
   public function is_recognized_type() {
-    return @$this->type['restore'] || @$this->type['backup'];
+    if (!empty($this->type)) {
+      return $this->type['restore'] || $this->type['backup'];
+    }
+    return FALSE;
   }
 
   /**
