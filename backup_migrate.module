@@ -1980,7 +1980,7 @@ function _backup_migrate_is_valid_memory_limit($value) {
 function backup_migrate_autoload_info() {
   return array(
     'backup_migrate_files_destination_archivesource' => 'includes/sources.archivesource.inc',
-    'BackupMigrateFilesDestinationDbConfirSource' => 'includes/BackupMigrateFilesDestinationDbConfirSource.inc',
+    'BackupMigrateFilesDestinationDbConfigSource' => 'includes/BackupMigrateFilesDestinationDbConfigSource.inc',
     'backup_migrate_destination_filesource' => 'includes/sources.filesource.inc',
   );
 }

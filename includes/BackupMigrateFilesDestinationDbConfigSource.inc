@@ -10,7 +10,7 @@
  * @ingroup backup_migrate_destinations
  */
 
-class BackupMigrateFilesDestinationDbConfirSource extends backup_migrate_destination_filesource {
+class BackupMigrateFilesDestinationDbConfigSource extends backup_migrate_destination_filesource {
 
   function type_name() {
     return t("DB and Config Archive Source");

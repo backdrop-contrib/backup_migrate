@@ -49,7 +49,7 @@ class BmTestBasics extends BmTestBase {
     $this->assertFieldByName('description_enabled');
     // This item should not have a value "selected", it just defaults to the
     // first item being the active item.
-    $items = array('db', 'files', 'config_files_active', 'config_files_staging', 'archive');
+    $items = array('db', 'db_config', 'files', 'config_files_active', 'config_files_staging', 'archive');
     $this->assertSelectOptions('edit-source-id', $items);
     $this->assertNoOptionsSelected('edit-source-id');
     // This item should have a value "selected", not just the first item. Note:
