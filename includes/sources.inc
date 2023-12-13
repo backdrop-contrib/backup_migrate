@@ -60,6 +60,13 @@ function backup_migrate_backup_migrate_source_subtypes() {
       'class' => 'backup_migrate_source_db_mysql',
       'can_create' => TRUE,
     ),
+    'db_config' => array(
+      'description' => t('Database and active config folder.'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationDbConfigSource.inc',
+      'class' => 'BackupMigrateFilesDestinationDbConfigSource',
+      'type_name' => t('Database and active config directory'),
+      'can_create' => FALSE,
+    ),
     'filesource' => array(
       'description' => t('A files directory which can be backed up from.'),
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/sources.filesource.inc',

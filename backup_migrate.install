@@ -624,3 +624,16 @@ function backup_migrate_update_1008() {
   }
   $config->save();
 }
+
+/**
+ * Add the exclude_filepaths configuration for the new "DB and active config" source to all profiles.
+ */
+function backup_migrate_update_1009() {
+  backup_migrate_include('profiles');
+  foreach (backup_migrate_get_profiles() as $profile) {
+    if (!isset($profile->filters['sources']['db_config']['exclude_filepaths'])) {
+      $profile->filters['sources']['db_config']['exclude_filepaths'] = '';
+      $profile->save();
+    }
+  }
+}

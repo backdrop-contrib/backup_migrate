@@ -1969,3 +1969,18 @@ function _backup_migrate_is_valid_memory_limit($value) {
   $test = preg_match('/^(-1|[0-9]+|[0-9]*(\.[0-9]+)?[mg])$/i', $value);
   return $test;
 }
+
+/**
+ * Implements hook_autoload_info().
+ * 
+ * TODO: Most classes are loaded through include_once since this is the way
+ * this was done in D7. Those should eventually be replaced by including them
+ * in the autoload hook below. For now, only the needed ones are included.
+ */
+function backup_migrate_autoload_info() {
+  return array(
+    'backup_migrate_files_destination_archivesource' => 'includes/sources.archivesource.inc',
+    'BackupMigrateFilesDestinationDbConfigSource' => 'includes/BackupMigrateFilesDestinationDbConfigSource.inc',
+    'backup_migrate_destination_filesource' => 'includes/sources.filesource.inc',
+  );
+}
