@@ -120,7 +120,17 @@ class BackupMigrateFilesDestinationDbConfirSource extends backup_migrate_destina
       $temp = backup_migrate_temp_directory();
 
       $tar = new Archive_Tar($from->filepath());
-      $tar->extractModify($temp, $file->name);
+      // Because Backdrop transliterate and lowercases file names for uploaded
+      // files by default, we must check if there is an original file name for
+      // the archive file and use that original name instead of the
+      // transliterated one.
+      if (!empty($_FILES['files']['orig_name']['backup_migrate_restore_upload']) && !empty($_FILES['files']['name']['backup_migrate_restore_upload']) && strtok($_FILES['files']['name']['backup_migrate_restore_upload'], '.') == $file->name) {
+        $file_name = strtok($_FILES['files']['orig_name']['backup_migrate_restore_upload'], '.');
+      }
+      else {
+        $file_name = $file->name;
+      }
+      $tar->extractModify($temp, $file_name);
 
       $sqlfile  = $temp . '/database.sql';
       $filepath = $temp . '/active';
