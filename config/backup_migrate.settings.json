@@ -4,8 +4,6 @@
     "backup_migrate_data_bytes_per_line": 2048,
     "backup_migrate_max_email_size": 20971520,
     "backup_migrate_allow_backup_to_file": true,
-    "file_private_path": false,
-    "file_public_path": false,
     "backup_migrate_allow_backup_to_download": true,
     "debug_http_request": false,
     "dev_query": 0,
