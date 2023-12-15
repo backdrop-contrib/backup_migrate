@@ -60,7 +60,6 @@ class BackupMigrateFilesDestinationDbConfigSource extends backup_migrate_destina
     if ($this->check_libs()) {
       $base_dir = $this->get_realpath();
 
-      $excluded_paths = empty($settings->filters['exclude_filepaths']) ? '' : $settings->filters['exclude_filepaths'];
       $exclude = $this->get_excluded_paths($settings);
       $files = $this->get_files_to_backup($this->get_realpath(), $settings, $exclude);
       if ($files) {
@@ -69,8 +68,8 @@ class BackupMigrateFilesDestinationDbConfigSource extends backup_migrate_destina
         $file->push_type('db_config');
         $gz = new Archive_Tar($file->filepath(), false);
 
-        $gz->addModify($files, $file->name .'/active', $base_dir);
-        $gz->addModify($db, $file->name . '/', dirname($db));
+        $gz->addModify($files, 'active', $base_dir);
+        $gz->addModify($db, '', dirname($db));
 
         unlink($db);
         rmdir(dirname($db));
@@ -120,17 +119,7 @@ class BackupMigrateFilesDestinationDbConfigSource extends backup_migrate_destina
       $temp = backup_migrate_temp_directory();
 
       $tar = new Archive_Tar($from->filepath());
-      // Because Backdrop transliterate and lowercases file names for uploaded
-      // files by default, we must check if there is an original file name for
-      // the archive file and use that original name instead of the
-      // transliterated one.
-      if (!empty($_FILES['files']['orig_name']['backup_migrate_restore_upload']) && !empty($_FILES['files']['name']['backup_migrate_restore_upload']) && strtok($_FILES['files']['name']['backup_migrate_restore_upload'], '.') == $file->name) {
-        $file_name = strtok($_FILES['files']['orig_name']['backup_migrate_restore_upload'], '.');
-      }
-      else {
-        $file_name = $file->name;
-      }
-      $tar->extractModify($temp, $file_name);
+      $tar->extractModify($temp, '/');
 
       $sqlfile  = $temp . '/database.sql';
       $filepath = $temp . '/active';
