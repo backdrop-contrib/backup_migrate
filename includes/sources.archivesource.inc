@@ -77,9 +77,9 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         $file->push_type('sitearchive');
         $gz = new Archive_Tar($file->filepath(), false);
 
-        $gz->addModify(array($manifest), $file->name .'/', dirname($manifest));
-        $gz->addModify($files, $file->name .'/docroot', $base_dir);
-        $gz->addModify($db, $file->name . '/', dirname($db));
+        $gz->addModify(array($manifest), '/', dirname($manifest));
+        $gz->addModify($files, 'docroot', $base_dir);
+        $gz->addModify($db, '/', dirname($db));
 
         unlink($manifest);
         rmdir(dirname($manifest));
@@ -145,10 +145,14 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
         'database-file-driver' => 'mysql',
       ),
     );
-    if ($private = config_get('system.core','file_private_path')) {
-      $info['Site 0']['files-private'] = 'docroot/' . $private;
-    }
-    $info['Site 0']['files-public'] = 'docroot/' . config_get('backup_migrate.settings','file_public_path');
+
+    // TODO: backup of private files doesn't work in D7 or Backdrop. Therefore
+    // this key should not be included in the manifest. Otherwise the restore
+    // of the rest of the files is never completed. 
+    // if ($private = config_get('system.core','file_private_path')) {
+    //   $info['Site 0']['files-private'] = 'docroot/' . $private;
+    // }
+    $info['Site 0']['files-public'] = 'docroot/' . config_get('system.core','file_public_path');
     $ini = $this->_array_to_ini($info);
 
     $tmpdir = backup_migrate_temp_directory();
@@ -201,16 +205,22 @@ class backup_migrate_files_destination_archivesource extends backup_migrate_dest
       $docroot  = $temp . '/' . $site['docroot'];
       $sqlfile  = $temp . '/' . $site['database-file-default'];
       $filepath = NULL;
-      if (isset($site['files-private'])) {
-        $filepath = $temp . '/' . $site['files-private'];
-      }
-      else if (isset($site['files-public'])) {
+      // TODO: currently, there is no way to backup or restore private files,
+      // since they often are outside the installation root. This feature does
+      // not work in D7 either. I will comment these out instead of removing,
+      // just in case there is a solution for this in the future.
+
+      // if (isset($site['files-private'])) {
+      //   $filepath = $temp . '/' . $site['files-private'];
+      // }
+      // else if (isset($site['files-public'])) {
+      if (isset($site['files-public'])) {
         $filepath = $temp . '/' . $site['files-public'];
       }
 
       // Move the files from the temp directory.
       if ($filepath && file_exists($filepath)) {
-        _backup_migrate_move_files($filepath, config_get('backup_migrate.settings','file_public_path') );
+        _backup_migrate_move_files($filepath, config_get('system.core','file_public_path') );
       }
       else {
         _backup_migrate_message('Files were not restored because the archive did not seem to contain a files directory or was in a format that Backup and Migrate couldn\'t read', array(), 'warning');
