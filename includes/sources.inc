@@ -67,6 +67,20 @@ function backup_migrate_backup_migrate_source_subtypes() {
       'type_name' => t('Database and active config directory'),
       'can_create' => FALSE,
     ),
+    'config_files_active' => array(
+      'description' => t('Configuration File Directory (Active).'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationConfigSource.inc',
+      'class' => 'BackupMigrateFilesDestinationConfigSource',
+      'type_name' => t('Configuration File Directory (Active).'),
+      'can_create' => FALSE,
+    ),
+    'config_files_staging' => array(
+      'description' => t('Configuration File Directory (Staging!).'),
+      'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationConfigSource.inc',
+      'class' => 'BackupMigrateFilesDestinationConfigSource',
+      'type_name' => t('Configuration File Directory (Staging).'),
+      'can_create' => FALSE,
+    ),
     'filesource' => array(
       'description' => t('A files directory which can be backed up from.'),
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/sources.filesource.inc',

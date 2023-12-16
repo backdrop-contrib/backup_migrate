@@ -1261,7 +1261,7 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
   $validators = array('file_validate_extensions' => array('gz zip sql mysql bz bz2'));
 
   $values = $form_state['values'];
-  if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators)) {
+  if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators, FALSE, FILE_EXISTS_REPLACE)) {
     backup_migrate_perform_restore('upload', $file->uri, $values);
   }
   else if ($values['from'] == 'saved' && $file = $values['file']) {
@@ -1982,5 +1982,6 @@ function backup_migrate_autoload_info() {
     'backup_migrate_files_destination_archivesource' => 'includes/sources.archivesource.inc',
     'BackupMigrateFilesDestinationDbConfigSource' => 'includes/BackupMigrateFilesDestinationDbConfigSource.inc',
     'backup_migrate_destination_filesource' => 'includes/sources.filesource.inc',
+    'BackupMigrateFilesDestinationConfigSource' => 'includes/BackupMigrateFilesDestinationConfigSource.inc',
   );
 }
