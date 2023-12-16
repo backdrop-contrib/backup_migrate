@@ -537,7 +537,7 @@ function backup_migrate_ui_destination_restore_file($destination_id = NULL, $fil
   }
   _backup_migrate_message('Cannot restore from the the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
   if ($destination_id && user_access('access backup files')) {
-    backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/' . $destination_id);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/' . $destination_id);
   }
   backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
@@ -603,7 +603,7 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
   }
   _backup_migrate_message('Cannot delete the file: %file_id because it does not exist.', array('%file_id' => $file_id), 'error');
   if ($destination_id && user_access('access backup files')) {
-    backdrop_goto(BACKUP_MIGRATE_MENU_PATH .'/destination/list/files/' . $destination_id);
+    backdrop_goto(BACKUP_MIGRATE_MENU_PATH .'/settings/destination/list/files/' . $destination_id);
   }
   backdrop_goto(BACKUP_MIGRATE_MENU_PATH);
 }
@@ -614,7 +614,7 @@ function backup_migrate_ui_destination_delete_file($destination_id = NULL, $file
 function backup_migrate_ui_destination_delete_file_confirm($form, &$form_state, $destination_id, $file_id) {
   $form['destination_id'] = array('#type' => 'value', '#value' => $destination_id);
   $form['file_id'] = array('#type' => 'value', '#value' => $file_id);
-  return confirm_form($form, t('Are you sure you want to delete the backup file?'), BACKUP_MIGRATE_MENU_PATH . '/destination/list/files/'. $destination_id, t('Are you sure you want to delete the backup file %file_id? <strong>This action cannot be undone.</strong>', array('%file_id' => $file_id)), t('Delete'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to delete the backup file?'), BACKUP_MIGRATE_MENU_PATH . '/settings/destination/list/files/'. $destination_id, t('Are you sure you want to delete the backup file %file_id? <strong>This action cannot be undone.</strong>', array('%file_id' => $file_id)), t('Delete'), t('Cancel'));
 }
 
 /**
