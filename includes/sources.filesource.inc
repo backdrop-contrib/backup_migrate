@@ -45,7 +45,7 @@ class backup_migrate_destination_filesource extends backup_migrate_source {
     }
 
     foreach ($config_directories as $key => $config_dir) {
-      $out["config_files_$key"] = backup_migrate_create_destination('filesource', array(
+      $out["config_files_$key"] = backup_migrate_create_destination("config_files_$key", array(
         'machine_name' => 'config_files_' . $key,
         'location' => $config_directories[$key],
         'name' => t('Configuration Files Directory (!key)', array('!key' => ucfirst($key))),
