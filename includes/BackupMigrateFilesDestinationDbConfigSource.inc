@@ -24,7 +24,7 @@ class BackupMigrateFilesDestinationDbConfigSource extends backup_migrate_destina
     $out['db_config'] = backup_migrate_create_destination('db_config', array(
       'machine_name' => 'db_config',
       'location' => config_get_config_directory(),
-      'name' => t('Database and active config directory'),
+      'name' => t('Database and Active Config Directory'),
       'show_in_list' => FALSE,
     ));
     return $out;
