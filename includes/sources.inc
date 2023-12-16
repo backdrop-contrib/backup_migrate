@@ -75,7 +75,7 @@ function backup_migrate_backup_migrate_source_subtypes() {
       'can_create' => FALSE,
     ),
     'config_files_staging' => array(
-      'description' => t('Configuration File Directory (Staging!).'),
+      'description' => t('Configuration File Directory (Staging).'),
       'file' => backdrop_get_path('module', 'backup_migrate') .'/includes/BackupMigrateFilesDestinationConfigSource.inc',
       'class' => 'BackupMigrateFilesDestinationConfigSource',
       'type_name' => t('Configuration File Directory (Staging).'),
