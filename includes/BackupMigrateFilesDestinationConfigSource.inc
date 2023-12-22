@@ -5,11 +5,10 @@
  */
 
 /**
- * A destination type for saving db and active config folder locally to the server.
+ * A destination type for saving active/staging config folders to the server.
  *
  * @ingroup backup_migrate_destinations
  */
-
 class BackupMigrateFilesDestinationConfigSource extends backup_migrate_destination_filesource {
   /**
    * {@inheritdoc}
