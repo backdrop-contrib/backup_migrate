@@ -90,6 +90,20 @@ may panic now. MAKE SURE THAT THIS MODULE IS NOT YOUR ONLY FORM OF BACKUP.
 
 -------------------------------------------------------------------------------
 
+Bee integration
+---------------
+
+Backup & Migrate now provides [bee](https://backdropcms.org/project/bee) integration. `bee` is the command line interface for Backdrop. At the moment, it provides the following commands. 
+
+* `bam-backup`: Backup a specified source associated with a Backdrop CMS website.
+* `bam-destinations`: Get a list of available destinations.
+* `bam-profiles`: Get a list of available settings profiles.
+* `bam-restore`: Restore a saved backup to a specified source.
+* `bam-saved`: Get a list of previously created backup files.
+* `bam-sources`: Get a list of available sources.
+
+Thanks to [rbargerhuff](https://github.com/rbargerhuff) for providing this integration!
+
 Wiki
 ----
 
