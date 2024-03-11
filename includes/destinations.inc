@@ -626,7 +626,7 @@ function backup_migrate_ui_destination_delete_file_confirm_submit($form, &$form_
     backup_migrate_destination_delete_file($destination_id, $file_id);
     _backup_migrate_message('Database backup file deleted: %file_id', array('%file_id' => $file_id));
   }
-  $form_state['redirect'] = user_access('access backup files') ? BACKUP_MIGRATE_MENU_PATH . "/destination/list/files/". $destination_id : BACKUP_MIGRATE_MENU_PATH;
+  $form_state['redirect'] = user_access('access backup files') ? BACKUP_MIGRATE_MENU_PATH . "/settings/destination/list/files/". $destination_id : BACKUP_MIGRATE_MENU_PATH;
 }
 
 /* Utilities */
@@ -1276,4 +1276,3 @@ class backup_migrate_destination_remote extends backup_migrate_destination {
     parent::edit_form_submit($form, $form_state);
   }
 }
-
