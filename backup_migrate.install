@@ -640,3 +640,17 @@ function backup_migrate_update_1009() {
     }
   }
 }
+
+/**
+ * Set weekly backups to be smart-deleted after 12 weeks if the original wrong
+ * "2147483647 weeks" value is found.
+ */
+function backup_migrate_update_1010() {
+  $backup_migrate_smart_keep_weekly = config_get('backup_migrate.settings', 'backup_migrate_smart_keep_weekly');
+  // This was the original setting changed in:
+  // https://github.com/backdrop-contrib/backup_migrate/issues/46
+  // The problem is that that commit never included this update hook! 
+  if ($backup_migrate_smart_keep_weekly == 2147483647) {
+    config_set('backup_migrate.settings', 'backup_migrate_smart_keep_weekly', 12);
+  }
+}
