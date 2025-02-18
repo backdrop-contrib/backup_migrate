@@ -26,12 +26,12 @@ function backup_migrate_ui_advanced_settings_form($form, &$form_state) {
     '#element_validate' => array('backup_migrate_memory_limit_validate'),
   );
   $form['backup_migrate_backup_max_time'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
+    '#min' => 0,
     '#title' => t('Time Limit'),
     '#default_value' => $config->get('backup_migrate_backup_max_time'),
     '#description' => t('If backups fail due to a PHP timeout error, especially an error saying "MySQL server has gone away", increase this setting. Before doing this, check to see what PHP\'s "max_execution_time" is set to, then set this field to a higher number, e.g. if max_execution_time is 180 (seconds) try setting Time Limit to 240 seconds (4 minutes), or 300 seconds (5 minutes). Default: <kbd>1200</kbd>.'),
     '#required' => FALSE,
-    '#element_validate' => array('element_validate_integer_positive'),
   );
   $form['backup_migrate_verbose'] = array(
     '#type' => 'checkbox',
@@ -48,28 +48,28 @@ function backup_migrate_ui_advanced_settings_form($form, &$form_state) {
     '#required' => FALSE,
   );
   $form['backup_migrate_data_rows_per_query'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
+    '#min' => 0,
     '#title' => t('Rows Per Query'),
     '#default_value' => $config->get('backup_migrate_data_rows_per_query'),
     '#description' => t('Controls how many records are loaded from the database at once. Defaults to "<kbd>50000</kbd>", i.e. 50000 rows. Note that setting this to a high number can cause problems when exporting large data sets, e.g. cache tables can have huge volumes of data per record.'),
     '#required' => FALSE,
-    '#element_validate' => array('element_validate_integer_positive'),
   );
   $form['backup_migrate_data_rows_per_line'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
+    '#min' => 0,
     '#title' => t('Rows Per Line'),
     '#default_value' => $config->get('backup_migrate_data_rows_per_line'),
     '#description' => t('Controls how many records are included in a single INSERT statement. Defaults to "!default", i.e. <kbd>30</kbd> records.'),
     '#required' => FALSE,
-    '#element_validate' => array('element_validate_integer_positive'),
   );
   $form['backup_migrate_data_bytes_per_line'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
+    '#min' => 0,
     '#title' => t('Data Bytes Per Line'),
     '#default_value' => $config->get('backup_migrate_data_bytes_per_line'),
     '#description' => t('Controls how much data will be inserted at once using a single INSERT statement. This works with the "backup_migrate_data_rows_per_line" variable to ensure that each INSERT statement doesn\'t end up being too large. Defaults to "<kbd>2000</kbd>", i.e. 2000 bytes.'),
     '#required' => FALSE,
-    '#element_validate' => array('element_validate_integer_positive'),
   );
   $form['backup_migrate_max_email_size'] = array(
     '#type' => 'textfield',
