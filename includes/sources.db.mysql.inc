@@ -565,7 +565,7 @@ class backup_migrate_source_db_mysql extends backup_migrate_source_db {
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
 
 SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";
-SET NAMES utf8;
+SET NAMES utf8mb4;
 
 ";
   }
