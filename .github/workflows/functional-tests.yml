@@ -3,7 +3,7 @@ on: [pull_request]
 jobs:
   simpletest:
     name: Run Simpletest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Setup env
         run: |
@@ -43,6 +43,7 @@ jobs:
           sudo sed -i -e "s?_PWD?$PWD?g" -e "s/_PHP_V/${{ env.USE_PHP_V }}/g" /etc/apache2/sites-available/000-default.conf
           sudo apt-get install libapache2-mod-fcgid
           sudo a2enmod rewrite proxy fcgid proxy_fcgi
+          sudo chmod 751 /home/runner
           sudo systemctl start apache2.service
           sudo sed -i -e 's/user = www-data/user = runner/' /etc/php/${{ env.USE_PHP_V }}/fpm/pool.d/www.conf
           sudo sed -i -e 's/listen.owner = www-data/listen.owner = runner/' /etc/php/${{ env.USE_PHP_V }}/fpm/pool.d/www.conf
