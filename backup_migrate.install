@@ -654,3 +654,12 @@ function backup_migrate_update_1010() {
     config_set('backup_migrate.settings', 'backup_migrate_smart_keep_weekly', 12);
   }
 }
+
+/**
+ * Provide correct list of tables when site uses multiple databases.
+ */
+function backup_migrate_update_1011() {
+  // Nothing to do here, as we don't want to mess up any settings. Just show
+  // a warning.
+  backdrop_set_message(t('If your site uses multiple databases, you will need to edit and save each of your Backup and Migrate !setting_link. Inspect each of your databases\' "Backup Options" accordion settings to assure the correct tables are shown.', array('!setting_link' => l('Settings Profiles', 'admin/config/system/backup_migrate/settings/profile'))), 'warning');
+}
