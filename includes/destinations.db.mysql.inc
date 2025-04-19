@@ -22,7 +22,9 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
   protected static $tableData = array();
 
   /**
-   * The tables keyed by name.
+   * Static cache of tables.
+   * 
+   * Keyed by source or destination machine_name.
    *
    * @var array
    */
@@ -297,12 +299,14 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    * Get a list of tables in the database.
    */
   public function _get_table_names() {
-    if (empty(static::$tableNames)) {
-      static::$tableNames = $this->query("SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
+    $machine_name_field = $this->get_machine_name_field();
+    $machine_name = $this->{$machine_name_field};
+    if (empty(static::$tableNames[$machine_name])) {
+      static::$tableNames[$machine_name] = $this->query("SHOW FULL TABLES WHERE Table_Type = 'BASE TABLE'")
         ->fetchAllKeyed(0, 0);
     }
 
-    return static::$tableNames;
+    return static::$tableNames[$machine_name];
   }
 
   /**
