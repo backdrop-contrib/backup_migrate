@@ -345,7 +345,9 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
    * Get a list of table and view data in the db.
    */
   protected function get_table_data() {
-    if (empty(static::$tableData)) {
+    $machine_name_field = $this->get_machine_name_field();
+    $machine_name = $this->{$machine_name_field};
+    if (empty(static::$tableData[$machine_name])) {
       $tables = $this->query('SHOW TABLE STATUS')
         ->fetchAll(PDO::FETCH_ASSOC);
 
@@ -354,11 +356,11 @@ class backup_migrate_destination_db_mysql extends backup_migrate_destination_db 
         // default query behavior was changed.
         // See: http://drupal.org/node/1171866
         $table = array_change_key_case($table);
-        static::$tableData[$table['name']] = $table;
+        static::$tableData[$machine_name][$table['name']] = $table;
       }
     }
 
-    return static::$tableData;
+    return static::$tableData[$machine_name];
   }
 
   /**
