@@ -154,6 +154,7 @@ class backup_migrate_schedule extends backup_migrate_item {
     $out = parent::get_list_column_info();
     $out = array(
       'name'                  => array('title' => t('Name')),
+      'source_name'           => array('title' => t('Source'), 'html' => TRUE),
       'destination_name'      => array('title' => t('Destinations'), 'html' => TRUE),
       'profile_name'          => array('title' => t('Profile'), 'html' => TRUE),
       'frequency_description' => array('title' => t('Frequency')),
@@ -272,6 +273,24 @@ class backup_migrate_schedule extends backup_migrate_item {
         $out[] = check_plain($destination->get_name());
       }
       return implode(', ', $out);
+    }
+    return '<div class="row-error">'. t("Missing") .'</div>';
+  }
+
+  /**
+   * Get the source of the schedule.
+   */
+  function get_source() {
+    require_once dirname(__FILE__) . '/sources.inc';
+    return backup_migrate_get_source($this->get('source_id'));
+  }
+
+  /**
+   * Get the name of the source.
+   */
+  function get_source_name() {
+    if ($source = $this->get_source()) {
+      return check_plain($source->get_name());
     }
     return '<div class="row-error">'. t("Missing") .'</div>';
   }
