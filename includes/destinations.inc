@@ -1091,7 +1091,7 @@ class backup_migrate_destination extends backup_migrate_location {
       $out[] = l(t("download"), $path . '/downloadfile/'. $destination_id .'/'. $file_id);
     }
     if ($can_read && user_access("restore from backup")) {
-      $out[] = l(t("restore"), $path . '/list/restorefile/' . $destination_id .'/'. $file_id);
+      $out[] = l(t("restore"), BACKUP_MIGRATE_MENU_PATH . '/restore', array('query' => array('restore_list' => 'saved', 'file' => $destination_id . '/' . $file_id)));
     }
     if ($can_delete && user_access("delete backup files")) {
       $out[] = l(t("delete"), $path . '/list/deletefile/' . $destination_id .'/'. $file_id);
