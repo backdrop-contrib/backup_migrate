@@ -319,6 +319,7 @@ function _backup_migrate_ui_destination_display_file_list($files, $options = arr
     'operations' => TRUE,
     'limit' => NULL,
     'form_elements' => NULL,
+    'pager_parameters' => array(),
   );
 
   $rows = $sort = array();
@@ -397,12 +398,10 @@ function _backup_migrate_ui_destination_display_file_list($files, $options = arr
       $start = 0;
 
       if ($options['pager']) {
-        $page = isset($_GET['page']) ? $_GET['page'] : '0';
+        $element = 0;
+        $page = pager_default_initialize($total, $limit, $element);
         $start = $page * $limit;
 
-        $element = 0;
-        $GLOBALS['pager_total'][$element] = ceil($total / $limit);
-        $GLOBALS['pager_page_array'][$element] = $page;
         $tags = array(
           t('« newest'),
           t('« newer'),
@@ -410,7 +409,12 @@ function _backup_migrate_ui_destination_display_file_list($files, $options = arr
           t('older »'),
           t('oldest »'),
           );
-        $pager = theme('pager', $tags, $limit, $element, array(), ceil($total/$limit));
+        $pager = theme('pager', array(
+          'tags' => $tags,
+          'element' => $element,
+          'parameters' => $options['pager_parameters'],
+          'quantity' => ceil($total / $limit),
+        ));
       }
       $end = min($total - 1, $start + $limit - 1);
       if ($total > $limit && $options['more']) {

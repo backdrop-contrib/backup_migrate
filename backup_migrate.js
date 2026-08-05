@@ -40,6 +40,31 @@
               });
             }
           }
+          // Auto-select the matching "Restore to" option when a saved
+          // backup file is chosen, based on the source that produced it.
+          // Only meaningful while "Restore from a saved backup" is the
+          // active choice - otherwise leave the dropdown alone.
+          if (Backdrop.settings.backup_migrate.file_sources !== undefined) {
+            var fileSources = Backdrop.settings.backup_migrate.file_sources;
+            var $sourceSelect = $('[name="source_id"]');
+            if ($sourceSelect.length) {
+              var syncSourceFromFile = function() {
+                if ($('[name="from"]:checked').val() !== 'saved') {
+                  return;
+                }
+                var fileId = $('[name="file"]:checked').val();
+                if (fileId !== undefined && fileSources[fileId] !== undefined) {
+                  var matched = $sourceSelect.find('option[value="' + fileSources[fileId] + '"]');
+                  if (matched.length) {
+                    $sourceSelect.val(fileSources[fileId]).trigger('change');
+                  }
+                }
+              };
+              $('[name="file"], [name="from"]').each(function() {
+                $(this).bind('load change click keypress focus', syncSourceFromFile).trigger('load');
+              });
+            }
+          }
           for (key in Backdrop.settings.backup_migrate.destination_selectors) {
             var info = Backdrop.settings.backup_migrate.destination_selectors[key];
             (function(info) {

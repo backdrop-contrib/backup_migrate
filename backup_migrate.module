@@ -1172,7 +1172,7 @@ function backup_migrate_ui_manual_restore_form() {
 
   $form = array();
 
-  $from_default = (isset($_GET['page']) || isset($_GET['sort'])) ? 'saved' : 'upload';
+  $from_default = (isset($_GET['page']) || isset($_GET['sort']) || (isset($_GET['restore_list']) && $_GET['restore_list'] == 'saved')) ? 'saved' : 'upload';
   $form['backup_migrate_restore_from_upload'] = array(
     "#type" => "radio",
     "#title" => t('Restore from an uploaded file'),
@@ -1212,17 +1212,31 @@ function backup_migrate_ui_manual_restore_form() {
   list($files, $fetch_time, $remote) = backup_migrate_get_saved_backups();
   $keys = array_keys($files);
   $default = reset($keys);
+
   $form['backup_migrate_restore_saved']['file'] = array(
     '#type' => 'backup_migrate_file_list',
     '#display_options' => array(
       'limit' => 5,
-      'pager' => FALSE,
-      'more' => BACKUP_MIGRATE_MENU_PATH . '/backups',
+      'pager' => TRUE,
       'operations' => FALSE,
+      'pager_parameters' => array('restore_list' => 'saved'),
     ),
     '#default_value' => $default,
     '#files' => $files,
   );
+
+  // Let the client auto-select the matching "Restore to" option based on
+  // which source produced the selected file, using the source id that was
+  // already recorded on the file at backup time.
+  $file_sources = array();
+  foreach ($files as $id => $file) {
+    if ($source_id = $file->info('bam_sourceid')) {
+      $file_sources[$id] = $source_id;
+    }
+  }
+  if ($file_sources) {
+    backdrop_add_js(array('backup_migrate' => array('file_sources' => $file_sources)), 'setting');
+  }
 
   $sources = _backup_migrate_get_source_form_item_options();
   if (count($sources) > 1) {
@@ -1230,7 +1244,7 @@ function backup_migrate_ui_manual_restore_form() {
       "#type" => "select",
       "#title" => t("Restore to"),
       "#options" => $sources,
-      "#description" => t("Choose where to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to."),
+      "#description" => t("Choose where to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to. Options available are based on the contents of the selected backup."),
       "#default_value" => 'db',
     );
   }
@@ -1240,6 +1254,26 @@ function backup_migrate_ui_manual_restore_form() {
       "#value" => 'db',
     );
   }
+
+  $form['restore_scope_wrapper'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'source_id' => 'db_config',
+    ),
+  );
+  $form['restore_scope_wrapper']['restore_scope_db_config'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('What would you like to restore?'),
+    '#parents' => array('restore_scope_db_config'),
+    '#options' => array(
+      'db' => t('Database'),
+      'config' => t('Configuration'),
+    ),
+    '#default_value' => array('db', 'config'),
+    '#description' => t('This backup contains both a database dump and the active configuration directory. Choose which parts to restore.'),
+  );
+
+  $form['#validate'][] = 'backup_migrate_ui_manual_restore_form_validate';
 
   $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
   // Add the advanced fieldset if there are any fields in it.
@@ -1265,6 +1299,17 @@ function backup_migrate_ui_manual_restore_form() {
 }
 
 /**
+ * The restore validate. Make sure at least one item is selected to restore
+ * for the combined source types.
+ */
+function backup_migrate_ui_manual_restore_form_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  if ($values['source_id'] == 'db_config' && !array_filter($values['restore_scope_db_config'])) {
+    form_set_error('restore_scope_db_config', t('Select at least one item to restore.'));
+  }
+}
+
+/**
  * The restore submit. Do the restore.
  */
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
@@ -1272,12 +1317,20 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
   $validators = array('file_validate_extensions' => array('gz zip sql mysql bz bz2'));
 
   $values = $form_state['values'];
+
+  // Normalize the checkbox choice into a single key. Checkboxes submit as
+  // key => key (checked) or key => 0 (unchecked); reduce that to a simple
+  // list of the selected keys.
+  if ($values['source_id'] == 'db_config') {
+    $values['restore_scope'] = array_keys(array_filter($values['restore_scope_db_config']));
+  }
+
   if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators, FALSE, FILE_EXISTS_REPLACE)) {
     backup_migrate_perform_restore('upload', $file->uri, $values);
   }
   else if ($values['from'] == 'saved' && $file = $values['file']) {
     list($destination, $file_id) = explode('/', $file, 2);
-    $file = backup_migrate_perform_restore($destination, $file_id, $form_state['values']);
+    $file = backup_migrate_perform_restore($destination, $file_id, $values);
   }
 
   $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH . '/restore';
