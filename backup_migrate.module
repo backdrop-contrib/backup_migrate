@@ -1224,13 +1224,25 @@ function backup_migrate_ui_manual_restore_form() {
     '#files' => $files,
   );
 
+  // Pass the source that created each saved backup to the restore form.
+  $file_sources = array();
+  foreach ($files as $id => $file) {
+    $source_id = $file->info('bam_sourceid');
+    if ($source_id) {
+      $file_sources[$id] = $source_id;
+    }
+  }
+  if ($file_sources) {
+    backdrop_add_js(array('backup_migrate' => array('file_sources' => $file_sources)), 'setting');
+  }
+
   $sources = _backup_migrate_get_source_form_item_options();
   if (count($sources) > 1) {
     $form['source_id'] = array(
       "#type" => "select",
       "#title" => t("Restore to"),
       "#options" => $sources,
-      "#description" => t("Choose where to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to."),
+      "#description" => t("Choose where to restore to. Any database destinations you have created and any databases specified in your settings.php can be restored to. The destination is selected automatically when the backup source is known."),
       "#default_value" => 'db',
     );
   }

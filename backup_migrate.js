@@ -75,6 +75,25 @@
               });
             })(info);
           }
+          // Auto-select the matching restore destination for saved backups.
+          if (Backdrop.settings.backup_migrate.file_sources !== undefined) {
+            var fileSources = Backdrop.settings.backup_migrate.file_sources;
+            var $sourceSelect = $('[name="source_id"]');
+            if ($sourceSelect.length) {
+              var syncSourceFromFile = function() {
+                if ($('[name="from"]:checked').val() !== 'saved') {
+                  return;
+                }
+                var fileId = $('[name="file"]:checked').val();
+                var sourceId = fileSources[fileId];
+                if (sourceId !== undefined) {
+                  $sourceSelect.val(sourceId).trigger('change');
+                }
+              };
+              $('[name="file"], [name="from"]').change(syncSourceFromFile);
+              syncSourceFromFile();
+            }
+          }
           // Add the convert to checkboxes functionality to all multiselects.
           $('#backup-migrate-ui-manual-backup-form select[multiple], #backup-migrate-crud-edit-form select[multiple]').each(function() {
             var self = this;
