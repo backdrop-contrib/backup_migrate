@@ -398,7 +398,7 @@ function backup_migrate_menu_callback($include, $function, $interactive = TRUE) 
 
 /**
  * Include views .inc files as necessary.
- * 
+ *
  * @deprecated
  */
 function backup_migrate_include() {
@@ -414,7 +414,7 @@ function backup_migrate_include() {
 
 /**
  * Include views .inc files as necessary.
- * 
+ *
  * @deprecated
  */
 function backup_migrate_include_path($file) {
@@ -424,7 +424,7 @@ function backup_migrate_include_path($file) {
 
 /**
  * The menu callback for easy manual backups.
- * 
+ *
  * @deprecated
  */
 function backup_migrate_ui_manual_backup_quick() {
@@ -581,7 +581,7 @@ function backup_migrate_ui_schedule_form($form, &$form_state, $sources, $schedul
         'copy_destination_id',
       );
 
-      // TODO This code comes from D7 - it does nothing!? 
+      // TODO This code comes from D7 - it does nothing!?
       array(
         '#type' => 'select',
         '#title' => t('Backup Destination'),
@@ -1257,7 +1257,7 @@ function backup_migrate_ui_manual_restore_form() {
   if (user_access('access backup files')) {
     $form[] = array(
       '#type' => 'markup',
-      '#markup' => t('<p>Or you can restore one of the files in your <a href="!url">saved backup destinations.</a></p>', array("!url" => url(BACKUP_MIGRATE_MENU_PATH . '/backups'))),
+      '#markup' => t('<p>Or you can restore one of the files in your <a href="!url">saved backup destinations.</a></p>', array("!url" => url(BACKUP_MIGRATE_MENU_PATH . '/settings/destination'))),
     );
   }
   $form['#attributes'] = array('enctype' => 'multipart/form-data');
@@ -1285,7 +1285,7 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
 
 /**
  * Convert an item to an 'exportable'.
- * 
+ *
  * TODO: Remove, as ctools export is not ported to Backdrop.
  */
 function backup_migrate_ui_export_form($form, &$form_state, $item) {
@@ -1702,7 +1702,7 @@ function backup_migrate_action_info() {
 
 /**
  * Action callback.
- * 
+ *
  * TODO: Remove. This is called from the commented text above.
  */
 function backup_migrate_action_backup() {
@@ -1995,7 +1995,7 @@ function _backup_migrate_is_valid_memory_limit($value) {
 
 /**
  * Implements hook_autoload_info().
- * 
+ *
  * TODO: Most classes are loaded through include_once since this is the way
  * this was done in D7. Those should eventually be replaced by including them
  * in the autoload hook below. For now, only the needed ones are included.
