@@ -123,20 +123,30 @@ class BackupMigrateFilesDestinationDbConfigSource extends backup_migrate_destina
       $tar = new Archive_Tar($from->filepath());
       $tar->extractModify($temp, '/');
 
+      // Restore both parts unless the user chose a specific scope.
+      $scope = empty($settings->restore_scope) ? array('db', 'config') : (array) $settings->restore_scope;
+
       $sqlfile  = $temp . '/database.sql';
       $filepath = $temp . '/active';
-      // Move the files from the temp directory.
-      _backup_migrate_move_files($filepath, config_get_config_directory('active'));
+      $success = TRUE;
 
-      // Restore the sql db.
-      if ($sqlfile && file_exists($sqlfile)) {
-        $db_settings = clone($settings);
-        $db_settings->source_id = 'db';
-        $file = new backup_file(array('filepath' => $sqlfile));
-        $success = backup_migrate_filters_restore($file, $db_settings);
+      // Move the configuration files from the temp directory.
+      if (in_array('config', $scope)) {
+        _backup_migrate_move_files($filepath, config_get_config_directory('active'));
       }
-      else {
-        _backup_migrate_message('The database was not restored because the archive did not seem to contain a database backup or was in a format that Backup and Migrate couldn\'t read', array(), 'warning');
+
+      // Restore the SQL database.
+      if (in_array('db', $scope)) {
+        if ($sqlfile && file_exists($sqlfile)) {
+          $db_settings = clone($settings);
+          $db_settings->source_id = 'db';
+          $file = new backup_file(array('filepath' => $sqlfile));
+          $success = backup_migrate_filters_restore($file, $db_settings) ? TRUE : FALSE;
+        }
+        else {
+          _backup_migrate_message('The database was not restored because the archive did not seem to contain a database backup or was in a format that Backup and Migrate couldn\'t read', array(), 'warning');
+          $success = FALSE;
+        }
       }
       return $success && $file;
     }

@@ -1241,6 +1241,24 @@ function backup_migrate_ui_manual_restore_form() {
     );
   }
 
+  $form['restore_scope_wrapper'] = array(
+    '#type' => 'backup_migrate_dependent',
+    '#dependencies' => array(
+      'source_id' => 'db_config',
+    ),
+  );
+  $form['restore_scope_wrapper']['restore_scope_db_config'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('What would you like to restore?'),
+    '#parents' => array('restore_scope_db_config'),
+    '#options' => array(
+      'db' => t('Database'),
+      'config' => t('Configuration'),
+    ),
+    '#default_value' => array('db', 'config'),
+    '#description' => t('This backup contains both a database dump and the active configuration directory. Choose which parts to restore.'),
+  );
+
   $form = array_merge_recursive($form, backup_migrate_filters_settings_form(backup_migrate_filters_settings_default('restore'), 'restore'));
   // Add the advanced fieldset if there are any fields in it.
   if (@$form['advanced']) {
@@ -1249,6 +1267,8 @@ function backup_migrate_ui_manual_restore_form() {
     $form['advanced']['#collapsed'] = TRUE;
     $form['advanced']['#collapsible'] = TRUE;
   }
+
+  $form['#validate'][] = 'backup_migrate_ui_manual_restore_form_validate';
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -1265,6 +1285,16 @@ function backup_migrate_ui_manual_restore_form() {
 }
 
 /**
+ * Validate the restore scope for combined database/configuration backups.
+ */
+function backup_migrate_ui_manual_restore_form_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  if ($values['source_id'] == 'db_config' && !array_filter($values['restore_scope_db_config'])) {
+    form_set_error('restore_scope_db_config', t('Select at least one item to restore.'));
+  }
+}
+
+/**
  * The restore submit. Do the restore.
  */
 function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
@@ -1272,12 +1302,16 @@ function backup_migrate_ui_manual_restore_form_submit($form, &$form_state) {
   $validators = array('file_validate_extensions' => array('gz zip sql mysql bz bz2'));
 
   $values = $form_state['values'];
+  if ($values['source_id'] == 'db_config') {
+    $values['restore_scope'] = array_keys(array_filter($values['restore_scope_db_config']));
+  }
+
   if ($values['from'] == 'upload' && $file = file_save_upload('backup_migrate_restore_upload', $validators, FALSE, FILE_EXISTS_REPLACE)) {
     backup_migrate_perform_restore('upload', $file->uri, $values);
   }
   else if ($values['from'] == 'saved' && $file = $values['file']) {
     list($destination, $file_id) = explode('/', $file, 2);
-    $file = backup_migrate_perform_restore($destination, $file_id, $form_state['values']);
+    $file = backup_migrate_perform_restore($destination, $file_id, $values);
   }
 
   $form_state['redirect'] = BACKUP_MIGRATE_MENU_PATH . '/restore';
