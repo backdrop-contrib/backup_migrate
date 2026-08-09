@@ -1250,6 +1250,8 @@ function backup_migrate_ui_manual_restore_form() {
     $form['advanced']['#collapsible'] = TRUE;
   }
 
+  $form['#validate'][] = 'backup_migrate_ui_manual_restore_form_validate';
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Restore now'),
@@ -1262,6 +1264,50 @@ function backup_migrate_ui_manual_restore_form() {
   }
   $form['#attributes'] = array('enctype' => 'multipart/form-data');
   return $form;
+}
+
+/**
+ * Validate the restore destination for configuration backups.
+ */
+function backup_migrate_ui_manual_restore_form_validate($form, &$form_state) {
+  $values = $form_state['values'];
+
+  // This check applies to saved backups because their metadata identifies the
+  // source that created the backup.
+  if ($values['from'] != 'saved' || empty($values['file']) || empty($values['source_id'])) {
+    return;
+  }
+
+  list($destination_id, $file_id) = explode('/', $values['file'], 2);
+  if (!$file_id || !$file = backup_migrate_destination_get_file($destination_id, $file_id)) {
+    return;
+  }
+
+  $backup_source_type = $file->info('bam_sourcetype');
+  if (empty($backup_source_type)) {
+    return;
+  }
+
+  // Configuration-only backups must stay within a configuration files
+  // directory. Database + configuration backups must stay with their
+  // matching restore handler.
+  $is_config_backup = strpos($backup_source_type, 'config_files_') === 0;
+  $is_db_config_backup = $backup_source_type == 'db_config';
+  if (!$is_config_backup && !$is_db_config_backup) {
+    return;
+  }
+
+  $restore_source = backup_migrate_get_source($values['source_id']);
+  $restore_source_type = $restore_source ? $restore_source->get('subtype') : '';
+
+  if ($restore_source_type != $backup_source_type) {
+    if ($is_config_backup) {
+      form_set_error('source_id', t('Configuration backups can only be restored to a Configuration Files Directory.'));
+    }
+    else {
+      form_set_error('source_id', t('Database and configuration backups can only be restored to the Database and Active Config Directory.'));
+    }
+  }
 }
 
 /**
